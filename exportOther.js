@@ -19,12 +19,12 @@ const endpoints = [
   { dataFilename: 'TimeEntries0.json', schemaFilename: 'TimeEntries.js' },
   { dataFilename: 'Skills0.json', schemaFilename: 'Skills.js' },
   { dataFilename: 'EmailConfigs0.json', schemaFilename: 'EmailConfigs.js' },
-  { dataFilename: 'Products0.json', schemaFilename: 'Products.js' },
+//  { dataFilename: 'Products0.json', schemaFilename: 'Products.js' },
   { dataFilename: 'SLAPolicies0.json', schemaFilename: 'SLAPolicies.js' },
   { dataFilename: 'BusinessHours0.json', schemaFilename: 'BusinessHours.js' },
-  { dataFilename: 'Surveys0.json', schemaFilename: 'Surveys.js' },
+//  { dataFilename: 'Surveys0.json', schemaFilename: 'Surveys.js' },
   { dataFilename: 'TicketFields0.json', schemaFilename: 'TicketFields.js' },
-  { dataFilename: 'Automations0.json', schemaFilename: 'Automations.js' },
+//  { dataFilename: 'Automations0.json', schemaFilename: 'Automations.js' },
   { dataFilename: 'Settings0.json', schemaFilename: 'Settings.js' },
 ];
 

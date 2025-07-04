@@ -31,6 +31,13 @@ const Solution = require('./models/Solution');
 const CannedResponse = require('./models/CannedResponse');
 const TimeEntry = require('./models/TimeEntry');
 const TicketDisplayIdMap = require('./models/TicketDisplayIdMap'); // Added
+const Role = require('./models/Role');
+const Skill = require('./models/Skill');
+const EmailConfig = require('./models/EmailConfig');
+const SLAPolicy = require('./models/SLAPolicy');
+const BusinessHour = require('./models/BusinessHour');
+const Setting = require('./models/Setting');
+const TicketField = require('./models/TicketField');
 
 async function importData() {
   try {
@@ -242,7 +249,160 @@ async function importData() {
       }
     }
     logger.info(`Imported ${timeEntriesRawData.length} Time Entries`);
+    
+    // Import Roles
+    logger.info('Importing Roles...');
+    const rolesFilePath = path.join(dataDir, 'Roles0.json');
+    if (!fs.existsSync(rolesFilePath)) {
+      logger.error(`Roles file not found at: ${rolesFilePath}`);
+      throw new Error(`Roles file not found: ${rolesFilePath}`);
+    }
+    const rolesRawData = JSON.parse(fs.readFileSync(rolesFilePath));
+    const rolesArray = Array.isArray(rolesRawData) ? rolesRawData : [rolesRawData];
+    for (const roleData of rolesArray) {
+      try {
+        delete roleData.id;
+        const role = new Role(roleData);
+        await role.save();
+      } catch (err) {
+        logger.error(`Error importing Role ${roleData.name || 'unknown'}: ${err.message}`);
+      }
+    }
+    logger.info(`Imported ${rolesArray.length} Roles`);
 
+    // Import Skills
+    logger.info('Importing Skills...');
+    const skillsFilePath = path.join(dataDir, 'Skills0.json');
+    if (!fs.existsSync(skillsFilePath)) {
+      logger.error(`Skills file not found at: ${skillsFilePath}`);
+      throw new Error(`Skills file not found: ${skillsFilePath}`);
+    }
+    const skillsRawData = JSON.parse(fs.readFileSync(skillsFilePath));
+    const skillsArray = Array.isArray(skillsRawData) ? skillsRawData : [skillsRawData];
+    for (const skillData of skillsArray) {
+      try {
+        if (skillData.agents) {
+          skillData.associated_agents = skillData.agents.map(agent => agent.id.toString());
+          delete skillData.agents;
+          delete skillData.id;
+        }
+        const skill = new Skill(skillData);
+        await skill.save();
+      } catch (err) {
+        logger.error(`Error importing Skill ${skillData.name || 'unknown'}: ${err.message}`);
+      }
+    }
+    logger.info(`Imported ${skillsArray.length} Skills`);
+
+    // Import Email Configs
+    logger.info('Importing Email Configs...');
+    const emailConfigsFilePath = path.join(dataDir, 'EmailConfigs0.json');
+    if (!fs.existsSync(emailConfigsFilePath)) {
+      logger.error(`Email Configs file not found at: ${emailConfigsFilePath}`);
+      throw new Error(`Email Configs file not found: ${emailConfigsFilePath}`);
+    }
+    const emailConfigsRawData = JSON.parse(fs.readFileSync(emailConfigsFilePath));
+    const emailConfigsArray = Array.isArray(emailConfigsRawData) ? emailConfigsRawData : [emailConfigsRawData];
+    for (const emailConfigData of emailConfigsArray) {
+      try {
+        if (emailConfigData.primary_role) {
+          emailConfigData.primary = emailConfigData.primary_role;
+          delete emailConfigData.primary_role;
+        }
+        delete emailConfigData.id;
+        const emailConfig = new EmailConfig(emailConfigData);
+        await emailConfig.save();
+      } catch (err) {
+        logger.error(`Error importing Email Config ${emailConfigData.name || 'unknown'}: ${err.message}`);
+      }
+    }
+    logger.info(`Imported ${emailConfigsArray.length} Email Configs`);
+
+    // Import SLA Policies
+    logger.info('Importing SLA Policies...');
+    const slaPoliciesFilePath = path.join(dataDir, 'SLAPolicies0.json');
+    if (!fs.existsSync(slaPoliciesFilePath)) {
+      logger.error(`SLA Policies file not found at: ${slaPoliciesFilePath}`);
+      throw new Error(`SLA Policies file not found: ${slaPoliciesFilePath}`);
+    }
+    const slaPoliciesRawData = JSON.parse(fs.readFileSync(slaPoliciesFilePath));
+    const slaPoliciesArray = Array.isArray(slaPoliciesRawData) ? slaPoliciesRawData : [slaPoliciesRawData];
+    for (const slaPolicyData of slaPoliciesArray) {
+      try {
+        // Rename sla_target to sla_targets
+        if (slaPolicyData.sla_target) {
+          slaPolicyData.sla_targets = slaPolicyData.sla_target;
+          delete slaPolicyData.sla_target;
+        }
+        delete slaPolicyData.id;
+        const slaPolicy = new SLAPolicy(slaPolicyData);
+        await slaPolicy.save();
+      } catch (err) {
+        logger.error(`Error importing SLA Policy ${slaPolicyData.name || 'unknown'}: ${err.message}`);
+      }
+    }
+    logger.info(`Imported ${slaPoliciesArray.length} SLA Policies`);
+
+    // Import Business Hours
+    logger.info('Importing Business Hours...');
+    const businessHoursFilePath = path.join(dataDir, 'BusinessHours0.json');
+    if (!fs.existsSync(businessHoursFilePath)) {
+      logger.error(`Business Hours file not found at: ${businessHoursFilePath}`);
+      throw new Error(`Business Hours file not found: ${businessHoursFilePath}`);
+    }
+    const businessHoursRawData = JSON.parse(fs.readFileSync(businessHoursFilePath));
+    const businessHoursArray = Array.isArray(businessHoursRawData) ? businessHoursRawData : [businessHoursRawData];
+    for (const businessHourData of businessHoursArray) {
+      try {
+        delete businessHourData.id;
+        const businessHour = new BusinessHour(businessHourData);
+        await businessHour.save();
+      } catch (err) {
+        logger.error(`Error importing Business Hour ${businessHourData.name || 'unknown'}: ${err.message}`);
+      }
+    }
+    logger.info(`Imported ${businessHoursArray.length} Business Hours`);
+
+    // Import Settings
+    logger.info('Importing Settings...');
+    const settingsFilePath = path.join(dataDir, 'Settings0.json');
+    if (!fs.existsSync(settingsFilePath)) {
+      logger.error(`Settings file not found at: ${settingsFilePath}`);
+      throw new Error(`Settings file not found: ${settingsFilePath}`);
+    }
+    const settingsRawData = JSON.parse(fs.readFileSync(settingsFilePath));
+    const settingsArray = Array.isArray(settingsRawData) ? settingsRawData : [settingsRawData];
+    for (const settingData of settingsArray) {
+      try {
+        delete settingData.id;
+        const setting = new Setting(settingData);
+        await setting.save();
+      } catch (err) {
+        logger.error(`Error importing Setting ${settingData.primary_language || 'unknown'}: ${err.message}`);
+      }
+    }
+    logger.info(`Imported ${settingsArray.length} Settings`);
+
+    // Import Ticket Fields
+    logger.info('Importing Ticket Fields...');
+    const ticketFieldsFilePath = path.join(dataDir, 'TicketFields0.json');
+    if (!fs.existsSync(ticketFieldsFilePath)) {
+      logger.error(`Ticket Fields file not found at: ${ticketFieldsFilePath}`);
+      throw new Error(`Ticket Fields file not found: ${ticketFieldsFilePath}`);
+    }
+    const ticketFieldsRawData = JSON.parse(fs.readFileSync(ticketFieldsFilePath));
+    const ticketFieldsArray = Array.isArray(ticketFieldsRawData) ? ticketFieldsRawData : [ticketFieldsRawData];
+    for (const ticketFieldData of ticketFieldsArray) {
+      try {
+        delete ticketFieldData.id;
+        const ticketField = new TicketField(ticketFieldData);
+        await ticketField.save();
+      } catch (err) {
+        logger.error(`Error importing Ticket Field ${ticketFieldData.name || 'unknown'}: ${err.message}`);
+      }
+    }
+    logger.info(`Imported ${ticketFieldsArray.length} Ticket Fields`);
+    
     logger.info('Data import completed successfully');
   } catch (err) {
     logger.error(`Import failed: ${err.message}`);
