@@ -1,0 +1,65 @@
+.dashboard {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.dashboard h1 {
+  font-size: 2em;
+  margin-bottom: 20px;
+  color: #333;
+}
+.ticket-list {
+  margin-bottom: 20px;
+}
+.ticket-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ticket-list th, .ticket-list td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: left;
+}
+.ticket-list th {
+  background: #f4f4f4;
+  font-weight: bold;
+}
+.ticket-row:hover {
+  background: #f9f9f9;
+  cursor: pointer;
+}
+.ticket-link {
+  text-decoration: underline;
+}
+.ticket-link:hover {
+  color: #0056b3;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.pagination button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.pagination button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+.pagination span {
+  font-size: 1em;
+}
+.error {
+  color: red;
+  margin: 10px 0;
+}
+.ticket-details-container {
+  margin-top: 20px;
+}

@@ -1,0 +1,35 @@
+Let’s continue work on the Refresh Desk application using the Google Drive folder (
+    https://drive.google.com/drive/folders/14cOdd9Z-Af4DPInhoU0IT2tzeEp1n_t7?usp=sharing). We’ve imported tickets, companies, and users into MongoDB with schemas based on Tickets0.json, Companies0.json, and Users0.json, and updated App.js and TicketDetails.js for ticket lists with collapsible conversations. Please pick up from the last step (e.g., verify imports, enhance UI, or add pagination). Reference our prior conversation for context and confirm which files or features to focus on.
+
+Something went wrong, please refresh to reconnect or try again.
+
+Let’s continue work on the Refresh Desk application using the Google Drive folder (https://drive.google.com/drive/folders/14cOdd9Z-Af4DPInhoU0IT2tzeEp1n_t7?usp=sharing). We’ve imported tickets, companies, and users into MongoDB with schemas based on Tickets*.json, Companies0.json, and Users0.json, and updated App.js and TicketDetails.js for ticket lists. Reference our prior conversation for context and confirm which files or features to focus on.
+
+Please pick up from the last step after I made all the changes you suggested then asked these questions: 
+
+Questions
+Does TicketDetails render on a new page at /tickets/9260188786 with 9 conversations? Yes.
+
+Do the status/priority dropdowns and conversation form work? Yes, except "Other" doesn't work.
+
+Are there any browser console errors after updating index.js? No.
+
+Describe the expected dashboard UI (e.g., colors, layout, sidebar, filters). I will provide details as we proceed. 
+
+List key features of your 298-line TicketDetails.js (e.g., merge button, requester_name). I will provide details as we proceed.
+
+Any issues with npm run dev? No.
+
+
+Here are some changes I'd like to see:
+
+1. Do not strip HTML from ticket description or conversation body. 
+
+2. For the first conversation body of every ticket, I see who created the ticket and when. No where on Ticket Description do we display the value of the description node. I'd like you to append the description to the body of the first conversation.
+
+3. Instead of displaying the user id, I'd like to see the name and email address of the person whose id you are referencing. 
+
+4. List the conversations in descending order so that the newest is first in the list on Ticket Details.
+
+5. There are two kinds of conversations, public and private. Only agents and admin should be able to see the private notes and the creator of private conversations should be able to edit the content of the conversation. Private conversation rows should have a label clearly marking them as "Private Note"
+

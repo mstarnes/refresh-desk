@@ -1,0 +1,87 @@
+.ticket-details {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #fff;
+}
+.ticket-details h2 {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+  color: #333;
+}
+.ticket-details h3 {
+  font-size: 1.2em;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+.ticket-details p {
+  margin: 5px 0;
+  color: #555;
+}
+.ticket-info {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.ticket-info label {
+  display: flex;
+  flex-direction: column;
+}
+.ticket-info select {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+.ticket-details button, .ticket-info button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin: 5px 0;
+}
+.ticket-details button:hover, .ticket-info button:hover {
+  background: #0056b3;
+}
+.conversation {
+  border: 1px solid #ccc;
+  margin: 10px 0;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+img {
+  margin: 10px 0;
+  max-width: 200px;
+}
+.error {
+  color: red;
+  margin: 10px 0;
+}
+form textarea {
+  width: 100%;
+  height: 100px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+
+.conversation.private {
+  border-left: 4px solid #ff9800;
+}
+.private-label {
+  background-color: #ff9800;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.description {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
