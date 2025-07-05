@@ -131,18 +131,22 @@ app.get('/api/tickets/:id', async (req, res) => {
 
 app.get('/api/tickets/user/:userId', async (req, res) => {
   try {
-    const tickets = await Ticket.find({ requester: req.params.userId })
+    const { userId } = req.params;
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({ error: 'Invalid userId format' });
+    }
+    const tickets = await Ticket.find({ requester: userId })
       .select('subject created_at status')
       .sort({ created_at: -1 })
       .limit(3)
       .lean();
     const ticketsWithDisplayId = await Promise.all(tickets.map(async ticket => {
       const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
-      return { ...ticket, display_id: mapEntry?.display_id };
+      return { ...ticket, display_id: mapEntry?.display_id || null };
     }));
     res.json(ticketsWithDisplayId);
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error: ' + err.message });
   }
 });
 
@@ -264,6 +268,19 @@ app.put('/api/tickets/:id/conversations/:conversationId', async (req, res) => {
     res.json({ message: 'Conversation updated' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update conversation' });
+  }
+});
+
+app.get('/api/tickets/display/:displayId', async (req, res) => {
+  try {
+    const { displayId } = req.params;
+    const mapEntry = await TicketDisplayIdMap.findOne({ display_id: Number(displayId) });
+    if (!mapEntry) return res.status(404).json({ error: 'Ticket not found' });
+    const ticket = await Ticket.findById(mapEntry.ticket_id).populate('requester group_id company_id agent').lean();
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    res.json({ ...ticket, display_id: mapEntry.display_id });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error: ' + err.message });
   }
 });
 
