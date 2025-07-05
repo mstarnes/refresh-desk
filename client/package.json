@@ -37,5 +37,9 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5001"
+  "proxy": "http://localhost:5001",
+  "reactRouterFuture": {
+    "v7_startTransition": true,
+    "v7_relativeSplatPath": true
+  }
 }

@@ -28,6 +28,9 @@ const BusinessHour = require('./models/BusinessHour');
 const Setting = require('./models/Setting');
 const TicketField = require('./models/TicketField');
 
+// Set strictPopulate to false as a fallback
+mongoose.set('strictPopulate', false);
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
@@ -40,13 +43,13 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS'
+    pass: process.env.SMTP_PASS
   }
 });
 
 // IMAP Setup
 const imap = new Imap({
-  user: process.env.PROTON_USER',
+  user: process.env.PROTON_USER,
   password: process.env.PROTON_PASS,
   host: process.env.PROTON_HOSTNAME,
   port: parseInt(process.env.PROTON_PORT),
@@ -61,11 +64,11 @@ app.get('/api/test', (req, res) => res.json({ message: 'Refresh Desk API is up!'
 // Tickets
 app.get('/api/tickets', async (req, res) => {
   try {
-    let query = Ticket.find().populate('requester group company agent');
-    if (req.query.status) query = query.where('status').equals(parseInt(req.query.status));
-    if (req.query.priority) query = query.where('priority').equals(parseInt(req.query.priority));
+    let query = Ticket.find().populate('requester group_id company_id agent');
+    if (req.query.status) query = query.where('status').equals(req.query.status);
+    if (req.query.priority) query = query.where('priority').equals(req.query.priority);
     if (req.query.requester) query = query.where('requester').equals(req.query.requester);
-    if (req.query.company) query = query.where('company').equals(req.query.company);
+    if (req.query.company) query = query.where('company_id').equals(req.query.company);
     const limit = parseInt(req.query.limit || process.env.DEFAULT_LIMIT || 10);
     const page = parseInt(req.query.page || 1);
     const skip = (page - 1) * limit;
@@ -90,16 +93,16 @@ app.get('/api/tickets-old', async (req, res) => {
   if (filters === 'newAndMyOpen') {
     query = {
       $or: [
-        { status: 2 },
-        { agent: req.query.userId || null, status: 2 },
-        { agent: null, status: 2 }
+        { status: 'Open' },
+        { agent: req.query.userId || null, status: 'Open' },
+        { agent: null, status: 'Open' }
       ]
     };
   } else if (filters === 'openTickets') {
-    query.status = 2;
+    query.status = 'Open';
   }
   const tickets = await Ticket.find(query)
-    .populate('requester group company agent')
+    .populate('requester group_id company_id agent')
     .sort({ updated_at: -1, created_at: -1 })
     .limit(limit)
     .lean();
@@ -107,7 +110,7 @@ app.get('/api/tickets-old', async (req, res) => {
     const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
     return {
       ...ticket,
-      priority: ticket.priority || 1,
+      priority: ticket.priority || 'Low',
       description: ticket.description ? (ticket.description.length > 100 ? ticket.description.substring(0, 100) + '...' : ticket.description) : '',
       display_id: mapEntry?.display_id
     };
@@ -117,7 +120,7 @@ app.get('/api/tickets-old', async (req, res) => {
 
 app.get('/api/tickets/:id', async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id).populate('requester group company agent').lean();
+    const ticket = await Ticket.findById(req.params.id).populate('requester group_id company_id agent').lean();
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
     res.json({ ...ticket, display_id: mapEntry?.display_id });
@@ -157,7 +160,7 @@ app.post('/api/tickets', async (req, res) => {
       priority: req.body.priority || priorityField.choices.Low, // Low
       ticket_type: req.body.ticket_type || ticketTypeField.choices[0],
       source: req.body.source || sourceField.choices.Email,
-      group: req.body.group || groupField.choices.IT,
+      group_id: req.body.group_id || groupField.choices.IT,
     });
     await ticket.save();
     const ticketCount = await Ticket.countDocuments();
@@ -173,7 +176,7 @@ app.post('/api/tickets', async (req, res) => {
 });
 
 app.patch('/api/tickets/:id', async (req, res) => {
-  const { priority, agent, status, ticket_type, source, group } = req.body;
+  const { priority, agent, status, ticket_type, source, group_id } = req.body;
   try {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
@@ -182,7 +185,7 @@ app.patch('/api/tickets/:id', async (req, res) => {
     if (status) ticket.status = status;
     if (ticket_type) ticket.ticket_type = ticket_type;
     if (source) ticket.source = source;
-    if (group) ticket.group = group;
+    if (group_id) ticket.group_id = group_id;
     ticket.updated_at = new Date();
     await ticket.save();
     const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
@@ -196,7 +199,7 @@ app.patch('/api/tickets/:id/close', async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-    ticket.status = 5; // Closed
+    ticket.status = 'Closed';
     ticket.updated_at = new Date();
     await ticket.save();
     res.json({ message: 'Ticket closed' });
@@ -1098,7 +1101,7 @@ async function processEmail(mail) {
     status: statusField.choices['2'][0], // Open
     priority: priorityField.choices.Low, // Low
     requester: user._id,
-    group: groupField.choices.IT, // IT
+    group_id: groupField.choices.IT, // IT
     source: sourceField.choices.Email, // Email
     ticket_type: ticketTypeField.choices[0], // First type
     created_at: new Date(),
