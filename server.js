@@ -29,27 +29,27 @@ const Setting = require('./models/Setting');
 const TicketField = require('./models/TicketField');
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/refresh-desk')
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
 // Email Setup
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOSTNAME || '127.0.0.1',
-  port: parseInt(process.env.SMTP_PORT) || 1025,
+  host: process.env.SMTP_HOSTNAME,
+  port: parseInt(process.env.SMTP_PORT),
   secure: false,
   auth: {
-    user: process.env.SMTP_USER || 'mitch.starnes@pm.me',
-    pass: process.env.SMTP_PASS || 'REDACTED'
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS'
   }
 });
 
 // IMAP Setup
 const imap = new Imap({
-  user: process.env.PROTON_USER || 'mitch.starnes@pm.me',
-  password: process.env.PROTON_PASS || 'REDACTED',
-  host: process.env.PROTON_HOSTNAME || '127.0.0.1',
-  port: parseInt(process.env.PROTON_PORT) || 1143,
+  user: process.env.PROTON_USER',
+  password: process.env.PROTON_PASS,
+  host: process.env.PROTON_HOSTNAME,
+  port: parseInt(process.env.PROTON_PORT),
   tls: false,
   connTimeout: 10000,
   authTimeout: 5000
