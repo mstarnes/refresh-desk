@@ -202,12 +202,13 @@ async function importData() {
             // Create TicketDisplayIdMap entry
             try {
               const mapEntry = new TicketDisplayIdMap({
-                ticket_id: ticketData.helpdesk_ticket.id,
+                // ticket_id: ticketData.helpdesk_ticket.id,
+                ticket_id: ticket._id,
                 display_id: ticketData.helpdesk_ticket.display_id,
               });
               await mapEntry.save();
             } catch (err) {
-              logger.error(`Error creating TicketDisplayIdMap for Ticket ID ${ticketData.helpdesk_ticket.id}: ${err.message}`);
+              logger.error(`Error creating TicketDisplayIdMap for Ticket ID ${ticketData.helpdesk_ticket.display_id}: ${err.message}`);
             }
 
             totalTickets++;
