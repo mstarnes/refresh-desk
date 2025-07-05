@@ -1075,7 +1075,7 @@ async function processEmail(mail) {
   const displayIdMatch = subject.match(/#(\d+)/) || (text || '').match(/http:\/\/localhost:5001\/tickets\/(\d+)/);
   if (displayIdMatch) {
     const display_id = parseInt(displayIdMatch[1]);
-    const mapEntry = await TicketDisplayIdMap.findOne({ display_id });
+    const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: mongoose.Types.ObjectId(display_idMatch[1]) });
     if (mapEntry) {
       const ticket = await Ticket.findById(mapEntry.ticket_id);
       if (ticket) {

@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const TicketDisplayIdMapSchema = new mongoose.Schema({
-  ticket_id: { type: Number, required: true, unique: true }, // Maps to Ticket.id
-  display_id: { type: Number, required: true, unique: true }, // Maps to Ticket.display_id
+const ticketDisplayIdMapSchema = new Schema({
+  ticket_id: { type: Schema.Types.ObjectId, ref: 'Ticket', required: true },
+  display_id: { type: Number, required: true, unique: true },
 });
 
-module.exports = mongoose.model('TicketDisplayIdMap', TicketDisplayIdMapSchema);
+module.exports = mongoose.model('TicketDisplayIdMap', ticketDisplayIdMapSchema);
