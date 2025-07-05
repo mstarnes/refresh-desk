@@ -1,65 +1,235 @@
-.dashboard {
+.App {
   padding: 20px;
+  font-family: Arial, sans-serif;
   max-width: 1200px;
   margin: 0 auto;
 }
-.dashboard h1 {
-  font-size: 2em;
+
+.dashboard-controls {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 20px;
+}
+
+.filters select,
+.sort select {
+  padding: 5px;
+  margin-left: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+h1 {
   color: #333;
+  font-size: 1.8em;
 }
-.ticket-list {
-  margin-bottom: 20px;
-}
-.ticket-list table {
+
+table {
   width: 100%;
   border-collapse: collapse;
-}
-.ticket-list th, .ticket-list td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: left;
-}
-.ticket-list th {
-  background: #f4f4f4;
-  font-weight: bold;
-}
-.ticket-row:hover {
-  background: #f9f9f9;
-  cursor: pointer;
-}
-.ticket-link {
-  text-decoration: underline;
-}
-.ticket-link:hover {
-  color: #0056b3;
-}
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
   margin-top: 20px;
 }
-.pagination button {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 3px;
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  background-color: #f2f2f2;
   cursor: pointer;
+  font-weight: bold;
 }
+
+th:hover {
+  background-color: #e0e0e0;
+}
+
+tr:hover {
+  background-color: #f9f9f9;
+}
+
+.priority-indicator {
+  width: 30px;
+  height: 30px;
+  background-color: gray; /* Default fallback */
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.ticket-link {
+  color: #1a0dab;
+  text-decoration: none;
+}
+
+.ticket-link:hover {
+  text-decoration: underline;
+}
+
+.priority-select,
+.agent-select,
+.status-select {
+  padding: 5px;
+  margin-bottom: 5px;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.new-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: #007aff;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  font-size: 1em;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination button {
+  padding: 8px 12px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f2f2f2;
+}
+
 .pagination button:disabled {
-  background: #6c757d;
   cursor: not-allowed;
+  opacity: 0.5;
 }
+
 .pagination span {
   font-size: 1em;
 }
-.error {
-  color: red;
-  margin: 10px 0;
+
+.reply-button {
+  padding: 5px 10px;
+  font-size: 0.9em;
+  background-color: #f2f2f2;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 5px;
 }
-.ticket-details-container {
-  margin-top: 20px;
+
+.reply-button:hover {
+  background-color: #e0e0e0;
+}
+
+.reply-modal {
+  z-index: 1001;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.reply-textarea {
+  width: 100%;
+  height: 150px;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.send-reply-button {
+  padding: 5px 10px;
+  font-size: 0.9em;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.send-reply-button:hover {
+  background-color: #45a049;
+}
+
+.send-reply-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.close-button {
+  padding: 5px 10px;
+  font-size: 0.9em;
+  background-color: #f2f2f2;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  background-color: #e0e0e0;
+}
+
+@media (max-width: 600px) {
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+  }
+
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  td:before {
+    content: attr(data-label);
+    font-weight: bold;
+    width: 40%;
+    text-align: left;
+    padding-right: 10px;
+  }
 }
