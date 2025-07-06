@@ -89,11 +89,20 @@ app.get('/api/tickets/search-nu', async (req, res) => {
 // Get all tickets
 app.get('/api/tickets', async (req, res) => {
   try {
-    const tickets = await Ticket.find()
+    const { limit = 10, filters, userId } = req.query;
+    let query = {};
+    if (filters === 'newAndMyOpen') {
+      query = { status: { $in: [2, 3] }, responder_id: userId };
+    } else if (filters === 'openTickets') {
+      query = { status: { $in: [2, 3] } };
+    }
+    const tickets = await Ticket.find(query)
+      .limit(parseInt(limit))
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
     res.json(tickets);
   } catch (err) {
+    console.error('Error fetching tickets:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -539,12 +548,13 @@ app.delete('/api/companies/:id', async (req, res) => {
   }
 });
 
-// Agents
+// Fetch agents
 app.get('/api/agents', async (req, res) => {
   try {
-    const agents = await Agent.find().select('name email');
+    const agents = await Agent.find().select('id _id name');
     res.json(agents);
   } catch (err) {
+    console.error('Error fetching agents:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1191,9 +1201,9 @@ app.delete('/api/ticket-fields/:id', async (req, res) => {
 
 // Search endpoint
 app.get('/api/tickets/search', async (req, res) => {
-  const { q } = req.query;
   try {
-    const tickets = await Ticket.find({
+    const { q, limit = 10, filters, userId } = req.query;
+    let query = {
       $or: [
         { display_id: parseInt(q) || -1 },
         { subject: { $regex: q, $options: 'i' } },
@@ -1202,16 +1212,22 @@ app.get('/api/tickets/search', async (req, res) => {
         { 'requester.name': { $regex: q, $options: 'i' } },
         { responder_name: { $regex: q, $options: 'i' } },
       ],
-    })
+    };
+    if (filters === 'newAndMyOpen') {
+      query = { ...query, status: { $in: [2, 3] }, responder_id: userId };
+    } else if (filters === 'openTickets') {
+      query = { ...query, status: { $in: [2, 3] } };
+    }
+    const tickets = await Ticket.find(query)
+      .limit(parseInt(limit))
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
     res.json(tickets);
   } catch (err) {
+    console.error('Error searching tickets:', err);
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // IMAP Email Processing
 async function processEmail(mail) {

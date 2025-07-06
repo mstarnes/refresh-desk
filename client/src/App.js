@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Link } from "react-router-dom";
-import "./App.css";
+// client/src/App.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
+import './App.css';
 
 function App() {
   const [tickets, setTickets] = useState([]);
@@ -9,115 +10,110 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortConfig, setSortConfig] = useState({
-    key: "updated_at",
-    direction: "desc",
+    key: 'updated_at',
+    direction: 'desc',
   });
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = parseInt(process.env.REACT_APP_DEFAULT_LIMIT) || 10;
   const [replyTicket, setReplyTicket] = useState(null);
-  const [replyContent, setReplyContent] = useState("");
+  const [replyContent, setReplyContent] = useState('');
   const [agents, setAgents] = useState([]);
   const [priorities, setPriorities] = useState({});
   const [statuses, setStatuses] = useState({});
   const [assignedAgents, setAssignedAgents] = useState({});
-  const [filter, setFilter] = useState("allTickets");
-  const [userId] = useState("mitch.starnes@gmail.com"); // Remove setUserId
+  const [filter, setFilter] = useState('allTickets');
+  const [userId] = useState('mitch.starnes@gmail.com');
 
   useEffect(() => {
     fetchTickets();
     fetchAgents();
   }, [filter, userId, ticketsPerPage]);
   
-  // Fetch tickets (existing function) - added for search
-  const fetchTicketsProposed = async () => {
+  const fetchTickets = async () => {
     try {
-      const response = await fetch('/api/tickets');
-      const data = await response.json();
-      console.log('Fetched tickets response:', data);
-      setTickets(data);
+      setLoading(true);
+      const response = await axios.get('http://localhost:5001/api/tickets', {
+        params: { limit: ticketsPerPage, filters: filter, userId },
+      });
+      console.log('Fetched tickets response:', response.data);
+      const tickets = Array.isArray(response.data) ? response.data : [];
+      setTickets(tickets);
+      const initialPriorities = tickets.reduce(
+        (acc, ticket) => ({
+          ...acc,
+          [ticket._id]: ticket.priority || 1,
+        }),
+        {}
+      );
+      const initialStatuses = tickets.reduce(
+        (acc, ticket) => ({
+          ...acc,
+          [ticket._id]: ticket.status || 2,
+        }),
+        {}
+      );
+      const initialAgents = tickets.reduce(
+        (acc, ticket) => ({
+          ...acc,
+          [ticket._id]: ticket.responder_id?._id || 'Unassigned',
+        }),
+        {}
+      );
+      setPriorities(initialPriorities);
+      setStatuses(initialStatuses);
+      setAssignedAgents(initialAgents);
+      setLoading(false);
     } catch (err) {
-      console.error('Error fetching tickets:', err);
+      console.error('Failed to fetch tickets:', err);
+      setError(`Failed to fetch tickets: ${err.message}`);
+      setLoading(false);
     }
   };
-
     
-    const fetchTickets = async () => {
-      try {
-        const response = await axios.get("http://localhost:5001/api/tickets", {
-          params: { limit: ticketsPerPage, filters: filter, userId },
-        });
-        console.log("Fetched tickets response:", response.data);
-        setTickets(
-          Array.isArray(response.data.tickets) ? response.data.tickets : []
-        );
-        const initialPriorities = response.data.tickets.reduce(
-          (acc, ticket) => ({
-            ...acc,
-            [ticket._id]: ticket.priority || 1,
-          }),
-          {}
-        );
-        const initialStatuses = response.data.tickets.reduce(
-          (acc, ticket) => ({
-            ...acc,
-            [ticket._id]: ticket.status || 2,
-          }),
-          {}
-        );
-        const initialAgents = response.data.tickets.reduce(
-          (acc, ticket) => ({
-            ...acc,
-            [ticket._id]: ticket.agent || "Unassigned",
-          }),
-          {}
-        );
-        setPriorities(initialPriorities);
-        setStatuses(initialStatuses);
-        setAssignedAgents(initialAgents);
-        setLoading(false);
-      } catch (err) {
-        setError(`Failed to fetch tickets: ${err.message}`);
-        setLoading(false);
-      }
-    };
-    
-
     const fetchAgents = async () => {
       try {
-        const response = await axios.get("http://localhost:5001/api/agents");
+      const response = await axios.get('http://localhost:5001/api/agents');
         setAgents(response.data);
       } catch (err) {
-        console.error("Fetch Agents Error:", err);
+      console.error('Fetch Agents Error:', err);
       }
     };
   
     const handleSearch = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
+    try {
+      setLoading(true);
     if (query) {
-      const response = await fetch(`/api/tickets/search?q=${encodeURIComponent(query)}`);
-      const tickets = await response.json();
-      // Update state with search results
-      setTickets(tickets);
+        const response = await axios.get('http://localhost:5001/api/tickets/search', {
+          params: { q: query, limit: ticketsPerPage, filters: filter, userId },
+        });
+        setTickets(Array.isArray(response.data) ? response.data : []);
     } else {
       fetchTickets();
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error('Error searching tickets:', err);
+      setError(`Error searching tickets: ${err.message}`);
+      setLoading(false);
     }
   };
 
   const sortData = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
     }
     setSortConfig({ key, direction });
     const sortedTickets = [...tickets].sort((a, b) => {
-      if (key === "subject") {
-        return direction === "asc"
+      if (key === 'subject') {
+        return direction === 'asc'
           ? a[key].localeCompare(b[key])
           : b[key].localeCompare(a[key]);
-      } else if (key === "updated_at" || key === "created_at") {
-        return direction === "asc"
+      } else if (key === 'updated_at' || key === 'created_at') {
+        return direction === 'asc'
           ? new Date(a[key]) - new Date(b[key])
           : new Date(b[key]) - new Date(a[key]);
       }
@@ -143,7 +139,7 @@ function App() {
 
   const openReplyForm = (ticket) => {
     setReplyTicket(ticket);
-    setReplyContent("");
+    setReplyContent('');
   };
 
   const closeReplyForm = () => {
@@ -153,99 +149,76 @@ function App() {
   const sendReply = async () => {
     if (replyTicket && replyContent.trim()) {
       try {
-        await axios.post("http://localhost:5001/api/tickets/reply", {
+        await axios.post('http://localhost:5001/api/tickets/reply', {
           ticketId: replyTicket._id,
           body: replyContent,
           user_id: userId,
         });
         closeReplyForm();
-        const response = await axios.get("http://localhost:5001/api/tickets", {
-          params: { limit: ticketsPerPage, filters: filter, userId },
-        });
-        setTickets(
-          Array.isArray(response.data.tickets) ? response.data.tickets : []
-        );
+        fetchTickets();
       } catch (err) {
-        setError("Failed to send reply");
+        setError('Failed to send reply');
       }
     }
   };
 
   const updateField = async (ticketId, field, value) => {
     try {
-      const response = await axios.patch(
-        `http://localhost:5001/api/tickets/${ticketId}`,
-        { [field]: value }
-      );
+      const updates = {};
+      if (field === 'priority') {
+        updates.priority = value === 'Low' ? 1 : value === 'Medium' ? 2 : value === 'High' ? 3 : 4;
+        updates.priority_name = value;
+      } else if (field === 'status') {
+        updates.status = value === 'Open' ? 2 : value === 'Pending' ? 3 : value === 'Resolved' ? 4 : 5;
+        updates.status_name = value;
+        if (value === 'Closed') updates.closed_at = new Date().toISOString();
+      } else if (field === 'agent') {
+        updates.responder_id = value === 'Unassigned' ? null : value;
+        updates.responder_name = value === 'Unassigned' ? null : agents.find(a => a._id === value)?.name;
+      }
+      const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, updates);
       const updatedTicket = response.data;
       setPriorities((prev) => ({
         ...prev,
-        [ticketId]: updatedTicket.priority || "Low",
+        [ticketId]: updatedTicket.priority || 1,
       }));
       setStatuses((prev) => ({
         ...prev,
-        [ticketId]: updatedTicket.status || "Open",
+        [ticketId]: updatedTicket.status || 2,
       }));
       setAssignedAgents((prev) => ({
         ...prev,
-        [ticketId]: updatedTicket.agent || "Unassigned",
+        [ticketId]: updatedTicket.responder_id?._id || 'Unassigned',
       }));
       setTickets((prevTickets) =>
         prevTickets.map((t) =>
           t._id === ticketId ? { ...t, ...updatedTicket } : t
         )
       );
-      const refreshResponse = await axios.get(
-        "http://localhost:5001/api/tickets",
-        {
-          params: { limit: ticketsPerPage, filters: filter, userId },
-        }
-      );
-      setTickets(
-        Array.isArray(refreshResponse.data.tickets)
-          ? refreshResponse.data.tickets
-          : []
-      );
     } catch (err) {
-      setError("Failed to update ticket");
-      console.error("Update error:", err);
+      setError('Failed to update ticket');
+      console.error('Update error:', err);
     }
   };
 
   const getPriorityColor = (priority) => {
-    const safePriority = priority || "Low";
+    const safePriority = priority || 'Low';
     switch (safePriority) {
-      case "Low":
-        return "green";
-      case "Medium":
-        return "blue";
-      case "High":
-        return "#FFA500";
-      case "Urgent":
-        return "red";
+      case 'Low':
+      case 1:
+        return 'green';
+      case 'Medium':
+      case 2:
+        return 'blue';
+      case 'High':
+      case 3:
+        return '#FFA500';
+      case 'Urgent':
+      case 4:
+        return 'red';
       default:
-        return "gray";
+        return 'gray';
     }
-  };
-
-  const getLastActionOld = (ticket) => {
-    const lastConversation = ticket.conversations?.find(
-      (conv) => !conv.incoming
-    );
-    if (lastConversation) {
-      const author = lastConversation.user_id === userId ? "Agent" : "User";
-      return `${author} responded on ${new Date(
-        lastConversation.created_at || lastConversation.updated_at
-      ).toLocaleString("en-US", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })}`;
-    }
-    return "";
   };
 
   const getLastAction = (ticket) => {
@@ -324,8 +297,8 @@ function App() {
         placeholder="Search tickets..."
         value={searchQuery}
         onChange={handleSearch}
+        className="search-input"
       />
-
       {currentTickets.length === 0 ? (
         <p>No tickets available or matching your filter/search.</p>
       ) : (
@@ -333,7 +306,7 @@ function App() {
           <thead>
             <tr>
               <th></th>
-              <th onClick={() => sortData("subject")}>Ticket</th>
+              <th onClick={() => sortData('subject')}>Ticket</th>
               <th>Details</th>
             </tr>
           </thead>
@@ -344,7 +317,7 @@ function App() {
                   <div
                     className="priority-indicator"
                     style={{
-                      backgroundColor: getPriorityColor(ticket.priority),
+                      backgroundColor: getPriorityColor(priorities[ticket._id]),
                     }}
                   ></div>
                 </td>
@@ -355,14 +328,14 @@ function App() {
                     )}
                     <div className="ticket-header">
                       <Link to={`/tickets/${ticket.display_id}`}>
-                        {ticket.subject} #{ticket.display_id}
+                        {ticket.subject || 'No Subject'} #{ticket.display_id}
                       </Link>
                     </div>
                     <div className="ticket-meta">
                       {ticket.requester && ticket.requester.name ? (
                         `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'}, ${ticket.responder_id?.name || 'Unassigned'})`
                       ) : (
-                        'Unknown'
+                        `Unknown (${ticket.company_id?.name || 'Unknown Company'}, ${ticket.responder_id?.name || 'Unassigned'})`
                       )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
                     </div>
                   </div>
@@ -370,9 +343,19 @@ function App() {
 
                 <td data-label="Details">
                   <select
-                    value={priorities[ticket._id]}
+                    value={priorities[ticket._id] || 'Low'}
                     onChange={(e) =>
-                      updateField(ticket._id, "priority", e.target.value)
+                      updateField(
+                        ticket._id,
+                        'priority',
+                        e.target.value === 'Low'
+                          ? 1
+                          : e.target.value === 'Medium'
+                          ? 2
+                          : e.target.value === 'High'
+                          ? 3
+                          : 4
+                      )
                     }
                     className="priority-select"
                   >
@@ -382,12 +365,12 @@ function App() {
                     <option value="Urgent">Urgent</option>
                   </select>
                   <select
-                    value={assignedAgents[ticket._id] || "Unassigned"}
+                    value={assignedAgents[ticket._id] || 'Unassigned'}
                     onChange={(e) =>
                       updateField(
                         ticket._id,
-                        "agent",
-                        e.target.value === "Unassigned" ? null : e.target.value
+                        'agent',
+                        e.target.value === 'Unassigned' ? null : e.target.value
                       )
                     }
                     className="agent-select"
@@ -400,9 +383,19 @@ function App() {
                     ))}
                   </select>
                   <select
-                    value={statuses[ticket._id]}
+                    value={statuses[ticket._id] || 'Open'}
                     onChange={(e) =>
-                      updateField(ticket._id, "status", e.target.value)
+                      updateField(
+                        ticket._id,
+                        'status',
+                        e.target.value === 'Open'
+                          ? 2
+                          : e.target.value === 'Pending'
+                          ? 3
+                          : e.target.value === 'Resolved'
+                          ? 4
+                          : 5
+                      )
                     }
                     className="status-select"
                   >
