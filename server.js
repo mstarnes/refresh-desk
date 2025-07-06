@@ -59,115 +59,192 @@ const imap = new Imap({
 });
 
 // Routes
-app.get('/api/test', (req, res) => res.json({ message: 'Refresh Desk API is up!' }));
-
-app.get('/api/tickets/search-nu', async (req, res) => {
-  const { q } = req.query;
+// Create a new ticket
+app.post('/api/tickets', async (req, res) => {
   try {
-    const tickets = await Ticket.find({
-      $or: [
-        { display_id: parseInt(q) || -1 },
-        { subject: { $regex: q, $options: 'i' } },
-        { description: { $regex: q, $options: 'i' } },
-        { 'conversations.body': { $regex: q, $options: 'i' } },
-        { responder_id: { $in: await User.find({ name: { $regex: q, $options: 'i' } }).distinct('_id') } },
-      ],
-    })
-      //.populate('responder_id', 'name')
-      .populate('requester', 'name')
-      .populate('company_id')
-      .populate('group_id');
-      //.populate('company_id', 'name')
-      //.populate('group_id', 'name');
-    res.json(tickets);
+    const { subject, description, priority, requester, display_id, status, responder_id, company_id } = req.body;
+
+    if (!requester || !requester.name) {
+      return res.status(400).json({ error: 'Requester name is required' });
+    }
+    if (!company_id) {
+      return res.status(400).json({ error: 'Company ID is required' });
+    }
+
+    const company = await Company.findById(company_id);
+    if (!company) {
+      return res.status(400).json({ error: 'Company not found' });
+    }
+
+    const slaPolicy = await SLAPolicy.findOne({ id: company.sla_policy_id });
+    if (!slaPolicy) {
+      return res.status(400).json({ error: 'SLA policy not found' });
+    }
+
+    const priorityKey = `priority_${priority}`;
+    const resolveWithin = slaPolicy.sla_target[priorityKey]?.resolve_within;
+    if (!resolveWithin) {
+      return res.status(400).json({ error: 'Invalid priority for SLA policy' });
+    }
+
+    const createdAt = new Date().toISOString();
+    const dueBy = new Date(Date.now() + resolveWithin * 1000).toISOString();
+
+    const ticket = new Ticket({
+      subject,
+      description,
+      priority: priority || 1,
+      requester,
+      display_id,
+      status: status || 2,
+      responder_id,
+      company_id,
+      created_at: createdAt,
+      due_by: dueBy,
+      conversations: [],
+      requester_name: requester.name,
+      priority_name: { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }[priority] || 'Low',
+      status_name: { 2: 'Open', 3: 'Pending', 4: 'Resolved', 5: 'Closed' }[status || 2] || 'Open',
+      responder_name: responder_id ? (await Agent.findById(responder_id))?.name : null,
+    });
+
+    await ticket.save();
+    const populatedTicket = await Ticket.findById(ticket._id)
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.status(201).json(populatedTicket);
   } catch (err) {
+    console.error('Error creating ticket:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Tickets
 // Get all tickets
 app.get('/api/tickets', async (req, res) => {
   try {
-    const { limit = 10, filters, userId } = req.query;
+    const { limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
     let query = {};
     if (filters === 'newAndMyOpen') {
-      query = { status: { $in: [2, 3] }, responder_id: userId };
+      const agent = await Agent.findOne({ email: userId });
+      query = { status: { $in: [2, 3] }, responder_id: agent ? agent._id : null };
     } else if (filters === 'openTickets') {
       query = { status: { $in: [2, 3] } };
     }
     const tickets = await Ticket.find(query)
+      .sort({ [sort]: direction === 'desc' ? -1 : 1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
-    res.json(tickets);
+    const total = await Ticket.countDocuments(query);
+    res.json({ tickets, total });
   } catch (err) {
     console.error('Error fetching tickets:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/api/tickets-nu', async (req, res) => {
+// Get ticket by display_id
+app.get('/api/tickets/display/:display_id', async (req, res) => {
   try {
-    let query = Ticket.find()
-      //.populate('responder_id', 'name')
-      .populate('requester', 'name')
-      .populate('company_id')
-      .populate('group_id');
-      //.populate('company_id', 'name')
-      //.populate('group_id', 'name');
-      //.populate('requester group_id company_id agent');
-    if (req.query.status) query = query.where('status').equals(req.query.status);
-    if (req.query.priority) query = query.where('priority').equals(req.query.priority);
-    if (req.query.requester) query = query.where('requester').equals(req.query.requester);
-    if (req.query.company) query = query.where('company_id').equals(req.query.company);
-    const limit = parseInt(req.query.limit || process.env.DEFAULT_LIMIT || 10);
-    const page = parseInt(req.query.page || 1);
-    const skip = (page - 1) * limit;
-    query = query.limit(limit).skip(skip).sort({ updated_at: -1 });
-    const tickets = await query.exec();
-    const total = await Ticket.countDocuments(query.getQuery());
-    const ticketsWithDisplayId = await Promise.all(tickets.map(async ticket => {
-      const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
-      return { ...ticket.toObject(), display_id: mapEntry?.display_id };
-    }));
-    res.json({ tickets: ticketsWithDisplayId, total, page, pages: Math.ceil(total / limit) });
+    const ticket = await Ticket.findOne({ display_id: req.params.display_id })
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    res.json(ticket);
   } catch (err) {
+    console.error('Error fetching ticket:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/api/tickets-old', async (req, res) => {
-  const limit = parseInt(process.env.DEFAULT_LIMIT) || 10;
-  const cutoffDate = new Date(process.env.CUTOFF_DATE || '2025-07-05T00:00:00Z');
-  const filters = req.query.filters || 'allTickets';
-  let query = { created_at: { $gte: cutoffDate } };
-  if (filters === 'newAndMyOpen') {
-    query = {
+// Search endpoint
+app.get('/api/tickets/search', async (req, res) => {
+  try {
+    const { q, limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
+    let query = {
       $or: [
-        { status: 'Open' },
-        { agent: req.query.userId || null, status: 'Open' },
-        { agent: null, status: 'Open' }
-      ]
+        { display_id: parseInt(q) || -1 },
+        { subject: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { 'conversations.body_text': { $regex: q, $options: 'i' } },
+        { 'requester.name': { $regex: q, $options: 'i' } },
+        { responder_name: { $regex: q, $options: 'i' } },
+      ],
     };
-  } else if (filters === 'openTickets') {
-    query.status = 'Open';
+    if (filters === 'newAndMyOpen') {
+      const agent = await Agent.findOne({ email: userId });
+      query = { ...query, status: { $in: [2, 3] }, responder_id: agent ? agent._id : null };
+    } else if (filters === 'openTickets') {
+      query = { ...query, status: { $in: [2, 3] } };
+    }
+    const tickets = await Ticket.find(query)
+      .sort({ [sort]: direction === 'desc' ? -1 : 1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit))
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    const total = await Ticket.countDocuments(query);
+    res.json({ tickets, total });
+  } catch (err) {
+    console.error('Error searching tickets:', err);
+    res.status(500).json({ error: err.message });
   }
-  const tickets = await Ticket.find(query)
-    .populate('requester group_id company_id agent')
-    .sort({ updated_at: -1, created_at: -1 })
-    .limit(limit)
-    .lean();
-  const truncatedTickets = await Promise.all(tickets.map(async ticket => {
-    const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
-    return {
-      ...ticket,
-      priority: ticket.priority || 'Low',
-      description: ticket.description ? (ticket.description.length > 100 ? ticket.description.substring(0, 100) + '...' : ticket.description) : '',
-      display_id: mapEntry?.display_id
-    };
-  }));
-  res.json(truncatedTickets);
+});
+
+// Update ticket
+app.patch('/api/tickets/:id', async (req, res) => {
+  try {
+    const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at } = req.body;
+    const updates = {};
+    if (priority) updates.priority = priority;
+    if (status) updates.status = status;
+    if (responder_id !== undefined) updates.responder_id = responder_id;
+    if (priority_name) updates.priority_name = priority_name;
+    if (status_name) updates.status_name = status_name;
+    if (responder_name !== undefined) updates.responder_name = responder_name;
+    if (closed_at) updates.closed_at = closed_at;
+    const ticket = await Ticket.findByIdAndUpdate(req.params.id, updates, { new: true })
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    res.json(ticket);
+  } catch (err) {
+    console.error('Error updating ticket:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Add conversation
+app.post('/api/tickets/:id/conversations', async (req, res) => {
+  try {
+    const { body_text, private: isPrivate, user_id, incoming, created_at, updated_at, id } = req.body;
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    ticket.conversations.push({
+      id: id || ticket.conversations.length + 1,
+      body_text,
+      private: isPrivate,
+      user_id,
+      incoming,
+      created_at,
+      updated_at,
+    });
+    await ticket.save();
+    const populatedTicket = await Ticket.findById(req.params.id)
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.json(populatedTicket);
+  } catch (err) {
+    console.error('Error adding conversation:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/tickets/:id', async (req, res) => {
@@ -206,114 +283,6 @@ app.get('/api/tickets/user/:userId', async (req, res) => {
     res.json(ticketsWithDisplayId);
   } catch (err) {
     res.status(500).json({ error: 'Server error: ' + err.message });
-  }
-});
-
-// Create a new ticket
-app.post('/api/tickets', async (req, res) => {
-  try {
-    const { subject, description, priority, requester, display_id, status, responder_id, company_id } = req.body;
-
-    if (!requester || !requester.name) {
-      return res.status(400).json({ error: 'Requester name is required' });
-    }
-    if (!company_id) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
-
-    const company = await Company.findById(company_id);
-    if (!company) {
-      return res.status(400).json({ error: 'Company not found' });
-    }
-
-    const slaPolicy = await SLAPolicy.findOne({ id: company.sla_policy_id });
-    if (!slaPolicy) {
-      return res.status(400).json({ error: 'SLA policy not found' });
-    }
-
-    const priorityKey = `priority_${priority}`;
-    const resolveWithin = slaPolicy.sla_target[priorityKey]?.resolve_within;
-    if (!resolveWithin) {
-      return res.status(400).json({ error: 'Invalid priority for SLA policy' });
-    }
-
-    const createdAt = new Date().toISOString();
-    const dueBy = new Date(Date.now() + resolveWithin * 1000).toISOString();
-
-    const ticket = new Ticket({
-      subject,
-      description,
-      priority,
-      requester,
-      display_id,
-      status: status || 2, // 2=Open
-      responder_id,
-      company_id,
-      created_at: createdAt,
-      due_by: dueBy,
-      conversations: [],
-      requester_name: requester.name,
-      priority_name: { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }[priority] || 'Low',
-      status_name: { 2: 'Open', 3: 'Pending', 4: 'Resolved', 5: 'Closed' }[status || 2] || 'Open',
-      responder_name: responder_id ? (await Agent.findById(responder_id))?.name : null,
-    });
-
-    await ticket.save();
-    const populatedTicket = await Ticket.findById(ticket._id)
-      .populate('responder_id', 'name')
-      .populate('company_id', 'name');
-    res.status(201).json(populatedTicket);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/tickets-old', async (req, res) => {
-  try {
-    const ticketFields = await TicketField.find();
-    const statusField = ticketFields.find(f => f.name === 'status');
-    const priorityField = ticketFields.find(f => f.name === 'priority');
-    const ticketTypeField = ticketFields.find(f => f.name === 'ticket_type');
-    const sourceField = ticketFields.find(f => f.name === 'source');
-    const groupField = ticketFields.find(f => f.name === 'group');
-    const ticket = new Ticket({
-      ...req.body,
-      status: req.body.status || statusField.choices['2'][0], // Open
-      priority: req.body.priority || priorityField.choices.Low, // Low
-      ticket_type: req.body.ticket_type || ticketTypeField.choices[0],
-      source: req.body.source || sourceField.choices.Email,
-      group_id: req.body.group_id || groupField.choices.IT,
-    });
-    await ticket.save();
-    const ticketCount = await Ticket.countDocuments();
-    const mapEntry = new TicketDisplayIdMap({
-      ticket_id: ticket._id,
-      display_id: ticketCount,
-    });
-    await mapEntry.save();
-    res.json({ ...ticket.toObject(), display_id: mapEntry.display_id });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.patch('/api/tickets/:id', async (req, res) => {
-  const { priority, agent, status, ticket_type, source, group_id } = req.body;
-  try {
-    const ticket = await Ticket.findById(req.params.id);
-    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-    if (priority) ticket.priority = priority;
-    if (agent) ticket.agent = agent;
-    if (status) ticket.status = status;
-    if (ticket_type) ticket.ticket_type = ticket_type;
-    if (source) ticket.source = source;
-    if (group_id) ticket.group_id = group_id;
-    ticket.updated_at = new Date();
-    await ticket.save();
-    const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
-    res.json({ ...ticket.toObject(), display_id: mapEntry?.display_id });
-  } catch (err) {
-    res.status(400).json({ error: 'Failed to update ticket: ' + err.message });
   }
 });
 
@@ -386,34 +355,6 @@ app.put('/api/tickets/:id/conversations/:conversationId', async (req, res) => {
     res.json({ message: 'Conversation updated' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update conversation' });
-  }
-});
-
-// Get ticket by display_id
-app.get('/api/tickets/display/:display_id', async (req, res) => {
-  try {
-    const ticket = await Ticket.findOne({ display_id: req.params.display_id })
-      .populate('responder_id', 'name')
-      .populate('company_id', 'name');
-    if (!ticket) {
-      return res.status(404).json({ error: 'Ticket not found' });
-    }
-    res.json(ticket);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/tickets/display/:displayId-nu', async (req, res) => {
-  try {
-    const { displayId } = req.params;
-    const mapEntry = await TicketDisplayIdMap.findOne({ display_id: Number(displayId) });
-    if (!mapEntry) return res.status(404).json({ error: 'Ticket not found' });
-    const ticket = await Ticket.findById(mapEntry.ticket_id).populate('requester group_id company_id agent').lean();
-    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
-    res.json({ ...ticket, display_id: mapEntry.display_id });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error: ' + err.message });
   }
 });
 
@@ -551,7 +492,7 @@ app.delete('/api/companies/:id', async (req, res) => {
 // Fetch agents
 app.get('/api/agents', async (req, res) => {
   try {
-    const agents = await Agent.find().select('id _id name');
+    const agents = await Agent.find().select('id _id name email');
     res.json(agents);
   } catch (err) {
     console.error('Error fetching agents:', err);
@@ -1195,36 +1136,6 @@ app.delete('/api/ticket-fields/:id', async (req, res) => {
     if (!ticketField) return res.status(404).json({ error: 'Ticket Field not found' });
     res.json({ message: 'Ticket Field deleted' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Search endpoint
-app.get('/api/tickets/search', async (req, res) => {
-  try {
-    const { q, limit = 10, filters, userId } = req.query;
-    let query = {
-      $or: [
-        { display_id: parseInt(q) || -1 },
-        { subject: { $regex: q, $options: 'i' } },
-        { description: { $regex: q, $options: 'i' } },
-        { 'conversations.body_text': { $regex: q, $options: 'i' } },
-        { 'requester.name': { $regex: q, $options: 'i' } },
-        { responder_name: { $regex: q, $options: 'i' } },
-      ],
-    };
-    if (filters === 'newAndMyOpen') {
-      query = { ...query, status: { $in: [2, 3] }, responder_id: userId };
-    } else if (filters === 'openTickets') {
-      query = { ...query, status: { $in: [2, 3] } };
-    }
-    const tickets = await Ticket.find(query)
-      .limit(parseInt(limit))
-      .populate('responder_id', 'name')
-      .populate('company_id', 'name');
-    res.json(tickets);
-  } catch (err) {
-    console.error('Error searching tickets:', err);
     res.status(500).json({ error: err.message });
   }
 });

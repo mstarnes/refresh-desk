@@ -6,6 +6,7 @@ import './App.css';
 
 function App() {
   const [tickets, setTickets] = useState([]);
+  const [totalTickets, setTotalTickets] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,38 +23,47 @@ function App() {
   const [priorities, setPriorities] = useState({});
   const [statuses, setStatuses] = useState({});
   const [assignedAgents, setAssignedAgents] = useState({});
-  const [filter, setFilter] = useState('allTickets');
+  const [filter, setFilter] = useState('newAndMyOpen');
   const [userId] = useState('mitch.starnes@gmail.com');
+  const [dialog, setDialog] = useState({ visible: false, ticket: null, x: 0, y: 0 });
 
   useEffect(() => {
     fetchTickets();
     fetchAgents();
-  }, [filter, userId, ticketsPerPage]);
+  }, [filter, currentPage, sortConfig]);
   
   const fetchTickets = async () => {
     try {
       setLoading(true);
       const response = await axios.get('http://localhost:5001/api/tickets', {
-        params: { limit: ticketsPerPage, filters: filter, userId },
+        params: {
+          limit: ticketsPerPage,
+          page: currentPage,
+          filters: filter,
+          userId,
+          sort: sortConfig.key,
+          direction: sortConfig.direction,
+        },
       });
       console.log('Fetched tickets response:', response.data);
-      const tickets = Array.isArray(response.data) ? response.data : [];
-      setTickets(tickets);
-      const initialPriorities = tickets.reduce(
+      const { tickets: fetchedTickets, total } = response.data;
+      setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
+      setTotalTickets(total || 0);
+      const initialPriorities = fetchedTickets.reduce(
         (acc, ticket) => ({
           ...acc,
-          [ticket._id]: ticket.priority || 1,
+          [ticket._id]: ticket.priority_name || 'Low',
         }),
         {}
       );
-      const initialStatuses = tickets.reduce(
+      const initialStatuses = fetchedTickets.reduce(
         (acc, ticket) => ({
           ...acc,
-          [ticket._id]: ticket.status || 2,
+          [ticket._id]: ticket.status_name || 'Open',
         }),
         {}
       );
-      const initialAgents = tickets.reduce(
+      const initialAgents = fetchedTickets.reduce(
         (acc, ticket) => ({
           ...acc,
           [ticket._id]: ticket.responder_id?._id || 'Unassigned',
@@ -83,13 +93,25 @@ function App() {
     const handleSearch = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
+    setSearchTerm(query);
+    setCurrentPage(1);
     try {
       setLoading(true);
     if (query) {
         const response = await axios.get('http://localhost:5001/api/tickets/search', {
-          params: { q: query, limit: ticketsPerPage, filters: filter, userId },
+          params: {
+            q: query,
+            limit: ticketsPerPage,
+            page: currentPage,
+            filters: filter,
+            userId,
+            sort: sortConfig.key,
+            direction: sortConfig.direction,
+          },
         });
-        setTickets(Array.isArray(response.data) ? response.data : []);
+        const { tickets: fetchedTickets, total } = response.data;
+        setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
+        setTotalTickets(total || 0);
     } else {
       fetchTickets();
       }
@@ -107,35 +129,12 @@ function App() {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
-    const sortedTickets = [...tickets].sort((a, b) => {
-      if (key === 'subject') {
-        return direction === 'asc'
-          ? a[key].localeCompare(b[key])
-          : b[key].localeCompare(a[key]);
-      } else if (key === 'updated_at' || key === 'created_at') {
-        return direction === 'asc'
-          ? new Date(a[key]) - new Date(b[key])
-          : new Date(b[key]) - new Date(a[key]);
-      }
-      return 0;
-    });
-    setTickets(sortedTickets);
+    setCurrentPage(1);
   };
 
-  const filteredTickets = tickets.filter(
-    (ticket) =>
-      ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (ticket.description &&
-        ticket.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredTickets = tickets; // Server-side filtering
 
-  const indexOfLastTicket = currentPage * ticketsPerPage;
-  const indexOfFirstTicket = indexOfLastTicket - ticketsPerPage;
-  const currentTickets = filteredTickets.slice(
-    indexOfFirstTicket,
-    indexOfLastTicket
-  );
-  const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
+  const totalPages = Math.ceil(totalTickets / ticketsPerPage);
 
   const openReplyForm = (ticket) => {
     setReplyTicket(ticket);
@@ -172,7 +171,7 @@ function App() {
         updates.status = value === 'Open' ? 2 : value === 'Pending' ? 3 : value === 'Resolved' ? 4 : 5;
         updates.status_name = value;
         if (value === 'Closed') updates.closed_at = new Date().toISOString();
-      } else if (field === 'agent') {
+      } else if (field === 'responder_id') {
         updates.responder_id = value === 'Unassigned' ? null : value;
         updates.responder_name = value === 'Unassigned' ? null : agents.find(a => a._id === value)?.name;
       }
@@ -180,11 +179,11 @@ function App() {
       const updatedTicket = response.data;
       setPriorities((prev) => ({
         ...prev,
-        [ticketId]: updatedTicket.priority || 1,
+        [ticketId]: updatedTicket.priority_name || 'Low',
       }));
       setStatuses((prev) => ({
         ...prev,
-        [ticketId]: updatedTicket.status || 2,
+        [ticketId]: updatedTicket.status_name || 'Open',
       }));
       setAssignedAgents((prev) => ({
         ...prev,
@@ -227,7 +226,8 @@ function App() {
     }
     const lastConversation = ticket.conversations?.slice(-1)[0];
     if (lastConversation) {
-      return `Updated ${new Date(lastConversation.updated_at).toLocaleDateString()}`;
+      const isAgent = agents.some(agent => agent.id === lastConversation.user_id);
+      return `${isAgent ? 'Agent' : 'User'} Updated ${new Date(lastConversation.updated_at).toLocaleDateString()}`;
     }
     return `Created ${new Date(ticket.created_at).toLocaleDateString()}`;
   };
@@ -249,6 +249,63 @@ function App() {
 
   const isTicketNew = (ticket) => !ticket.updated_at;
 
+  const getLastActionDetails = (ticket) => {
+    const lastConversation = ticket.conversations?.slice(-1)[0];
+    if (lastConversation) {
+      const name = lastConversation.user_id === ticket.requester.id
+        ? ticket.requester.name
+        : agents.find((a) => a.id === lastConversation.user_id)?.name || `Agent ${lastConversation.user_id}`;
+      return {
+        initial: name[0] || 'U',
+        name,
+        verb: lastConversation.private ? 'noted' : 'replied',
+        timestamp: new Date(lastConversation.updated_at).toLocaleString(),
+        preview: lastConversation.body_text.slice(0, 240) + (lastConversation.body_text.length > 240 ? '...' : ''),
+      };
+    }
+    return {
+      initial: ticket.requester?.name[0] || 'U',
+      name: ticket.requester?.name || 'Unknown',
+      verb: 'created',
+      timestamp: new Date(ticket.created_at).toLocaleString(),
+      preview: ticket.description.slice(0, 240) + (ticket.description.length > 240 ? '...' : ''),
+    };
+  };
+
+  const handleMouseEnter = (ticket, e) => {
+    setDialog({
+      visible: true,
+      ticket,
+      x: e.clientX + 10,
+      y: e.clientY + 10,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setDialog({ visible: false, ticket: null, x: 0, y: 0 });
+  };
+
+  const handleReply = async (ticketId, isPrivate) => {
+    const body = prompt(`Enter ${isPrivate ? 'note' : 'reply'} text:`);
+    if (body) {
+      try {
+        await axios.post(`http://localhost:5001/api/tickets/${ticketId}/conversations`, {
+          body_text: body,
+          private: isPrivate,
+          user_id: userId,
+          incoming: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          id: Math.floor(Math.random() * 1000000),
+        });
+        fetchTickets();
+      } catch (err) {
+        setError('Failed to add conversation');
+        console.error('Conversation error:', err);
+      }
+    }
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
@@ -257,7 +314,7 @@ function App() {
       <div className="dashboard-controls">
         <div className="filters">
           <label>Filter: </label>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <select value={filter} onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}>
             <option value="newAndMyOpen">New and My Open Tickets</option>
             <option value="openTickets">Open Tickets</option>
             <option value="allTickets">All Tickets</option>
@@ -275,9 +332,7 @@ function App() {
           </select>
           <select
             value={sortConfig.direction}
-            onChange={(e) =>
-              setSortConfig({ ...sortConfig, direction: e.target.value })
-            }
+            onChange={(e) => setSortConfig({ ...sortConfig, direction: e.target.value })}
           >
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>
@@ -289,17 +344,10 @@ function App() {
         type="text"
         placeholder="Search tickets..."
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={(e) => handleSearch(e)}
         className="search-input"
       />
-      <input
-        type="text"
-        placeholder="Search tickets..."
-        value={searchQuery}
-        onChange={handleSearch}
-        className="search-input"
-      />
-      {currentTickets.length === 0 ? (
+      {filteredTickets.length === 0 ? (
         <p>No tickets available or matching your filter/search.</p>
       ) : (
         <table>
@@ -311,7 +359,7 @@ function App() {
             </tr>
           </thead>
           <tbody>
-            {currentTickets.map((ticket) => (
+            {filteredTickets.map((ticket) => (
               <tr key={`${ticket._id}-${statuses[ticket._id]}`}>
                 <td data-label="Avatar">
                   <div
@@ -327,20 +375,23 @@ function App() {
                       <span className="new-indicator"></span>
                     )}
                     <div className="ticket-header">
-                      <Link to={`/tickets/${ticket.display_id}`}>
+                      <Link
+                        to={`/ticket/${ticket.display_id}`}
+                        onMouseEnter={(e) => handleMouseEnter(ticket, e)}
+                        onMouseLeave={handleMouseLeave}
+                      >
                         {ticket.subject || 'No Subject'} #{ticket.display_id}
                       </Link>
                     </div>
                     <div className="ticket-meta">
                       {ticket.requester && ticket.requester.name ? (
-                        `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'}, ${ticket.responder_id?.name || 'Unassigned'})`
+                        `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'})`
                       ) : (
-                        `Unknown (${ticket.company_id?.name || 'Unknown Company'}, ${ticket.responder_id?.name || 'Unassigned'})`
+                        `Unknown (${ticket.company_id?.name || 'Unknown Company'})`
                       )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
                     </div>
                   </div>
                 </td>
-
                 <td data-label="Details">
                   <select
                     value={priorities[ticket._id] || 'Low'}
@@ -369,7 +420,7 @@ function App() {
                     onChange={(e) =>
                       updateField(
                         ticket._id,
-                        'agent',
+                        'responder_id',
                         e.target.value === 'Unassigned' ? null : e.target.value
                       )
                     }
@@ -421,9 +472,7 @@ function App() {
           Page {currentPage} of {totalPages}
         </span>
         <button
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-          }
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}
         >
           Next
@@ -449,6 +498,29 @@ function App() {
             <button onClick={closeReplyForm} className="close-button">
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+      {dialog.visible && (
+        <div
+          className="ticket-dialog"
+          style={{ position: 'absolute', top: dialog.y, left: dialog.x }}
+        >
+          <div className="dialog-content">
+            <div className="dialog-header">
+              <div className="avatar">{getLastActionDetails(dialog.ticket).initial}</div>
+              <div>
+                <div>
+                  {getLastActionDetails(dialog.ticket).name} {getLastActionDetails(dialog.ticket).verb}
+                </div>
+                <div className="timestamp">{getLastActionDetails(dialog.ticket).timestamp}</div>
+              </div>
+            </div>
+            <div className="dialog-body">{getLastActionDetails(dialog.ticket).preview}</div>
+            <div className="dialog-actions">
+              <button onClick={() => handleReply(dialog.ticket._id, false)}>Reply</button>
+              <button onClick={() => handleReply(dialog.ticket._id, true)}>Add Note</button>
+            </div>
           </div>
         </div>
       )}

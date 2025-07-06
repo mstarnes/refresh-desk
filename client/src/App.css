@@ -5,6 +5,71 @@
   margin: 0 auto;
 }
 
+/* mouseover dialog */
+.ticket-dialog {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  width: 300px;
+}
+
+.dialog-content {
+  padding: 15px;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: #007bff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: #666;
+}
+
+.dialog-body {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.dialog-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.dialog-actions button:first-child {
+  background: #007bff;
+  color: #fff;
+}
+
+.dialog-actions button:last-child {
+  background: #6c757d;
+  color: #fff;
+}
+
 .dashboard-controls {
   display: flex;
   justify-content: space-between;

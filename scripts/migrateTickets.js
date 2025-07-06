@@ -6,10 +6,9 @@ const Agent = require('../models/Agent');
 
 async function migrateTickets() {
   try {
-    await mongoose.connect('mongodb://localhost/refresh-desk', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => console.log(err));
 
     const tickets = await Ticket.find();
     const companies = await Company.find().select('id _id');

@@ -4,7 +4,7 @@ import axios from 'axios';
 import './TicketDetails.css';
 
 const TicketDetails = () => {
-  const { id } = useParams(); // id is now display_id
+  const { display_id } = useParams(); // id is now display_id
   const navigate = useNavigate();
   const [ticket, setTicket] = useState(null);
   const [timeline, setTimeline] = useState([]);
@@ -14,7 +14,7 @@ const TicketDetails = () => {
 
   const fetchTicket = async () => {
     try {
-      const response = await axios.get(`http://localhost:5001/api/tickets/display/${id}`); // New endpoint
+      const response = await axios.get(`http://localhost:5001/api/tickets/display/${display_id}`); // New endpoint
       console.log('Fetched ticket data:', response.data);
       setTicket(response.data);
       setLoading(false);
@@ -70,7 +70,7 @@ const TicketDetails = () => {
   useEffect(() => {
     fetchTicket();
     fetchAgents();
-  }, [id]);
+  }, [display_id]);
 
   useEffect(() => {
     fetchTimeline();
