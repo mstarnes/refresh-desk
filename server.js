@@ -147,7 +147,7 @@ app.get('/api/tickets', async (req, res) => {
 // Get ticket by display_id
 app.get('/api/tickets/display/:display_id', async (req, res) => {
   try {
-    const ticket = await Ticket.findOne({ display_id: req.params.display_id })
+    const ticket = await Ticket.findOne({ display_id: parseInt(req.params.display_id) })
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
     if (!ticket) {
@@ -157,6 +157,20 @@ app.get('/api/tickets/display/:display_id', async (req, res) => {
   } catch (err) {
     console.error('Error fetching ticket:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Get tickets by user_id
+app.get('/api/tickets/user/:userId', async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const tickets = await Ticket.find({ 'requester.id': userId })
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.json(tickets);
+  } catch (err) {
+    console.error('Error fetching user tickets:', err);
+    res.status(400).json({ error: err.message });
   }
 });
 
@@ -194,13 +208,24 @@ app.get('/api/tickets/search', async (req, res) => {
   }
 });
 
+// Fetch agents
+app.get('/api/agents', async (req, res) => {
+  try {
+    const agents = await Agent.find().select('id _id name email');
+    res.json(agents);
+  } catch (err) {
+    console.error('Error fetching agents:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Update ticket
 app.patch('/api/tickets/:id', async (req, res) => {
   try {
     const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at } = req.body;
     const updates = {};
-    if (priority) updates.priority = priority;
-    if (status) updates.status = status;
+    if (priority !== undefined) updates.priority = priority;
+    if (status !== undefined) updates.status = status;
     if (responder_id !== undefined) updates.responder_id = responder_id;
     if (priority_name) updates.priority_name = priority_name;
     if (status_name) updates.status_name = status_name;
@@ -247,6 +272,34 @@ app.post('/api/tickets/:id/conversations', async (req, res) => {
   }
 });
 
+// Reply endpoint
+app.post('/api/tickets/reply', async (req, res) => {
+  try {
+    const { ticketId, body, user_id } = req.body;
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    ticket.conversations.push({
+      id: ticket.conversations.length + 1,
+      body_text: body,
+      private: false,
+      user_id,
+      incoming: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    await ticket.save();
+    const populatedTicket = await Ticket.findById(ticketId)
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.json(populatedTicket);
+  } catch (err) {
+    console.error('Error adding reply:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/tickets/:id', async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id)
@@ -260,27 +313,6 @@ app.get('/api/tickets/:id', async (req, res) => {
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
     res.json({ ...ticket, display_id: mapEntry?.display_id });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error: ' + err.message });
-  }
-});
-
-app.get('/api/tickets/user/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    if (!mongoose.isValidObjectId(userId)) {
-      return res.status(400).json({ error: 'Invalid userId format' });
-    }
-    const tickets = await Ticket.find({ requester: userId })
-      .select('subject created_at status')
-      .sort({ created_at: -1 })
-      .limit(3)
-      .lean();
-    const ticketsWithDisplayId = await Promise.all(tickets.map(async ticket => {
-      const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
-      return { ...ticket, display_id: mapEntry?.display_id || null };
-    }));
-    res.json(ticketsWithDisplayId);
   } catch (err) {
     res.status(500).json({ error: 'Server error: ' + err.message });
   }
@@ -485,17 +517,6 @@ app.delete('/api/companies/:id', async (req, res) => {
     if (!company) return res.status(404).json({ error: 'Company not found' });
     res.json({ message: 'Company deleted' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Fetch agents
-app.get('/api/agents', async (req, res) => {
-  try {
-    const agents = await Agent.find().select('id _id name email');
-    res.json(agents);
-  } catch (err) {
-    console.error('Error fetching agents:', err);
     res.status(500).json({ error: err.message });
   }
 });

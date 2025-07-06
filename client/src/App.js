@@ -24,7 +24,7 @@ function App() {
   const [statuses, setStatuses] = useState({});
   const [assignedAgents, setAssignedAgents] = useState({});
   const [filter, setFilter] = useState('newAndMyOpen');
-  const [userId] = useState('mitch.starnes@gmail.com');
+  const [userId] = useState('mitch.starnes@exotech.pro'); // Updated email
   const [dialog, setDialog] = useState({ visible: false, ticket: null, x: 0, y: 0 });
 
   useEffect(() => {
@@ -91,9 +91,9 @@ function App() {
     };
   
     const handleSearch = async (e) => {
+    if (e.key === 'Enter') {
     const query = e.target.value;
     setSearchQuery(query);
-    setSearchTerm(query);
     setCurrentPage(1);
     try {
       setLoading(true);
@@ -102,7 +102,7 @@ function App() {
           params: {
             q: query,
             limit: ticketsPerPage,
-            page: currentPage,
+              page: 1,
             filters: filter,
             userId,
             sort: sortConfig.key,
@@ -112,6 +112,30 @@ function App() {
         const { tickets: fetchedTickets, total } = response.data;
         setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
         setTotalTickets(total || 0);
+          const initialPriorities = fetchedTickets.reduce(
+            (acc, ticket) => ({
+              ...acc,
+              [ticket._id]: ticket.priority_name || 'Low',
+            }),
+            {}
+          );
+          const initialStatuses = fetchedTickets.reduce(
+            (acc, ticket) => ({
+              ...acc,
+              [ticket._id]: ticket.status_name || 'Open',
+            }),
+            {}
+          );
+          const initialAgents = fetchedTickets.reduce(
+            (acc, ticket) => ({
+              ...acc,
+              [ticket._id]: ticket.responder_id?._id || 'Unassigned',
+            }),
+            {}
+          );
+          setPriorities(initialPriorities);
+          setStatuses(initialStatuses);
+          setAssignedAgents(initialAgents);
     } else {
       fetchTickets();
       }
@@ -120,6 +144,9 @@ function App() {
       console.error('Error searching tickets:', err);
       setError(`Error searching tickets: ${err.message}`);
       setLoading(false);
+      }
+    } else {
+      setSearchQuery(e.target.value);
     }
   };
 
@@ -132,7 +159,7 @@ function App() {
     setCurrentPage(1);
   };
 
-  const filteredTickets = tickets; // Server-side filtering
+  const filteredTickets = tickets;
 
   const totalPages = Math.ceil(totalTickets / ticketsPerPage);
 
@@ -343,8 +370,9 @@ function App() {
       <input
         type="text"
         placeholder="Search tickets..."
-        value={searchTerm}
-        onChange={(e) => handleSearch(e)}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onKeyDown={handleSearch}
         className="search-input"
       />
       {filteredTickets.length === 0 ? (
