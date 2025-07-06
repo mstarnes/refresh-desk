@@ -75,6 +75,35 @@ function App() {
     fetchAgents();
   }, [filter, userId, ticketsPerPage]);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch tickets (existing function) - added for search
+  const fetchTickets = async () => {
+    try {
+      const response = await fetch('/api/tickets');
+      const data = await response.json();
+      console.log('Fetched tickets response:', data);
+      setTickets(data);
+    } catch (err) {
+      console.error('Error fetching tickets:', err);
+    }
+  };
+
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    if (query) {
+      const response = await fetch(`/api/tickets/search?q=${encodeURIComponent(query)}`);
+      const tickets = await response.json();
+      // Update state with search results
+      setTickets(tickets);
+    } else {
+      // Fetch all tickets
+      fetchTickets();
+      console.log("fetchTickets() not defined");
+    }
+  };
+
   const sortData = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -198,7 +227,7 @@ function App() {
     }
   };
 
-  const getLastAction = (ticket) => {
+  const getLastActionOld = (ticket) => {
     const lastConversation = ticket.conversations?.find(
       (conv) => !conv.incoming
     );
@@ -216,6 +245,32 @@ function App() {
       })}`;
     }
     return "";
+  };
+
+  const getLastAction = (ticket) => {
+    if (ticket.status === 'closed' && ticket.closed_at) {
+      return `Closed ${new Date(ticket.closed_at).toLocaleDateString()}`;
+    }
+    const lastConversation = ticket.conversations?.slice(-1)[0];
+    if (lastConversation) {
+      return `Updated ${new Date(lastConversation.updated_at).toLocaleDateString()}`;
+    }
+    return `Created ${new Date(ticket.created_at).toLocaleDateString()}`;
+  };
+
+  const getSLAStatus = (ticket) => {
+    if (ticket.status === 'closed') {
+      return new Date(ticket.closed_at) <= new Date(ticket.due_by)
+        ? 'Closed on time'
+        : 'Closed late';
+    }
+    const dueBy = new Date(ticket.due_by);
+    const now = new Date();
+    const diffHours = (dueBy - now) / (1000 * 60 * 60);
+    if (diffHours > 0) {
+      return `Due in ${Math.round(diffHours)} hours`;
+    }
+    return `Overdue by ${Math.abs(Math.round(diffHours))} hours`;
   };
 
   const isTicketNew = (ticket) => !ticket.updated_at;
@@ -263,6 +318,13 @@ function App() {
         onChange={(e) => setSearchTerm(e.target.value)}
         className="search-input"
       />
+      <input
+        type="text"
+        placeholder="Search tickets..."
+        value={searchQuery}
+        onChange={handleSearch}
+      />
+
       {currentTickets.length === 0 ? (
         <p>No tickets available or matching your filter/search.</p>
       ) : (
@@ -286,43 +348,20 @@ function App() {
                   ></div>
                 </td>
                 <td data-label="Ticket">
-                  <div>
+                  <div className="ticket-card">
                     {isTicketNew(ticket) && (
                       <span className="new-indicator"></span>
                     )}
-                    <strong>
-                      <Link
-                        to={`/ticket/${ticket._id}`}
-                        className="ticket-link"
-                      >
-                        {ticket.subject} #{ticket._id}
+                    <div className="ticket-header">
+                      <Link to={`/tickets/${ticket.display_id}`}>
+                        {ticket.subject} #{ticket.display_id}
                       </Link>
-                    </strong>
-                    <br />
-                    <a href={`mailto:${ticket.requester?.email}`}>
-                      {ticket.requester?.name ||
-                        ticket.requester?.email?.split("@")[0]}
-                    </a>
-                    <br />
-                    <span>
-                      Ticket opened on{" "}
-                      {new Date(ticket.created_at).toLocaleString("en-US", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
-                    </span>
-                    <br />
-                    {getLastAction(ticket)}
-                    <button
-                      onClick={() => openReplyForm(ticket)}
-                      className="reply-button"
-                    >
-                      Reply
-                    </button>
+                    </div>
+                    <div className="ticket-meta">
+                      {ticket.requester ? `${ticket.requester.name} (${ticket.requester.company_id})` : 'Unknown'} | 
+                      {getLastAction(ticket)} | 
+                      {getSLAStatus(ticket)}
+                    </div>
                   </div>
                 </td>
 

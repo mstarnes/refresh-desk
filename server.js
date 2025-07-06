@@ -61,10 +61,41 @@ const imap = new Imap({
 // Routes
 app.get('/api/test', (req, res) => res.json({ message: 'Refresh Desk API is up!' }));
 
+app.get('/api/tickets/search', async (req, res) => {
+  const { q } = req.query;
+  try {
+    const tickets = await Ticket.find({
+      $or: [
+        { display_id: parseInt(q) || -1 },
+        { subject: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { 'conversations.body': { $regex: q, $options: 'i' } },
+        { responder_id: { $in: await User.find({ name: { $regex: q, $options: 'i' } }).distinct('_id') } },
+      ],
+    })
+      //.populate('responder_id', 'name')
+      .populate('requester', 'name')
+      .populate('company_id')
+      .populate('group_id');
+      //.populate('company_id', 'name')
+      //.populate('group_id', 'name');
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Tickets
 app.get('/api/tickets', async (req, res) => {
   try {
-    let query = Ticket.find().populate('requester group_id company_id agent');
+    let query = Ticket.find()
+      //.populate('responder_id', 'name')
+      .populate('requester', 'name')
+      .populate('company_id')
+      .populate('group_id');
+      //.populate('company_id', 'name')
+      //.populate('group_id', 'name');
+      //.populate('requester group_id company_id agent');
     if (req.query.status) query = query.where('status').equals(req.query.status);
     if (req.query.priority) query = query.where('priority').equals(req.query.priority);
     if (req.query.requester) query = query.where('requester').equals(req.query.requester);
@@ -120,7 +151,14 @@ app.get('/api/tickets-old', async (req, res) => {
 
 app.get('/api/tickets/:id', async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id).populate('requester group_id company_id agent').lean();
+    const ticket = await Ticket.findById(req.params.id)
+      //.populate('responder_id', 'name')
+      .populate('requester', 'name')
+      .populate('company_id')
+      .populate('group_id');
+      //.populate('company_id', 'name')
+      //.populate('group_id', 'name');
+      //.populate('requester group_id company_id agent').lean();
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
     res.json({ ...ticket, display_id: mapEntry?.display_id });
