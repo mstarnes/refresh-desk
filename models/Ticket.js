@@ -118,7 +118,8 @@ const TicketSchema = new mongoose.Schema({
   id: { type: Number, required: true, unique: true },
   description: { type: String },
   requester_id: { type: Number },
-  responder_id: { type: Number },
+  // responder_id: { type: Number },
+  responder_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
   status: { type: Number },
   urgent: { type: Boolean },
   source: { type: Number },
@@ -189,6 +190,7 @@ const TicketSchema = new mongoose.Schema({
   ticket_states: TicketStatesSchema,
   requester: RequesterSchema,
   conversations: [ConversationSchema], // Renamed from notes
+  company_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' }, // Added
 });
 
 // Add index on display_id

@@ -5,6 +5,7 @@ import "./App.css";
 
 function App() {
   const [tickets, setTickets] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortConfig, setSortConfig] = useState({
@@ -24,6 +25,23 @@ function App() {
   const [userId] = useState("mitch.starnes@gmail.com"); // Remove setUserId
 
   useEffect(() => {
+    fetchTickets();
+    fetchAgents();
+  }, [filter, userId, ticketsPerPage]);
+  
+  // Fetch tickets (existing function) - added for search
+  const fetchTicketsProposed = async () => {
+    try {
+      const response = await fetch('/api/tickets');
+      const data = await response.json();
+      console.log('Fetched tickets response:', data);
+      setTickets(data);
+    } catch (err) {
+      console.error('Error fetching tickets:', err);
+    }
+  };
+
+    
     const fetchTickets = async () => {
       try {
         const response = await axios.get("http://localhost:5001/api/tickets", {
@@ -63,6 +81,8 @@ function App() {
         setLoading(false);
       }
     };
+    
+
     const fetchAgents = async () => {
       try {
         const response = await axios.get("http://localhost:5001/api/agents");
@@ -71,25 +91,8 @@ function App() {
         console.error("Fetch Agents Error:", err);
       }
     };
-    fetchTickets();
-    fetchAgents();
-  }, [filter, userId, ticketsPerPage]);
-
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Fetch tickets (existing function) - added for search
-  const fetchTickets = async () => {
-    try {
-      const response = await fetch('/api/tickets');
-      const data = await response.json();
-      console.log('Fetched tickets response:', data);
-      setTickets(data);
-    } catch (err) {
-      console.error('Error fetching tickets:', err);
-    }
-  };
-
-  const handleSearch = async (e) => {
+  
+    const handleSearch = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
     if (query) {
@@ -98,9 +101,7 @@ function App() {
       // Update state with search results
       setTickets(tickets);
     } else {
-      // Fetch all tickets
       fetchTickets();
-      console.log("fetchTickets() not defined");
     }
   };
 
@@ -248,7 +249,7 @@ function App() {
   };
 
   const getLastAction = (ticket) => {
-    if (ticket.status === 'closed' && ticket.closed_at) {
+    if (ticket.status === 5 && ticket.closed_at) {
       return `Closed ${new Date(ticket.closed_at).toLocaleDateString()}`;
     }
     const lastConversation = ticket.conversations?.slice(-1)[0];
@@ -259,7 +260,7 @@ function App() {
   };
 
   const getSLAStatus = (ticket) => {
-    if (ticket.status === 'closed') {
+    if (ticket.status === 5) {
       return new Date(ticket.closed_at) <= new Date(ticket.due_by)
         ? 'Closed on time'
         : 'Closed late';
@@ -358,9 +359,11 @@ function App() {
                       </Link>
                     </div>
                     <div className="ticket-meta">
-                      {ticket.requester ? `${ticket.requester.name} (${ticket.requester.company_id})` : 'Unknown'} | 
-                      {getLastAction(ticket)} | 
-                      {getSLAStatus(ticket)}
+                      {ticket.requester && ticket.requester.name ? (
+                        `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'}, ${ticket.responder_id?.name || 'Unassigned'})`
+                      ) : (
+                        'Unknown'
+                      )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
                     </div>
                   </div>
                 </td>

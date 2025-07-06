@@ -61,7 +61,7 @@ const imap = new Imap({
 // Routes
 app.get('/api/test', (req, res) => res.json({ message: 'Refresh Desk API is up!' }));
 
-app.get('/api/tickets/search', async (req, res) => {
+app.get('/api/tickets/search-nu', async (req, res) => {
   const { q } = req.query;
   try {
     const tickets = await Ticket.find({
@@ -86,7 +86,19 @@ app.get('/api/tickets/search', async (req, res) => {
 });
 
 // Tickets
+// Get all tickets
 app.get('/api/tickets', async (req, res) => {
+  try {
+    const tickets = await Ticket.find()
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/tickets-nu', async (req, res) => {
   try {
     let query = Ticket.find()
       //.populate('responder_id', 'name')
@@ -188,7 +200,66 @@ app.get('/api/tickets/user/:userId', async (req, res) => {
   }
 });
 
+// Create a new ticket
 app.post('/api/tickets', async (req, res) => {
+  try {
+    const { subject, description, priority, requester, display_id, status, responder_id, company_id } = req.body;
+
+    if (!requester || !requester.name) {
+      return res.status(400).json({ error: 'Requester name is required' });
+    }
+    if (!company_id) {
+      return res.status(400).json({ error: 'Company ID is required' });
+    }
+
+    const company = await Company.findById(company_id);
+    if (!company) {
+      return res.status(400).json({ error: 'Company not found' });
+    }
+
+    const slaPolicy = await SLAPolicy.findOne({ id: company.sla_policy_id });
+    if (!slaPolicy) {
+      return res.status(400).json({ error: 'SLA policy not found' });
+    }
+
+    const priorityKey = `priority_${priority}`;
+    const resolveWithin = slaPolicy.sla_target[priorityKey]?.resolve_within;
+    if (!resolveWithin) {
+      return res.status(400).json({ error: 'Invalid priority for SLA policy' });
+    }
+
+    const createdAt = new Date().toISOString();
+    const dueBy = new Date(Date.now() + resolveWithin * 1000).toISOString();
+
+    const ticket = new Ticket({
+      subject,
+      description,
+      priority,
+      requester,
+      display_id,
+      status: status || 2, // 2=Open
+      responder_id,
+      company_id,
+      created_at: createdAt,
+      due_by: dueBy,
+      conversations: [],
+      requester_name: requester.name,
+      priority_name: { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }[priority] || 'Low',
+      status_name: { 2: 'Open', 3: 'Pending', 4: 'Resolved', 5: 'Closed' }[status || 2] || 'Open',
+      responder_name: responder_id ? (await Agent.findById(responder_id))?.name : null,
+    });
+
+    await ticket.save();
+    const populatedTicket = await Ticket.findById(ticket._id)
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.status(201).json(populatedTicket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/tickets-old', async (req, res) => {
   try {
     const ticketFields = await TicketField.find();
     const statusField = ticketFields.find(f => f.name === 'status');
@@ -309,7 +380,22 @@ app.put('/api/tickets/:id/conversations/:conversationId', async (req, res) => {
   }
 });
 
-app.get('/api/tickets/display/:displayId', async (req, res) => {
+// Get ticket by display_id
+app.get('/api/tickets/display/:display_id', async (req, res) => {
+  try {
+    const ticket = await Ticket.findOne({ display_id: req.params.display_id })
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    res.json(ticket);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/tickets/display/:displayId-nu', async (req, res) => {
   try {
     const { displayId } = req.params;
     const mapEntry = await TicketDisplayIdMap.findOne({ display_id: Number(displayId) });
@@ -1102,6 +1188,30 @@ app.delete('/api/ticket-fields/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Search endpoint
+app.get('/api/tickets/search', async (req, res) => {
+  const { q } = req.query;
+  try {
+    const tickets = await Ticket.find({
+      $or: [
+        { display_id: parseInt(q) || -1 },
+        { subject: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { 'conversations.body_text': { $regex: q, $options: 'i' } },
+        { 'requester.name': { $regex: q, $options: 'i' } },
+        { responder_name: { $regex: q, $options: 'i' } },
+      ],
+    })
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 // IMAP Email Processing
 async function processEmail(mail) {
