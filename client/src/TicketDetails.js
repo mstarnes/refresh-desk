@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import './TicketDetails.css';
+import mongoose from 'mongoose';
 
 function TicketDetails() {
   const { display_id } = useParams();
