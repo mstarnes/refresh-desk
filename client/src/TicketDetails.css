@@ -305,8 +305,12 @@
 .ticket-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 20px;
+}
+
+.ticket-info {
+  flex: 1;
 }
 
 .ticket-meta {
@@ -316,7 +320,9 @@
 
 .ticket-controls {
   display: flex;
+  flex-direction: column;
   gap: 10px;
+  min-width: 150px;
 }
 
 .priority-select,
@@ -330,13 +336,12 @@
   margin-bottom: 20px;
 }
 
-.description-textarea {
+.description-html {
   width: 100%;
   min-height: 200px;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
-  resize: none;
   background: #f9f9f9;
 }
 

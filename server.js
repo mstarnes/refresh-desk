@@ -7,6 +7,7 @@ const { simpleParser } = require('mailparser');
 const nodemailer = require('nodemailer');
 
 const app = express();
+app.use(express.json({ limit: '1mb' })); // Increase payload limit to 1mb
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 
@@ -172,7 +173,7 @@ app.get('/api/tickets/user/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     const tickets = await Ticket.find({ 'requester.id': userId })
-      .sort({ updated_at: -1 }) // Sort by most recent
+      .sort({ updated_at: -1 })
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
     res.json(tickets);

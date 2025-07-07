@@ -1,11 +1,8 @@
 // client/src/TicketDetails.js
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import './TicketDetails.css';
-import { Link } from 'react-router-dom';
-
-const mongoose = require('mongoose');
 
 function TicketDetails() {
   const { display_id } = useParams();
@@ -125,7 +122,7 @@ function TicketDetails() {
   };
 
   const getLastAction = (ticket) => {
-    if (ticket.status === 5 && ticket.closed_at) {
+    if (ticket.status === 5 && ticket.closed_at && !isNaN(new Date(ticket.closed_at))) {
       return `Closed ${new Date(ticket.closed_at).toLocaleDateString()}`;
     }
     const lastConversation = ticket.conversations?.slice(-1)[0];
@@ -137,7 +134,7 @@ function TicketDetails() {
   };
 
   const getSLAStatus = (ticket) => {
-    if (ticket.status === 5) {
+    if (ticket.status === 5 && ticket.closed_at && !isNaN(new Date(ticket.closed_at))) {
       return `Closed ${new Date(ticket.closed_at).toLocaleDateString()} (${new Date(ticket.closed_at) <= new Date(ticket.due_by) ? 'on time' : 'late'})`;
     }
     const dueBy = new Date(ticket.due_by);
@@ -155,6 +152,7 @@ function TicketDetails() {
   return (
     <div className="ticket-details">
       <div className="ticket-header">
+        <div className="ticket-info">
       <h2>{ticket.subject || 'No Subject'} #{ticket.display_id}</h2>
         <div className="ticket-meta">
           {ticket.requester && ticket.requester.name ? (
@@ -162,6 +160,7 @@ function TicketDetails() {
           ) : (
             `Unknown (${ticket.company_id?.name || 'Unknown Company'})`
           )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
+          </div>
         </div>
         <div className="ticket-controls">
           <select
@@ -200,17 +199,17 @@ function TicketDetails() {
       </div>
       <div className="ticket-description">
         <h3>Description</h3>
-        <textarea
-          value={ticket.description_html || 'No description'}
-          readOnly
-          rows="10"
-          className="description-textarea"
+        <div
+          className="description-html"
+          dangerouslySetInnerHTML={{ __html: ticket.description_html || 'No description' }}
         />
       </div>
       <div className="ticket-conversations">
         <h3>Conversations</h3>
         {ticket.conversations?.length ? (
-          ticket.conversations.map((conv) => (
+          [...ticket.conversations]
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .map((conv) => (
             <div key={conv.id} className="conversation">
               <p>{conv.body_text}</p>
               <p className="conversation-meta">

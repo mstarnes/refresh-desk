@@ -1,20 +1,19 @@
 // client/src/App.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 
 function App() {
   const [tickets, setTickets] = useState([]);
   const [totalTickets, setTotalTickets] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('searchQuery') || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortConfig, setSortConfig] = useState({
     key: 'updated_at',
     direction: 'desc',
   });
-  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = parseInt(process.env.REACT_APP_DEFAULT_LIMIT) || 10;
   const [replyTicket, setReplyTicket] = useState(null);
@@ -29,12 +28,15 @@ function App() {
   const [userId] = useState(process.env.REACT_APP_CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro');
   const [dialog, setDialog] = useState({ visible: false, ticket: null });
   const [dialogTimeout, setDialogTimeout] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     fetchTickets();
     fetchAgents();
     localStorage.setItem('filter', filter);
-  }, [filter, currentPage, sortConfig]);
+    localStorage.setItem('searchQuery', searchQuery);
+  }, [filter, currentPage, sortConfig, searchQuery]);
   
   const fetchTickets = async () => {
     try {
@@ -96,11 +98,12 @@ function App() {
   
     const handleSearch = async (e) => {
     if (e.key === 'Enter') {
-    const query = e.target.value;
-    setSearchQuery(query);
-    setFilter(''); // Clear filter during search
-    setCurrentPage(1);
-    localStorage.setItem('filter', '');
+      const query = e.target.value;
+      setSearchQuery(query);
+      setFilter('');
+      setCurrentPage(1);
+      localStorage.setItem('filter', '');
+      localStorage.setItem('searchQuery', query);
     try {
       setLoading(true);
     if (query) {
@@ -167,9 +170,10 @@ function App() {
 
   const handleFilterChange = (value) => {
     setFilter(value);
-    setSearchQuery(''); // Clear search when changing filter
+    setSearchQuery('');
     setCurrentPage(1);
     localStorage.setItem('filter', value);
+    localStorage.setItem('searchQuery', '');
   };
 
   const filteredTickets = tickets;
@@ -227,7 +231,7 @@ function App() {
         });
         closeNoteForm();
         fetchTickets();
-      } reply: {
+      } catch (err) {
         setError('Failed to add note');
         console.error('Note error:', err);
       }
@@ -326,7 +330,7 @@ function App() {
   };
 
   const getSLAStatus = (ticket) => {
-    if (ticket.status === 5) {
+    if (ticket.status === 5 && ticket.closed_at && !isNaN(new Date(ticket.closed_at))) {
       return `Closed ${new Date(ticket.closed_at).toLocaleDateString()} (${new Date(ticket.closed_at) <= new Date(ticket.due_by) ? 'on time' : 'late'})`;
     }
     const dueBy = new Date(ticket.due_by);
