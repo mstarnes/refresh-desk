@@ -138,9 +138,7 @@ function TicketDetails() {
 
   const getSLAStatus = (ticket) => {
     if (ticket.status === 5) {
-      return new Date(ticket.closed_at) <= new Date(ticket.due_by)
-        ? 'Closed on time'
-        : 'Closed late';
+      return `Closed ${new Date(ticket.closed_at).toLocaleDateString()} (${new Date(ticket.closed_at) <= new Date(ticket.due_by) ? 'on time' : 'late'})`;
     }
     const dueBy = new Date(ticket.due_by);
     const now = new Date();
@@ -202,7 +200,12 @@ function TicketDetails() {
       </div>
       <div className="ticket-description">
         <h3>Description</h3>
-        <p>{ticket.description || 'No description'}</p>
+        <textarea
+          value={ticket.description_html || 'No description'}
+          readOnly
+          rows="10"
+          className="description-textarea"
+        />
       </div>
       <div className="ticket-conversations">
         <h3>Conversations</h3>
@@ -230,6 +233,14 @@ function TicketDetails() {
               <Link to={`/ticket/${t.display_id}`}>
                 {t.subject || 'No Subject'} #{t.display_id}
               </Link>
+              <div className="timeline-meta">
+                {t.requester && t.requester.name ? (
+                  `${t.requester.name} (${t.company_id?.name || 'Unknown Company'})`
+                ) : (
+                  `Unknown (${t.company_id?.name || 'Unknown Company'})`
+                )} | {getLastAction(t)} | {getSLAStatus(t)}
+              </div>
+              <div className="timeline-spacer"></div>
             </div>
           ))
         ) : (

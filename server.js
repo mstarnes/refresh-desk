@@ -172,6 +172,7 @@ app.get('/api/tickets/user/:userId', async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     const tickets = await Ticket.find({ 'requester.id': userId })
+      .sort({ updated_at: -1 }) // Sort by most recent
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
     res.json(tickets);
@@ -243,7 +244,7 @@ app.patch('/api/tickets/:id', async (req, res) => {
     if (responder_id !== undefined) updates.responder_id = responder_id;
     if (priority_name) updates.priority_name = priority_name;
     if (status_name) updates.status_name = status_name;
-    if (responder_name !== undefined) updates.responder_name = responder_name;
+    if (responder_name) updates.responder_name = responder_name;
     if (closed_at) updates.closed_at = closed_at;
     if (conversations) updates.conversations = conversations;
     const ticket = await Ticket.findByIdAndUpdate(req.params.id, updates, { new: true })

@@ -98,7 +98,9 @@ function App() {
     if (e.key === 'Enter') {
     const query = e.target.value;
     setSearchQuery(query);
+    setFilter(''); // Clear filter during search
     setCurrentPage(1);
+    localStorage.setItem('filter', '');
     try {
       setLoading(true);
     if (query) {
@@ -107,7 +109,7 @@ function App() {
             q: query,
             limit: ticketsPerPage,
               page: 1,
-            filters: filter,
+              filters: '',
             userId,
             sort: sortConfig.key,
             direction: sortConfig.direction,
@@ -161,6 +163,13 @@ function App() {
     }
     setSortConfig({ key, direction });
     setCurrentPage(1);
+  };
+
+  const handleFilterChange = (value) => {
+    setFilter(value);
+    setSearchQuery(''); // Clear search when changing filter
+    setCurrentPage(1);
+    localStorage.setItem('filter', value);
   };
 
   const filteredTickets = tickets;
@@ -218,7 +227,7 @@ function App() {
         });
         closeNoteForm();
         fetchTickets();
-      } catch (err) {
+      } reply: {
         setError('Failed to add note');
         console.error('Note error:', err);
       }
@@ -318,9 +327,7 @@ function App() {
 
   const getSLAStatus = (ticket) => {
     if (ticket.status === 5) {
-      return new Date(ticket.closed_at) <= new Date(ticket.due_by)
-        ? 'Closed on time'
-        : 'Closed late';
+      return `Closed ${new Date(ticket.closed_at).toLocaleDateString()} (${new Date(ticket.closed_at) <= new Date(ticket.due_by) ? 'on time' : 'late'})`;
     }
     const dueBy = new Date(ticket.due_by);
     const now = new Date();
@@ -391,10 +398,11 @@ function App() {
       <div className="dashboard-controls">
         <div className="filters">
           <label>Filter: </label>
-          <select value={filter} onChange={(e) => { setFilter(e.target.value); setCurrentPage(1); }}>
+          <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
             <option value="newAndMyOpen">New and My Open Tickets</option>
             <option value="openTickets">Open Tickets</option>
             <option value="allTickets">All Tickets</option>
+            <option value="">None</option>
           </select>
         </div>
         <div className="sort">
