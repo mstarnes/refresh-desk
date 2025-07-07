@@ -89,6 +89,7 @@ app.post('/api/tickets', async (req, res) => {
 
     const createdAt = new Date().toISOString();
     const dueBy = new Date(Date.now() + resolveWithin * 1000).toISOString();
+    const agent = await Agent.findOne({ email: 'mitch.starnes@exotech.pro' });
 
     const ticket = new Ticket({
       subject,
@@ -97,7 +98,7 @@ app.post('/api/tickets', async (req, res) => {
       requester,
       display_id,
       status: status || 2,
-      responder_id,
+      responder_id: responder_id || (agent?._id || new mongoose.Types.ObjectId('6868527ff5d2b14198b52653')),
       company_id,
       created_at: createdAt,
       due_by: dueBy,
@@ -105,7 +106,7 @@ app.post('/api/tickets', async (req, res) => {
       requester_name: requester.name,
       priority_name: { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }[priority] || 'Low',
       status_name: { 2: 'Open', 3: 'Pending', 4: 'Resolved', 5: 'Closed' }[status || 2] || 'Open',
-      responder_name: responder_id ? (await Agent.findById(responder_id))?.name : null,
+      responder_name: responder_id ? (await Agent.findById(responder_id))?.name : agent?.name || 'Mitch Starnes',
     });
 
     await ticket.save();
@@ -126,7 +127,7 @@ app.get('/api/tickets', async (req, res) => {
     let query = {};
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
-      query = { status: { $in: [2, 3] }, responder_id: agent ? agent._id : null };
+      query = { status: { $in: [2, 3] }, responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') };
     } else if (filters === 'openTickets') {
       query = { status: { $in: [2, 3] } };
     }
@@ -190,7 +191,7 @@ app.get('/api/tickets/search', async (req, res) => {
     };
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
-      query = { ...query, status: { $in: [2, 3] }, responder_id: agent ? agent._id : null };
+      query = { ...query, status: { $in: [2, 3] }, responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') };
     } else if (filters === 'openTickets') {
       query = { ...query, status: { $in: [2, 3] } };
     }
