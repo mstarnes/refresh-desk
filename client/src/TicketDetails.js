@@ -16,7 +16,7 @@ function TicketDetails() {
   const [statuses, setStatuses] = useState({});
   const [assignedAgents, setAssignedAgents] = useState({});
   const [agents, setAgents] = useState([]);
-  const [userId] = useState('mitch.starnes@exotech.pro');
+  const [userId] = useState(process.env.REACT_APP_CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro');
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -63,19 +63,20 @@ function TicketDetails() {
     try {
       const updates = {};
       let conversationText = '';
+      const agent = agents.find(a => a.email === userId) || { id: 9006333765, name: 'Mitch Starnes' };
       if (field === 'priority') {
         updates.priority = value === 'Low' ? 1 : value === 'Medium' ? 2 : value === 'High' ? 3 : 4;
         updates.priority_name = value;
-        conversationText = `Agent Mitch Starnes changed priority to ${value} on ${new Date().toLocaleString()}`;
+        conversationText = `Agent ${agent.name} changed priority to ${value} on ${new Date().toLocaleString()}`;
       } else if (field === 'status') {
         updates.status = value === 'Open' ? 2 : value === 'Pending' ? 3 : value === 'Resolved' ? 4 : 5;
         updates.status_name = value;
         if (value === 'Closed') updates.closed_at = new Date().toISOString();
-        conversationText = `Agent Mitch Starnes changed status to ${value} on ${new Date().toLocaleString()}`;
+        conversationText = `Agent ${agent.name} changed status to ${value} on ${new Date().toLocaleString()}`;
       } else if (field === 'responder_id') {
         updates.responder_id = value === 'Unassigned' ? null : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653');
-        updates.responder_name = value === 'Unassigned' ? null : 'Mitch Starnes';
-        conversationText = `Agent Mitch Starnes ${value === 'Unassigned' ? 'unassigned' : 'assigned'} ticket on ${new Date().toLocaleString()}`;
+        updates.responder_name = value === 'Unassigned' ? null : agent.name;
+        conversationText = `Agent ${agent.name} ${value === 'Unassigned' ? 'unassigned' : 'assigned'} ticket on ${new Date().toLocaleString()}`;
       }
       const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, {
         ...updates,
@@ -85,7 +86,7 @@ function TicketDetails() {
             id: Math.floor(Math.random() * 1000000),
             body_text: conversationText,
             private: false,
-            user_id: userId,
+            user_id: agent.id,
             incoming: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -99,7 +100,7 @@ function TicketDetails() {
       setAssignedAgents({ [ticketId]: updatedTicket.responder_id?._id || 'Unassigned' });
     } catch (err) {
       setError('Failed to update ticket');
-      console.error('Update error:', err);
+      console.error('Error updating ticket:', err);
     }
   };
 

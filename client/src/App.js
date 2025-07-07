@@ -19,19 +19,21 @@ function App() {
   const ticketsPerPage = parseInt(process.env.REACT_APP_DEFAULT_LIMIT) || 10;
   const [replyTicket, setReplyTicket] = useState(null);
   const [replyContent, setReplyContent] = useState('');
+  const [noteTicket, setNoteTicket] = useState(null);
+  const [noteContent, setNoteContent] = useState('');
   const [agents, setAgents] = useState([]);
   const [priorities, setPriorities] = useState({});
   const [statuses, setStatuses] = useState({});
   const [assignedAgents, setAssignedAgents] = useState({});
   const [filter, setFilter] = useState(() => localStorage.getItem('filter') || 'newAndMyOpen');
-  const [userId] = useState('mitch.starnes@exotech.pro');
+  const [userId] = useState(process.env.REACT_APP_CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro');
   const [dialog, setDialog] = useState({ visible: false, ticket: null });
   const [dialogTimeout, setDialogTimeout] = useState(null);
 
   useEffect(() => {
     fetchTickets();
     fetchAgents();
-    localStorage.setItem('filter', filter); // Save filter to localStorage
+    localStorage.setItem('filter', filter);
   }, [filter, currentPage, sortConfig]);
   
   const fetchTickets = async () => {
@@ -174,18 +176,51 @@ function App() {
     setReplyTicket(null);
   };
 
+  const openNoteForm = (ticket) => {
+    setNoteTicket(ticket);
+    setNoteContent('');
+  };
+
+  const closeNoteForm = () => {
+    setNoteTicket(null);
+  };
+
   const sendReply = async () => {
     if (replyTicket && replyContent.trim()) {
       try {
+        const agent = agents.find(a => a.email === userId) || { id: 9006333765, name: 'Mitch Starnes' };
         await axios.post('http://localhost:5001/api/tickets/reply', {
           ticketId: replyTicket._id,
           body: replyContent,
-          user_id: userId,
+          user_id: agent.id,
         });
         closeReplyForm();
         fetchTickets();
       } catch (err) {
         setError('Failed to send reply');
+        console.error('Reply error:', err);
+      }
+    }
+  };
+
+  const sendNote = async () => {
+    if (noteTicket && noteContent.trim()) {
+      try {
+        const agent = agents.find(a => a.email === userId) || { id: 9006333765, name: 'Mitch Starnes' };
+        await axios.post(`http://localhost:5001/api/tickets/${noteTicket._id}/conversations`, {
+          body_text: noteContent,
+          private: true,
+          user_id: agent.id,
+          incoming: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          id: Math.floor(Math.random() * 1000000),
+        });
+        closeNoteForm();
+        fetchTickets();
+      } catch (err) {
+        setError('Failed to add note');
+        console.error('Note error:', err);
       }
     }
   };
@@ -194,19 +229,20 @@ function App() {
     try {
       const updates = {};
       let conversationText = '';
+      const agent = agents.find(a => a.email === userId) || { id: 9006333765, name: 'Mitch Starnes' };
       if (field === 'priority') {
         updates.priority = value === 'Low' ? 1 : value === 'Medium' ? 2 : value === 'High' ? 3 : 4;
         updates.priority_name = value;
-        conversationText = `Agent Mitch Starnes changed priority to ${value} on ${new Date().toLocaleString()}`;
+        conversationText = `Agent ${agent.name} changed priority to ${value} on ${new Date().toLocaleString()}`;
       } else if (field === 'status') {
         updates.status = value === 'Open' ? 2 : value === 'Pending' ? 3 : value === 'Resolved' ? 4 : 5;
         updates.status_name = value;
         if (value === 'Closed') updates.closed_at = new Date().toISOString();
-        conversationText = `Agent Mitch Starnes changed status to ${value} on ${new Date().toLocaleString()}`;
+        conversationText = `Agent ${agent.name} changed status to ${value} on ${new Date().toLocaleString()}`;
       } else if (field === 'responder_id') {
         updates.responder_id = value === 'Unassigned' ? null : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653');
-        updates.responder_name = value === 'Unassigned' ? null : 'Mitch Starnes';
-        conversationText = `Agent Mitch Starnes ${value === 'Unassigned' ? 'unassigned' : 'assigned'} ticket on ${new Date().toLocaleString()}`;
+        updates.responder_name = value === 'Unassigned' ? null : agent.name;
+        conversationText = `Agent ${agent.name} ${value === 'Unassigned' ? 'unassigned' : 'assigned'} ticket on ${new Date().toLocaleString()}`;
       }
       const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, {
         ...updates,
@@ -216,7 +252,7 @@ function App() {
             id: Math.floor(Math.random() * 1000000),
             body_text: conversationText,
             private: false,
-            user_id: userId,
+            user_id: agent.id,
             incoming: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -241,10 +277,10 @@ function App() {
           t._id === ticketId ? { ...t, ...updatedTicket } : t
         )
       );
-      await fetchTickets(); // Refresh to ensure consistency
+      await fetchTickets();
     } catch (err) {
       setError('Failed to update ticket');
-      console.error('Update error:', err);
+      console.error('Error updating ticket:', err);
     }
   };
 
@@ -337,26 +373,14 @@ function App() {
     setDialog({ visible: false, ticket: null });
   };
 
-  const handleReply = async (ticketId, isPrivate) => {
-    const body = prompt(`Enter ${isPrivate ? 'note' : 'reply'} text:`);
-    if (body) {
-      try {
-        await axios.post(`http://localhost:5001/api/tickets/${ticketId}/conversations`, {
-          body_text: body,
-          private: isPrivate,
-          user_id: userId,
-          incoming: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          id: Math.floor(Math.random() * 1000000),
-        });
-        fetchTickets();
+  const handleReply = () => {
+    openReplyForm(dialog.ticket);
         handleCloseDialog();
-      } catch (err) {
-        setError('Failed to add conversation');
-        console.error('Conversation error:', err);
-      }
-    }
+  };
+
+  const handleAddNote = () => {
+    openNoteForm(dialog.ticket);
+    handleCloseDialog();
   };
 
   if (loading) return <p>Loading...</p>;
@@ -511,6 +535,7 @@ function App() {
               onChange={(e) => setReplyContent(e.target.value)}
               placeholder="Type your reply here..."
               className="reply-textarea"
+              rows="5"
             />
             <button
               onClick={sendReply}
@@ -520,6 +545,30 @@ function App() {
               Send Reply
             </button>
             <button onClick={closeReplyForm} className="close-button">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {noteTicket && (
+        <div className="modal note-modal">
+          <div className="modal-content">
+            <h2>Add Note to Ticket: {noteTicket.subject}</h2>
+            <textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder="Type your note here..."
+              className="note-textarea"
+              rows="5"
+            />
+            <button
+              onClick={sendNote}
+              className="send-note-button"
+              disabled={!noteContent.trim()}
+            >
+              Add Note
+            </button>
+            <button onClick={closeNoteForm} className="close-button">
               Cancel
             </button>
           </div>
@@ -540,8 +589,8 @@ function App() {
             </div>
             <div className="dialog-body">{getLastActionDetails(dialog.ticket).preview}</div>
             <div className="dialog-actions">
-              <button onClick={() => handleReply(dialog.ticket._id, false)}>Reply</button>
-              <button onClick={() => handleReply(dialog.ticket._id, true)}>Add Note</button>
+              <button onClick={handleReply}>Reply</button>
+              <button onClick={handleAddNote}>Add Note</button>
             </div>
           </div>
         </div>

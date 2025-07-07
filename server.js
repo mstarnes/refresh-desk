@@ -89,7 +89,7 @@ app.post('/api/tickets', async (req, res) => {
 
     const createdAt = new Date().toISOString();
     const dueBy = new Date(Date.now() + resolveWithin * 1000).toISOString();
-    const agent = await Agent.findOne({ email: 'mitch.starnes@exotech.pro' });
+    const agent = await Agent.findOne({ email: process.env.CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro' });
 
     const ticket = new Ticket({
       subject,
@@ -127,7 +127,13 @@ app.get('/api/tickets', async (req, res) => {
     let query = {};
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
-      query = { status: { $in: [2, 3, 4] }, responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') };
+      query = {
+        $or: [
+          { responder_id: null },
+          { responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') }
+        ],
+        status: { $in: [2, 3] }
+      };
     } else if (filters === 'openTickets') {
       query = { status: { $in: [2, 3] } };
     }
@@ -191,7 +197,14 @@ app.get('/api/tickets/search', async (req, res) => {
     };
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
-      query = { ...query, status: { $in: [2, 3, 4] }, responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') };
+      query = {
+        ...query,
+        $or: [
+          { responder_id: null },
+          { responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') }
+        ],
+        status: { $in: [2, 3] }
+      };
     } else if (filters === 'openTickets') {
       query = { ...query, status: { $in: [2, 3] } };
     }
