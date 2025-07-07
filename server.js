@@ -127,7 +127,7 @@ app.get('/api/tickets', async (req, res) => {
     let query = {};
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
-      query = { status: { $in: [2, 3] }, responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') };
+      query = { status: { $in: [2, 3, 4] }, responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') };
     } else if (filters === 'openTickets') {
       query = { status: { $in: [2, 3] } };
     }
@@ -191,7 +191,7 @@ app.get('/api/tickets/search', async (req, res) => {
     };
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
-      query = { ...query, status: { $in: [2, 3] }, responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') };
+      query = { ...query, status: { $in: [2, 3, 4] }, responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') };
     } else if (filters === 'openTickets') {
       query = { ...query, status: { $in: [2, 3] } };
     }
@@ -223,7 +223,7 @@ app.get('/api/agents', async (req, res) => {
 // Update ticket
 app.patch('/api/tickets/:id', async (req, res) => {
   try {
-    const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at } = req.body;
+    const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at, conversations } = req.body;
     const updates = {};
     if (priority !== undefined) updates.priority = priority;
     if (status !== undefined) updates.status = status;
@@ -232,6 +232,7 @@ app.patch('/api/tickets/:id', async (req, res) => {
     if (status_name) updates.status_name = status_name;
     if (responder_name !== undefined) updates.responder_name = responder_name;
     if (closed_at) updates.closed_at = closed_at;
+    if (conversations) updates.conversations = conversations;
     const ticket = await Ticket.findByIdAndUpdate(req.params.id, updates, { new: true })
       .populate('responder_id', 'name')
       .populate('company_id', 'name');

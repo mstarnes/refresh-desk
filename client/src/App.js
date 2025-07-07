@@ -23,13 +23,15 @@ function App() {
   const [priorities, setPriorities] = useState({});
   const [statuses, setStatuses] = useState({});
   const [assignedAgents, setAssignedAgents] = useState({});
-  const [filter, setFilter] = useState('newAndMyOpen');
-  const [userId] = useState('mitch.starnes@exotech.pro'); // Updated email
-  const [dialog, setDialog] = useState({ visible: false, ticket: null, x: 0, y: 0 });
+  const [filter, setFilter] = useState(() => localStorage.getItem('filter') || 'newAndMyOpen');
+  const [userId] = useState('mitch.starnes@exotech.pro');
+  const [dialog, setDialog] = useState({ visible: false, ticket: null });
+  const [dialogTimeout, setDialogTimeout] = useState(null);
 
   useEffect(() => {
     fetchTickets();
     fetchAgents();
+    localStorage.setItem('filter', filter); // Save filter to localStorage
   }, [filter, currentPage, sortConfig]);
   
   const fetchTickets = async () => {
@@ -191,18 +193,36 @@ function App() {
   const updateField = async (ticketId, field, value) => {
     try {
       const updates = {};
+      let conversationText = '';
       if (field === 'priority') {
         updates.priority = value === 'Low' ? 1 : value === 'Medium' ? 2 : value === 'High' ? 3 : 4;
         updates.priority_name = value;
+        conversationText = `Agent Mitch Starnes changed priority to ${value} on ${new Date().toLocaleString()}`;
       } else if (field === 'status') {
         updates.status = value === 'Open' ? 2 : value === 'Pending' ? 3 : value === 'Resolved' ? 4 : 5;
         updates.status_name = value;
         if (value === 'Closed') updates.closed_at = new Date().toISOString();
+        conversationText = `Agent Mitch Starnes changed status to ${value} on ${new Date().toLocaleString()}`;
       } else if (field === 'responder_id') {
-        updates.responder_id = value === 'Unassigned' ? null : value;
-        updates.responder_name = value === 'Unassigned' ? null : agents.find(a => a._id === value)?.name;
+        updates.responder_id = value === 'Unassigned' ? null : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653');
+        updates.responder_name = value === 'Unassigned' ? null : 'Mitch Starnes';
+        conversationText = `Agent Mitch Starnes ${value === 'Unassigned' ? 'unassigned' : 'assigned'} ticket on ${new Date().toLocaleString()}`;
       }
-      const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, updates);
+      const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, {
+        ...updates,
+        conversations: conversationText ? [
+          ...(tickets.find(t => t._id === ticketId)?.conversations || []),
+          {
+            id: Math.floor(Math.random() * 1000000),
+            body_text: conversationText,
+            private: false,
+            user_id: userId,
+            incoming: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ] : undefined
+      });
       const updatedTicket = response.data;
       setPriorities((prev) => ({
         ...prev,
@@ -221,6 +241,7 @@ function App() {
           t._id === ticketId ? { ...t, ...updatedTicket } : t
         )
       );
+      await fetchTickets(); // Refresh to ensure consistency
     } catch (err) {
       setError('Failed to update ticket');
       console.error('Update error:', err);
@@ -299,17 +320,21 @@ function App() {
     };
   };
 
-  const handleMouseEnter = (ticket, e) => {
-    setDialog({
-      visible: true,
-      ticket,
-      x: e.clientX + 10,
-      y: e.clientY + 10,
-    });
+  const handleMouseEnter = (ticket) => {
+    if (dialogTimeout) clearTimeout(dialogTimeout);
+    const timeout = setTimeout(() => {
+      setDialog({ visible: true, ticket });
+    }, parseInt(process.env.REACT_APP_DIALOG_DELAY) || 1000);
+    setDialogTimeout(timeout);
   };
 
   const handleMouseLeave = () => {
-    setDialog({ visible: false, ticket: null, x: 0, y: 0 });
+    if (dialogTimeout) clearTimeout(dialogTimeout);
+  };
+
+  const handleCloseDialog = () => {
+    if (dialogTimeout) clearTimeout(dialogTimeout);
+    setDialog({ visible: false, ticket: null });
   };
 
   const handleReply = async (ticketId, isPrivate) => {
@@ -326,6 +351,7 @@ function App() {
           id: Math.floor(Math.random() * 1000000),
         });
         fetchTickets();
+        handleCloseDialog();
       } catch (err) {
         setError('Failed to add conversation');
         console.error('Conversation error:', err);
@@ -405,7 +431,7 @@ function App() {
                     <div className="ticket-header">
                       <Link
                         to={`/ticket/${ticket.display_id}`}
-                        onMouseEnter={(e) => handleMouseEnter(ticket, e)}
+                        onMouseEnter={() => handleMouseEnter(ticket)}
                         onMouseLeave={handleMouseLeave}
                       >
                         {ticket.subject || 'No Subject'} #{ticket.display_id}
@@ -423,19 +449,7 @@ function App() {
                 <td data-label="Details">
                   <select
                     value={priorities[ticket._id] || 'Low'}
-                    onChange={(e) =>
-                      updateField(
-                        ticket._id,
-                        'priority',
-                        e.target.value === 'Low'
-                          ? 1
-                          : e.target.value === 'Medium'
-                          ? 2
-                          : e.target.value === 'High'
-                          ? 3
-                          : 4
-                      )
-                    }
+                    onChange={(e) => updateField(ticket._id, 'priority', e.target.value)}
                     className="priority-select"
                   >
                     <option value="Low">Low</option>
@@ -445,13 +459,7 @@ function App() {
                   </select>
                   <select
                     value={assignedAgents[ticket._id] || 'Unassigned'}
-                    onChange={(e) =>
-                      updateField(
-                        ticket._id,
-                        'responder_id',
-                        e.target.value === 'Unassigned' ? null : e.target.value
-                      )
-                    }
+                    onChange={(e) => updateField(ticket._id, 'responder_id', e.target.value)}
                     className="agent-select"
                   >
                     <option value="Unassigned">Unassigned</option>
@@ -463,19 +471,7 @@ function App() {
                   </select>
                   <select
                     value={statuses[ticket._id] || 'Open'}
-                    onChange={(e) =>
-                      updateField(
-                        ticket._id,
-                        'status',
-                        e.target.value === 'Open'
-                          ? 2
-                          : e.target.value === 'Pending'
-                          ? 3
-                          : e.target.value === 'Resolved'
-                          ? 4
-                          : 5
-                      )
-                    }
+                    onChange={(e) => updateField(ticket._id, 'status', e.target.value)}
                     className="status-select"
                   >
                     <option value="Open">Open</option>
@@ -530,11 +526,9 @@ function App() {
         </div>
       )}
       {dialog.visible && (
-        <div
-          className="ticket-dialog"
-          style={{ position: 'absolute', top: dialog.y, left: dialog.x }}
-        >
+        <div className="ticket-dialog">
           <div className="dialog-content">
+            <button className="dialog-close" onClick={handleCloseDialog}>X</button>
             <div className="dialog-header">
               <div className="avatar">{getLastActionDetails(dialog.ticket).initial}</div>
               <div>

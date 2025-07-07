@@ -62,18 +62,36 @@ function TicketDetails() {
   const updateField = async (ticketId, field, value) => {
     try {
       const updates = {};
+      let conversationText = '';
       if (field === 'priority') {
         updates.priority = value === 'Low' ? 1 : value === 'Medium' ? 2 : value === 'High' ? 3 : 4;
         updates.priority_name = value;
+        conversationText = `Agent Mitch Starnes changed priority to ${value} on ${new Date().toLocaleString()}`;
       } else if (field === 'status') {
         updates.status = value === 'Open' ? 2 : value === 'Pending' ? 3 : value === 'Resolved' ? 4 : 5;
         updates.status_name = value;
         if (value === 'Closed') updates.closed_at = new Date().toISOString();
+        conversationText = `Agent Mitch Starnes changed status to ${value} on ${new Date().toLocaleString()}`;
       } else if (field === 'responder_id') {
         updates.responder_id = value === 'Unassigned' ? null : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653');
         updates.responder_name = value === 'Unassigned' ? null : 'Mitch Starnes';
+        conversationText = `Agent Mitch Starnes ${value === 'Unassigned' ? 'unassigned' : 'assigned'} ticket on ${new Date().toLocaleString()}`;
       }
-      const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, updates);
+      const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, {
+        ...updates,
+        conversations: conversationText ? [
+          ...(ticket?.conversations || []),
+          {
+            id: Math.floor(Math.random() * 1000000),
+            body_text: conversationText,
+            private: false,
+            user_id: userId,
+            incoming: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ] : undefined
+      });
       const updatedTicket = response.data;
       setTicket(updatedTicket);
       setPriorities({ [ticketId]: updatedTicket.priority_name || 'Low' });
@@ -149,19 +167,7 @@ function TicketDetails() {
         <div className="ticket-controls">
           <select
             value={priorities[ticket._id] || 'Low'}
-            onChange={(e) =>
-              updateField(
-                ticket._id,
-                'priority',
-                e.target.value === 'Low'
-                  ? 1
-                  : e.target.value === 'Medium'
-                  ? 2
-                  : e.target.value === 'High'
-                  ? 3
-                  : 4
-              )
-            }
+            onChange={(e) => updateField(ticket._id, 'priority', e.target.value)}
             className="priority-select"
           >
             <option value="Low">Low</option>
@@ -171,13 +177,7 @@ function TicketDetails() {
           </select>
           <select
             value={assignedAgents[ticket._id] || 'Unassigned'}
-            onChange={(e) =>
-              updateField(
-                ticket._id,
-                'responder_id',
-                e.target.value === 'Unassigned' ? null : e.target.value
-              )
-            }
+            onChange={(e) => updateField(ticket._id, 'responder_id', e.target.value)}
             className="agent-select"
           >
             <option value="Unassigned">Unassigned</option>
@@ -189,19 +189,7 @@ function TicketDetails() {
           </select>
           <select
             value={statuses[ticket._id] || 'Open'}
-            onChange={(e) =>
-              updateField(
-                ticket._id,
-                'status',
-                e.target.value === 'Open'
-                  ? 2
-                  : e.target.value === 'Pending'
-                  ? 3
-                  : e.target.value === 'Resolved'
-                  ? 4
-                  : 5
-              )
-            }
+            onChange={(e) => updateField(ticket._id, 'status', e.target.value)}
             className="status-select"
           >
             <option value="Open">Open</option>
