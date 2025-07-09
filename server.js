@@ -246,7 +246,8 @@ app.patch('/api/tickets/:id', async (req, res) => {
     if (priority_name) updates.priority_name = priority_name;
     if (status_name) updates.status_name = status_name;
     if (responder_name) updates.responder_name = responder_name;
-    if (closed_at) updates.closed_at = closed_at;
+    //if (closed_at) updates.closed_at = closed_at;
+    if (closed_at) updates['ticket_states.closed_at'] = closed_at; // Use dot notation for nested field
     if (conversations) updates.conversations = conversations;
     const ticket = await Ticket.findByIdAndUpdate(req.params.id, updates, { new: true })
       .populate('responder_id', 'name')

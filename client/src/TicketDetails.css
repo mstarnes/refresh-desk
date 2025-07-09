@@ -355,6 +355,16 @@
   margin-bottom: 10px;
 }
 
+.conversation-private {
+  border-left: 3px solid #FF4500;
+}
+
+.conversation-html {
+  /* Match .description-html styles, e.g., */
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .conversation-meta {
   font-size: 12px;
   color: #999;

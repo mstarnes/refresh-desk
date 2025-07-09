@@ -1,12 +1,13 @@
 // client/src/TicketDetails.js
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './TicketDetails.css';
 import mongoose from 'mongoose';
 
 function TicketDetails() {
   const { display_id } = useParams();
+  const navigate = useNavigate();
   const [ticket, setTicket] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const [error, setError] = useState(null);
@@ -83,7 +84,7 @@ function TicketDetails() {
           {
             id: Math.floor(Math.random() * 1000000),
             body_text: conversationText,
-            private: false,
+            private: true,
             user_id: agent.id,
             incoming: false,
             created_at: new Date().toISOString(),
@@ -152,9 +153,10 @@ function TicketDetails() {
 
   return (
     <div className="ticket-details">
+      <button onClick={() => navigate("/")}>Back to List</button>
       <div className="ticket-header">
         <div className="ticket-info">
-      <h2>{ticket.subject || 'No Subject'} #{ticket.display_id}</h2>
+          <h2>{ticket.subject || 'No Subject'} #{ticket.display_id}</h2>
         <div className="ticket-meta">
           {ticket.requester && ticket.requester.name ? (
             `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'})`
@@ -206,27 +208,33 @@ function TicketDetails() {
         />
       </div>
       <div className="ticket-conversations">
-        <h3>Conversations</h3>
+        <h3>Updates</h3>
         {ticket.conversations?.length ? (
           [...ticket.conversations]
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .map((conv) => (
-            <div key={conv.id} className="conversation">
-              <p>{conv.body_text}</p>
-              <p className="conversation-meta">
-                {conv.user_id === ticket.requester.id
-                  ? ticket.requester.name
-                  : agents.find((a) => a.id === conv.user_id)?.name || `Agent ${conv.user_id}`} |{' '}
-                {conv.private ? 'Note' : 'Reply'} | {new Date(conv.created_at).toLocaleString()}
-              </p>
-            </div>
-          ))
+              <div
+                key={conv.id}
+                className={`conversation ${conv.private ? 'conversation-private' : ''}`}
+              >
+                <div
+                  className="conversation-html"
+                  dangerouslySetInnerHTML={{ __html: conv.body || (conv.body_text || 'No content') }}
+                />
+                <p className="conversation-meta">
+                  {conv.user_id === ticket.requester.id
+                    ? ticket.requester.name
+                    : agents.find((a) => a.id === conv.user_id)?.name || `Agent ${conv.user_id}`} |{' '}
+                  {conv.private ? 'Note' : 'Reply'} | {new Date(conv.created_at).toLocaleString()}
+                </p>
+              </div>
+            ))
         ) : (
           <p>No conversations</p>
         )}
       </div>
       <div className="ticket-timeline">
-        <h3>Timeline (Recent Tickets from Requester)</h3>
+        <h3>Requester History</h3>
         {timeline.length ? (
           timeline.map((t) => (
             <div key={t._id} className="timeline-item">

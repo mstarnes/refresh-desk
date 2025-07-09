@@ -36,8 +36,7 @@ function App() {
     fetchTickets();
     fetchAgents();
     localStorage.setItem('filter', filter);
-    localStorage.setItem('searchQuery', searchQuery);
-  }, [filter, currentPage, sortConfig, searchQuery]);
+  }, [filter, currentPage, sortConfig]); // Removed searchQuery
   
   const fetchTickets = async () => {
     try {
@@ -101,27 +100,27 @@ function App() {
     if (e.key === 'Enter') {
       const query = e.target.value;
       setSearchQuery(query);
-      setFilter('');
+      setFilter(''); // Clear filter during search
       setCurrentPage(1);
       localStorage.setItem('filter', '');
-      localStorage.setItem('searchQuery', query);
-    try {
-      setLoading(true);
-    if (query) {
-        const response = await axios.get('http://localhost:5001/api/tickets/search', {
-          params: {
-            q: query,
-            limit: ticketsPerPage,
+      localStorage.setItem('searchQuery', query); // Persist searchQuery
+      try {
+        setLoading(true);
+        if (query) {
+          const response = await axios.get('http://localhost:5001/api/tickets/search', {
+            params: {
+              q: query,
+              limit: ticketsPerPage,
               page: 1,
               filters: '',
-            userId,
-            sort: sortConfig.key,
-            direction: sortConfig.direction,
-          },
-        });
-        const { tickets: fetchedTickets, total } = response.data;
-        setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
-        setTotalTickets(total || 0);
+              userId,
+              sort: sortConfig.key,
+              direction: sortConfig.direction,
+            },
+          });
+          const { tickets: fetchedTickets, total } = response.data;
+          setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
+          setTotalTickets(total || 0);
           const initialPriorities = fetchedTickets.reduce(
             (acc, ticket) => ({
               ...acc,
@@ -146,14 +145,14 @@ function App() {
           setPriorities(initialPriorities);
           setStatuses(initialStatuses);
           setAssignedAgents(initialAgents);
-    } else {
-      fetchTickets();
-      }
-      setLoading(false);
-    } catch (err) {
-      console.error('Error searching tickets:', err);
-      setError(`Error searching tickets: ${err.message}`);
-      setLoading(false);
+        } else {
+          await fetchTickets(); // Reset to filtered tickets when query is empty
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error('Error searching tickets:', err);
+        setError(`Error searching tickets: ${err.message}`);
+        setLoading(false);
       }
     } else {
       setSearchQuery(e.target.value);
@@ -319,8 +318,8 @@ function App() {
   };
 
   const getLastAction = (ticket) => {
-    if (ticket.status === 5 && ticket.closed_at) {
-      return `Closed ${new Date(ticket.closed_at).toLocaleDateString()}`;
+    if (ticket.status === 5 && ticket.ticket_states.closed_at) {
+      return `Closed ${new Date(ticket.ticket_states.closed_at).toLocaleDateString()}`;
     }
     const lastConversation = ticket.conversations?.slice(-1)[0];
     if (lastConversation) {
@@ -331,8 +330,8 @@ function App() {
   };
 
   const getSLAStatus = (ticket) => {
-    if (ticket.status === 5 && ticket.closed_at && !isNaN(new Date(ticket.closed_at))) {
-      return `Closed ${new Date(ticket.closed_at).toLocaleDateString()} (${new Date(ticket.closed_at) <= new Date(ticket.due_by) ? 'on time' : 'late'})`;
+    if (ticket.status === 5 && ticket.ticket_states.closed_at && !isNaN(new Date(ticket.ticket_states.closed_at))) {
+      return `Closed ${new Date(ticket.ticket_states.closed_at).toLocaleDateString()} (${new Date(ticket.ticket_states.closed_at) <= new Date(ticket.due_by) ? 'on time' : 'late'})`;
     }
     const dueBy = new Date(ticket.due_by);
     const now = new Date();
@@ -431,12 +430,12 @@ function App() {
       </div>
       <h1>Ticket Dashboard</h1>
       <input
-        type="text"
-        placeholder="Search tickets..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onKeyDown={handleSearch}
-        className="search-input"
+          type="text"
+          placeholder="Search tickets..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearch}
+          className="search-input"
       />
       {filteredTickets.length === 0 ? (
         <p>No tickets available or matching your filter/search.</p>
