@@ -302,18 +302,18 @@ function App() {
     switch (safePriority) {
       case 'Low':
       case 1:
-        return 'green';
+        return '#28a745'; // green
       case 'Medium':
       case 2:
-        return 'blue';
+        return '#007bff'; // blue
       case 'High':
       case 3:
-        return '#FFA500';
+        return '#fd7e14'; // orange
       case 'Urgent':
       case 4:
-        return 'red';
+        return '#dc3545'; // red
       default:
-        return 'gray';
+        return '#6c757d'; // gray
     }
   };
 
@@ -394,12 +394,16 @@ function App() {
     handleCloseDialog();
   };
 
+  const getInitial = (name) => {
+    return name ? name.charAt(0).toUpperCase() : 'U';
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
   return (
-    <div className="App">
-      <div className="dashboard-controls">
+    <div className="dashboard-container">
+      <div className="top-controls">
         <div className="filters">
           <label>Filter: </label>
           <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
@@ -427,43 +431,32 @@ function App() {
             <option value="asc">Ascending</option>
           </select>
         </div>
-      </div>
-      <h1>Ticket Dashboard</h1>
       <input
           type="text"
-          placeholder="Search tickets..."
+          placeholder="Search tickets... (press Enter)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleSearch}
           className="search-input"
       />
+      </div>
+      <h1>Ticket Dashboard</h1>
       {filteredTickets.length === 0 ? (
         <p>No tickets available or matching your filter/search.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th></th>
-              <th onClick={() => sortData('subject')}>Ticket</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="ticket-list">
             {filteredTickets.map((ticket) => (
-              <tr key={`${ticket._id}-${statuses[ticket._id]}`}>
-                <td data-label="Avatar">
+            <div key={`${ticket._id}-${statuses[ticket._id]}`} className="ticket-card">
+              <input type="checkbox" className="ticket-checkbox" />
                   <div
-                    className="priority-indicator"
+                className="ticket-icon"
                     style={{
                       backgroundColor: getPriorityColor(priorities[ticket._id]),
                     }}
-                  ></div>
-                </td>
-                <td data-label="Ticket">
-                  <div className="ticket-card">
-                    {isTicketNew(ticket) && (
-                      <span className="new-indicator"></span>
-                    )}
+              >
+                {getInitial(ticket.requester?.name || 'Unknown')}
+              </div>
+              <div className="ticket-info">
                     <div className="ticket-header">
                       <Link
                         to={`/ticket/${ticket.display_id}`}
@@ -472,6 +465,9 @@ function App() {
                       >
                         {ticket.subject || 'No Subject'} #{ticket.display_id}
                       </Link>
+                  {isTicketNew(ticket) && (
+                    <span className="new-indicator"></span>
+                  )}
                     </div>
                     <div className="ticket-meta">
                       {ticket.requester && ticket.requester.name ? (
@@ -481,8 +477,6 @@ function App() {
                       )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
                     </div>
                   </div>
-                </td>
-                <td data-label="Details">
                   <select
                     value={priorities[ticket._id] || 'Low'}
                     onChange={(e) => updateField(ticket._id, 'priority', e.target.value)}
@@ -515,11 +509,9 @@ function App() {
                     <option value="Resolved">Resolved</option>
                     <option value="Closed">Closed</option>
                   </select>
-                </td>
-              </tr>
+            </div>
             ))}
-          </tbody>
-        </table>
+        </div>
       )}
       <div className="pagination">
         <button

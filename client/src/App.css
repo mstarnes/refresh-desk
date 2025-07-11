@@ -1,5 +1,5 @@
 /* client/src/App.css */
-/* Existing styles (preserved, please verify) */
+/* Existing styles (preserved) */
 .App {
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -197,4 +197,102 @@
 
 .pagination span {
   font-size: 1em;
+}
+
+/* New styles for Freshdesk-like layout */
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticket-card {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  gap: 15px;
+}
+
+.ticket-checkbox {
+  margin: 0;
+}
+
+.ticket-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.ticket-info {
+  flex: 1;
+}
+
+.ticket-header a {
+  font-weight: bold;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.ticket-header a:hover {
+  text-decoration: underline;
+}
+
+.ticket-meta {
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.priority-select, .agent-select, .status-select {
+  padding: 5px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: white;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .top-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    max-width: none;
+  }
+
+  .ticket-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .priority-select, .agent-select, .status-select {
+    width: 100%;
+  }
 }
