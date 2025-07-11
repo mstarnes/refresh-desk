@@ -32,63 +32,60 @@ Refresh Desk is a ticket management system built with the **MERN stack** (MongoD
    ```bash
    git clone https://github.com/mstarnes/refresh-desk.git
    cd refresh-desk
+   ```
 
-Install Dependencies:For the client:bash
+2. **Install Dependencies**:
+   - Install client dependencies:
+     ```bash
+     cd client
+     npm install
+     ```
+   - Install server dependencies:
+     ```bash
+     cd ../server
+     npm install
+     ```
 
-cd client
-npm install
+3. **Set Up Environment Variables**:
+   - Create a `.env` file in the `server` directory with the following:
+     ```
+     MONGO_URI=mongodb://localhost:27017/refresh_desk
+     PORT=5001
+     ```
+   - Create a `.env` file in the `client` directory with:
+     ```
+     REACT_APP_DEFAULT_LIMIT=10
+     REACT_APP_CURRENT_AGENT_EMAIL=mitch.starnes@exotech.pro
+     REACT_APP_DIALOG_DELAY=1000
+     ```
+   - Replace `MONGO_URI` with your MongoDB connection string if using a cloud instance.
 
-For the server:bash
+4. **Start MongoDB**:
+   - Ensure MongoDB is running locally (`mongod`) or accessible via your cloud provider.
 
-cd ../server
-npm install
+5. **Run the Application**:
+   - Start the server:
+     ```bash
+     cd server
+     npm run dev
+     ```
+   - In a new terminal, start the client:
+     ```bash
+     cd client
+     npm run dev
+     ```
+   - The client runs on http://localhost:3000, and the server runs on http://localhost:5001.
 
-Set Up Environment Variables:Create a .env file in the server directory:env
+## Usage
 
-MONGO_URI=mongodb://localhost:27017/refresh_desk
-PORT=5001
+- **Access the Dashboard**: Open http://localhost:3000 in your browser. View tickets filtered by "New and My Open Tickets" by default.
+- **Search Tickets**: Enter a search query in the search bar and press Enter to search tickets. Clear the search query and press Enter to reset to the filtered ticket list.
+- **Manage Tickets**: Click a ticket subject to view details, including conversations. Update priority, status, or assignee via dropdowns in the dashboard or ticket details. Add replies or private notes to tickets, with private notes styled with an orange-red border (#FF4500) and public replies with a blue border (#007bff).
+- **Conversations**: Conversations render HTML content from body fields, falling back to body_text if body is empty. Private notes are labeled "Note" and public replies as "Reply" in the conversation metadata.
 
-Create a .env file in the client directory:env
+## Project Structure
 
-REACT_APP_DEFAULT_LIMIT=10
-REACT_APP_CURRENT_AGENT_EMAIL=mitch.starnes@exotech.pro
-REACT_APP_DIALOG_DELAY=1000
-
-Replace MONGO_URI with your MongoDB connection string if using a cloud instance (e.g., MongoDB Atlas).
-
-Start MongoDB:Run MongoDB locally:bash
-
-mongod
-
-Or ensure your cloud MongoDB instance is accessible.
-
-Run the Application:Start the server:bash
-
-cd server
-npm run dev
-
-In a new terminal, start the client:bash
-
-cd client
-npm run dev
-
-Access the client at http://localhost:3000 and the server at http://localhost:5001.
-
-UsageAccess the Dashboard:Open http://localhost:3000 in your browser.
-View tickets filtered by "New and My Open Tickets" by default.
-
-Search Tickets:Enter a query in the search bar and press Enter to search tickets.
-Clear the query and press Enter to reset to the filtered ticket list.
-
-Manage Tickets:Click a ticket subject to view details, including conversations.
-Update priority, status, or assignee via dropdowns in the dashboard or ticket details.
-Add replies or private notes, with private notes styled with an orange-red border (#FF4500) and public replies with a blue border (#007bff).
-
-Conversations:Conversations render HTML from body fields, falling back to body_text if body is empty.
-Private notes are labeled "Note" and public replies as "Reply" in metadata.
-
-Project Structureplaintext
-
+```
 refresh-desk/
 ├── client/                   # React frontend
 │   ├── src/
@@ -105,37 +102,42 @@ refresh-desk/
 │   ├── .env                  # Server environment variables
 │   └── package.json          # Server dependencies
 └── README.md                 # This file
+```
 
-API EndpointsGET /api/tickets: Fetch tickets with pagination, filters, and sorting.
-GET /api/tickets/search: Search tickets by keyword.
-PATCH /api/tickets/:id: Update ticket fields (e.g., priority, status, assignee).
-POST /api/tickets/reply: Add a public reply to a ticket.
-POST /api/tickets/:id/conversations: Add a private note to a ticket.
-GET /api/agents: Fetch list of agents.
+## API Endpoints
 
-Known IssuesSearch Focus: Fixed to prevent input focus loss by triggering searches only on Enter.
-Timeline: New ticket requests may not appear immediately in the timeline; requires investigation.
+- **GET /api/tickets**: Fetch tickets with pagination, filters, and sorting.
+- **GET /api/tickets/search**: Search tickets by keyword.
+- **PATCH /api/tickets/:id**: Update ticket fields (e.g., priority, status, assignee).
+- **POST /api/tickets/reply**: Add a public reply to a ticket.
+- **POST /api/tickets/:id/conversations**: Add a private note to a ticket.
+- **GET /api/agents**: Fetch list of agents.
 
-ContributingFork the repository.
-Create a feature branch:bash
+## Known Issues
 
-git checkout -b feature/your-feature
+- **Search Focus**: Previously, the search input lost focus due to frequent backend queries. Fixed by triggering searches only on Enter.
+- **Timeline**: New ticket requests may not appear in the timeline immediately; requires further investigation.
 
-Commit changes:bash
+## Contributing
 
-git commit -m "Add your feature"
+- Fork the repository.
+- Create a feature branch (`git checkout -b feature/your-feature`).
+- Commit changes (`git commit -m "Add your feature"`).
+- Push to the branch (`git push origin feature/your-feature`).
+- Open a pull request.
 
-Push to the branch:bash
+## Future Enhancements
 
-git push origin feature/your-feature
+- Add real-time ticket updates using WebSockets.
+- Implement debounced search for real-time filtering (optional).
+- Add sanitization for HTML content using DOMPurify to prevent XSS.
+- Enhance mobile responsiveness for ticket details view.
+- Fix timeline issues with new ticket requests.
 
-Open a pull request.
+## License
 
-Future EnhancementsImplement real-time ticket updates using WebSockets.
-Add debounced search for real-time filtering (optional).
-Integrate DOMPurify for HTML sanitization to prevent XSS.
-Improve mobile responsiveness for ticket details.
-Resolve timeline issues with new ticket requests.
+This project is licensed under the MIT License.
 
-LicenseThis project is licensed under the MIT License.ContactFor questions or feedback, contact Mitch Starnes (mailto:mitch.starnes@exotech.pro).
+## Contact
 
+For questions or feedback, contact Mitch Starnes (mailto:mitch.starnes@exotech.pro).
