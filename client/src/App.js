@@ -394,8 +394,11 @@ function App() {
     handleCloseDialog();
   };
 
-  const getInitial = (name) => {
-    return name ? name.charAt(0).toUpperCase() : 'U';
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const words = name.split(' ');
+    const initials = words.map(word => word.charAt(0).toUpperCase()).join('');
+    return initials.substring(0, 3);
   };
 
   if (loading) return <p>Loading...</p>;
@@ -404,6 +407,7 @@ function App() {
   return (
     <div className="dashboard-container">
       <div className="top-controls">
+        <div className="filter-sort-wrapper">
         <div className="filters">
           <label>Filter: </label>
           <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
@@ -431,6 +435,7 @@ function App() {
             <option value="asc">Ascending</option>
           </select>
         </div>
+        </div>
       <input
           type="text"
           placeholder="Search tickets... (press Enter)"
@@ -454,7 +459,7 @@ function App() {
                       backgroundColor: getPriorityColor(priorities[ticket._id]),
                     }}
               >
-                {getInitial(ticket.requester?.name || 'Unknown')}
+                {getInitials(ticket.requester?.name || 'Unknown')}
               </div>
               <div className="ticket-info">
                     <div className="ticket-header">
@@ -477,6 +482,7 @@ function App() {
                       )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
                     </div>
                   </div>
+              <div className="selects-container">
                   <select
                     value={priorities[ticket._id] || 'Low'}
                     onChange={(e) => updateField(ticket._id, 'priority', e.target.value)}
@@ -509,6 +515,7 @@ function App() {
                     <option value="Resolved">Resolved</option>
                     <option value="Closed">Closed</option>
                   </select>
+            </div>
             </div>
             ))}
         </div>
