@@ -1,7 +1,7 @@
 // client/src/App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import './App.css';
 import mongoose from 'mongoose';
 
@@ -9,9 +9,11 @@ function App() {
   const [tickets, setTickets] = useState([]);
   const [totalTickets, setTotalTickets] = useState(0);
   const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('searchQuery') || '');
+  const [activeSearchQuery, setActiveSearchQuery] = useState(() => localStorage.getItem('searchQuery') || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortConfig, setSortConfig] = useState({
+  const storedSortConfig = JSON.parse(localStorage.getItem('sortConfig'));
+  const [sortConfig, setSortConfig] = useState(storedSortConfig || {
     key: 'updated_at',
     direction: 'desc',
   });
@@ -25,20 +27,15 @@ function App() {
   const [priorities, setPriorities] = useState({});
   const [statuses, setStatuses] = useState({});
   const [assignedAgents, setAssignedAgents] = useState({});
-  const [filter, setFilter] = useState(() => localStorage.getItem('filter') || 'newAndMyOpen');
+  const [filter, setFilter] = useState(() => {
+    const stored = localStorage.getItem('filter');
+    return stored !== null ? stored : 'newAndMyOpen';
+  });
   const [userId] = useState(process.env.REACT_APP_CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro');
   const [dialog, setDialog] = useState({ visible: false, ticket: null });
   const [dialogTimeout, setDialogTimeout] = useState(null);
-  const navigate = useNavigate();
-  const location = useLocation();
 
-  useEffect(() => {
-    fetchTickets();
-    fetchAgents();
-    localStorage.setItem('filter', filter);
-  }, [filter, currentPage, sortConfig]); // Removed searchQuery
-  
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get('http://localhost:5001/api/tickets', {
@@ -85,84 +82,105 @@ function App() {
       setError(`Failed to fetch tickets: ${err.message}`);
       setLoading(false);
     }
-  };
+  }, [ticketsPerPage, currentPage, filter, userId, sortConfig.key, sortConfig.direction]);
     
-    const fetchAgents = async () => {
-      try {
+  const fetchAgents = useCallback(async () => {
+    try {
       const response = await axios.get('http://localhost:5001/api/agents');
-        setAgents(response.data);
-      } catch (err) {
+      setAgents(response.data);
+    } catch (err) {
       console.error('Fetch Agents Error:', err);
+    }
+  }, []);
+
+  const performSearch = useCallback(async (query) => {
+    try {
+      setLoading(true);
+      if (query) {
+        const response = await axios.get('http://localhost:5001/api/tickets/search', {
+          params: {
+            q: query,
+            limit: ticketsPerPage,
+            page: currentPage,
+            filters: '',
+            userId,
+            sort: sortConfig.key,
+            direction: sortConfig.direction,
+          },
+        });
+        const { tickets: fetchedTickets, total } = response.data;
+        setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
+        setTotalTickets(total || 0);
+        const initialPriorities = fetchedTickets.reduce(
+          (acc, ticket) => ({
+            ...acc,
+            [ticket._id]: ticket.priority_name || 'Low',
+          }),
+          {}
+        );
+        const initialStatuses = fetchedTickets.reduce(
+          (acc, ticket) => ({
+            ...acc,
+            [ticket._id]: ticket.status_name || 'Open',
+          }),
+          {}
+        );
+        const initialAgents = fetchedTickets.reduce(
+          (acc, ticket) => ({
+            ...acc,
+            [ticket._id]: ticket.responder_id?._id || 'Unassigned',
+          }),
+          {}
+        );
+        setPriorities(initialPriorities);
+        setStatuses(initialStatuses);
+        setAssignedAgents(initialAgents);
+      } else {
+        await fetchTickets(); // Reset to filtered tickets when query is empty
       }
-    };
+      setLoading(false);
+    } catch (err) {
+      console.error('Error searching tickets:', err);
+      setError(`Error searching tickets: ${err.message}`);
+      setLoading(false);
+    }
+  }, [ticketsPerPage, currentPage, userId, sortConfig.key, sortConfig.direction, fetchTickets]);
   
+  useEffect(() => {
+    fetchAgents();
+    localStorage.setItem('filter', filter);
+  }, [fetchAgents, filter]); 
+  
+  useEffect(() => {
+    if (activeSearchQuery) {
+      performSearch(activeSearchQuery);
+    } else {
+      fetchTickets();
+    }
+  }, [performSearch, fetchTickets, activeSearchQuery, currentPage, sortConfig]); 
+  
+  useEffect(() => {
+    localStorage.setItem('sortConfig', JSON.stringify(sortConfig));
+  }, [sortConfig]);
+
     const handleSearch = async (e) => {
     if (e.key === 'Enter') {
       const query = e.target.value;
+      setActiveSearchQuery(query);
       setSearchQuery(query);
-      setFilter(''); // Clear filter during search
+      setFilter('');
       setCurrentPage(1);
       localStorage.setItem('filter', '');
-      localStorage.setItem('searchQuery', query); // Persist searchQuery
-      try {
-        setLoading(true);
-        if (query) {
-          const response = await axios.get('http://localhost:5001/api/tickets/search', {
-            params: {
-              q: query,
-              limit: ticketsPerPage,
-              page: 1,
-              filters: '',
-              userId,
-              sort: sortConfig.key,
-              direction: sortConfig.direction,
-            },
-          });
-          const { tickets: fetchedTickets, total } = response.data;
-          setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
-          setTotalTickets(total || 0);
-          const initialPriorities = fetchedTickets.reduce(
-            (acc, ticket) => ({
-              ...acc,
-              [ticket._id]: ticket.priority_name || 'Low',
-            }),
-            {}
-          );
-          const initialStatuses = fetchedTickets.reduce(
-            (acc, ticket) => ({
-              ...acc,
-              [ticket._id]: ticket.status_name || 'Open',
-            }),
-            {}
-          );
-          const initialAgents = fetchedTickets.reduce(
-            (acc, ticket) => ({
-              ...acc,
-              [ticket._id]: ticket.responder_id?._id || 'Unassigned',
-            }),
-            {}
-          );
-          setPriorities(initialPriorities);
-          setStatuses(initialStatuses);
-          setAssignedAgents(initialAgents);
-        } else {
-          await fetchTickets(); // Reset to filtered tickets when query is empty
-        }
-        setLoading(false);
-      } catch (err) {
-        console.error('Error searching tickets:', err);
-        setError(`Error searching tickets: ${err.message}`);
-        setLoading(false);
-      }
+      localStorage.setItem('searchQuery', query);
     } else {
       setSearchQuery(e.target.value);
     }
   };
 
   const sortData = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    let direction = sortConfig.direction;
+    if (sortConfig.key === key) {
+      direction = sortConfig.direction === 'desc' ? 'asc' : 'desc';
     }
     setSortConfig({ key, direction });
     setCurrentPage(1);
@@ -171,6 +189,7 @@ function App() {
   const handleFilterChange = (value) => {
     setFilter(value);
     setSearchQuery('');
+    setActiveSearchQuery('');
     setCurrentPage(1);
     localStorage.setItem('filter', value);
     localStorage.setItem('searchQuery', '');
@@ -408,116 +427,116 @@ function App() {
     <div className="dashboard-container">
       <div className="top-controls">
         <div className="filter-sort-wrapper">
-        <div className="filters">
-          <label>Filter: </label>
-          <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
-            <option value="newAndMyOpen">New and My Open Tickets</option>
-            <option value="openTickets">Open Tickets</option>
-            <option value="allTickets">All Tickets</option>
-            <option value="">None</option>
-          </select>
+          <div className="filters">
+            <label>Filter: </label>
+            <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
+              <option value="newAndMyOpen">New and My Open Tickets</option>
+              <option value="openTickets">Open Tickets</option>
+              <option value="allTickets">All Tickets</option>
+              <option value="">None</option>
+            </select>
+          </div>
+          <div className="sort">
+            <label>Sort by: </label>
+            <select
+              value={sortConfig.key}
+              onChange={(e) => sortData(e.target.value)}
+            >
+              <option value="updated_at">Last Modified</option>
+              <option value="created_at">Date Created</option>
+              <option value="subject">Subject</option>
+            </select>
+            <select
+              value={sortConfig.direction}
+              onChange={(e) => setSortConfig({ ...sortConfig, direction: e.target.value })}
+            >
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </div>
         </div>
-        <div className="sort">
-          <label>Sort by: </label>
-          <select
-            value={sortConfig.key}
-            onChange={(e) => sortData(e.target.value)}
-          >
-            <option value="updated_at">Last Modified</option>
-            <option value="created_at">Date Created</option>
-            <option value="subject">Subject</option>
-          </select>
-          <select
-            value={sortConfig.direction}
-            onChange={(e) => setSortConfig({ ...sortConfig, direction: e.target.value })}
-          >
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
-          </select>
-        </div>
-        </div>
-      <input
+        <input
           type="text"
           placeholder="Search tickets... (press Enter)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleSearch}
           className="search-input"
-      />
+        />
       </div>
-      <h1>Ticket Dashboard</h1>
+      <h1>Refresh Desk Dashboard</h1>
       {filteredTickets.length === 0 ? (
         <p>No tickets available or matching your filter/search.</p>
       ) : (
         <div className="ticket-list">
-            {filteredTickets.map((ticket) => (
+          {filteredTickets.map((ticket) => (
             <div key={`${ticket._id}-${statuses[ticket._id]}`} className="ticket-card">
               <input type="checkbox" className="ticket-checkbox" />
-                  <div
+              <div
                 className="ticket-icon"
-                    style={{
-                      backgroundColor: getPriorityColor(priorities[ticket._id]),
-                    }}
+                style={{
+                  backgroundColor: getPriorityColor(priorities[ticket._id]),
+                }}
               >
                 {getInitials(ticket.requester?.name || 'Unknown')}
               </div>
               <div className="ticket-info">
-                    <div className="ticket-header">
-                      <Link
-                        to={`/ticket/${ticket.display_id}`}
-                        onMouseEnter={() => handleMouseEnter(ticket)}
-                        onMouseLeave={handleMouseLeave}
-                      >
-                        {ticket.subject || 'No Subject'} #{ticket.display_id}
-                      </Link>
+                <div className="ticket-header">
+                  <Link
+                    to={`/ticket/${ticket.display_id}`}
+                    onMouseEnter={() => handleMouseEnter(ticket)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    {ticket.subject || 'No Subject'} #{ticket.display_id}
+                  </Link>
                   {isTicketNew(ticket) && (
                     <span className="new-indicator"></span>
                   )}
-                    </div>
-                    <div className="ticket-meta">
-                      {ticket.requester && ticket.requester.name ? (
-                        `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'})`
-                      ) : (
-                        `Unknown (${ticket.company_id?.name || 'Unknown Company'})`
-                      )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
-                    </div>
-                  </div>
+                </div>
+                <div className="ticket-meta">
+                  {ticket.requester && ticket.requester.name ? (
+                    `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'})`
+                  ) : (
+                    `Unknown (${ticket.company_id?.name || 'Unknown Company'})`
+                  )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
+                </div>
+              </div>
               <div className="selects-container">
-                  <select
-                    value={priorities[ticket._id] || 'Low'}
-                    onChange={(e) => updateField(ticket._id, 'priority', e.target.value)}
-                    className="priority-select"
-                  >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Urgent">Urgent</option>
-                  </select>
-                  <select
-                    value={assignedAgents[ticket._id] || 'Unassigned'}
-                    onChange={(e) => updateField(ticket._id, 'responder_id', e.target.value)}
-                    className="agent-select"
-                  >
-                    <option value="Unassigned">Unassigned</option>
-                    {agents.map((agent) => (
-                      <option key={agent._id} value={agent._id}>
-                        {agent.name}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={statuses[ticket._id] || 'Open'}
-                    onChange={(e) => updateField(ticket._id, 'status', e.target.value)}
-                    className="status-select"
-                  >
-                    <option value="Open">Open</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Resolved">Resolved</option>
-                    <option value="Closed">Closed</option>
-                  </select>
+                <select
+                  value={priorities[ticket._id] || 'Low'}
+                  onChange={(e) => updateField(ticket._id, 'priority', e.target.value)}
+                  className="priority-select"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Urgent">Urgent</option>
+                </select>
+                <select
+                  value={assignedAgents[ticket._id] || 'Unassigned'}
+                  onChange={(e) => updateField(ticket._id, 'responder_id', e.target.value)}
+                  className="agent-select"
+                >
+                  <option value="Unassigned">Unassigned</option>
+                  {agents.map((agent) => (
+                    <option key={agent._id} value={agent._id}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={statuses[ticket._id] || 'Open'}
+                  onChange={(e) => updateField(ticket._id, 'status', e.target.value)}
+                  className="status-select"
+                >
+                  <option value="Open">Open</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
             </div>
-            </div>
-            ))}
+          ))}
         </div>
       )}
       <div className="pagination">

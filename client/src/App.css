@@ -57,7 +57,7 @@
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 5px;
-  box-shadow: 0 2Px 8Px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   width: 300px;
 }
@@ -108,7 +108,7 @@
 
 .dialog-actions {
   display: flex;
-  gap: 10Px;
+  gap: 10px;
 }
 
 .dialog-actions button {
@@ -150,7 +150,7 @@
   min-height: 100px;
   margin-bottom: 10px;
   padding: 10px;
-  border: 1Px solid #ddd;
+  border: 1px solid #ddd;
   border-radius: 5px;
 }
 
@@ -167,9 +167,9 @@
 .close-button {
   background: #6c757d;
   color: #fff;
-  padding: 8Px 16Px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 5Px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
@@ -178,15 +178,15 @@
   justify-content: center;
   align-items: center;
   gap: 10px;
-  margin-top: 20Px;
+  margin-top: 20px;
 }
 
 .pagination button {
   background: #007bff;
   color: white;
   border: none;
-  padding: 8Px 12Px;
-  border-radius: 3Px;
+  padding: 8px 12px;
+  border-radius: 3px;
   cursor: pointer;
 }
 
@@ -210,48 +210,48 @@
 .top-controls {
   display: flex;
   flex-direction: column;
-  gap: 10Px;
-  margin-bottom: 20Px;
+  gap: 15px;
+  margin-bottom: 15px;
 }
 
 .filter-sort-wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10Px;
+  gap: 10px;
 }
 
 .search-input {
   width: 100%;
-  padding: 8Px;
-  border: 1Px solid #ced4da;
-  border-radius: 4Px;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
 }
 
 .ticket-list {
   display: flex;
   flex-direction: column;
-  gap: 10Px;
+  gap: 10px;
 }
 
 .ticket-card {
   display: flex;
-  align-items: flex-start;
-  padding: 15Px;
+  align-items: center;
+  padding: 15px;
   background-color: white;
-  border: 1Px solid #dee2e6;
-  border-radius: 8Px;
-  box-shadow: 0 1Px 3Px rgba(0, 0, 0, 0.1);
-  gap: 15Px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  gap: 15px;
 }
 
 .ticket-checkbox {
-  margin-top: 10Px;
+  align-self: center;
 }
 
 .ticket-icon {
-  width: 40Px;
-  height: 40Px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   color: white;
   display: flex;
@@ -259,6 +259,7 @@
   justify-content: center;
   font-weight: bold;
   font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .ticket-info {
@@ -286,14 +287,14 @@
 .selects-container {
   display: flex;
   flex-direction: column;
-  gap: 10Px;
-  min-width: 150Px;
+  gap: 5px;
+  min-width: 150px;
 }
 
 .priority-select, .agent-select, .status-select {
-  padding: 5Px;
-  border: 1Px solid #ced4da;
-  border-radius: 4Px;
+  padding: 5px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
   background-color: white;
 }
 
@@ -307,13 +308,13 @@
   .ticket-card {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10Px;
+    gap: 10px;
   }
 
   .selects-container {
     width: 100%;
     flex-direction: row;
-    gap: 10Px;
+    gap: 10px;
   }
 
   .priority-select, .agent-select, .status-select {
