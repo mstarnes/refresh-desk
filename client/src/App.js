@@ -383,7 +383,7 @@ function App() {
         ? ticket.requester.name
         : agents.find((a) => a.id === lastConversation.user_id)?.name || `Agent ${lastConversation.user_id}`;
       return {
-        initial: name[0] || 'U',
+        initial: getInitials(name),
         name,
         verb: lastConversation.private ? 'noted' : 'replied',
         timestamp: new Date(lastConversation.updated_at).toLocaleString(),
@@ -391,9 +391,9 @@ function App() {
       };
     }
     return {
-      initial: ticket.requester?.name[0] || 'U',
+      initial: getInitials(ticket.requester?.name || 'Unknown'),
       name: ticket.requester?.name || 'Unknown',
-      verb: 'created',
+      verb: 'created a ticket',
       timestamp: new Date(ticket.created_at).toLocaleString(),
       preview: ticket.description.slice(0, 240) + (ticket.description.length > 240 ? '...' : ''),
     };
@@ -627,7 +627,9 @@ function App() {
           <div className="dialog-content">
             <button className="dialog-close" onClick={handleCloseDialog}>X</button>
             <div className="dialog-header">
-              <div className="avatar">{getLastActionDetails(dialog.ticket).initial}</div>
+              <div className="avatar" style={{ backgroundColor: getPriorityColor(priorities[dialog.ticket._id]) }}>
+                {getLastActionDetails(dialog.ticket).initial}
+              </div>
               <div>
                 <div>
                   {getLastActionDetails(dialog.ticket).name} {getLastActionDetails(dialog.ticket).verb}

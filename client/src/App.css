@@ -171,42 +171,79 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  width: 300px;
+  width: 400px;
+  padding: 0;
 }
 
 .dialog-content {
-  padding: 15px;
   position: relative;
 }
 
 .dialog-close {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 10px;
+  right: 10px;
   background: none;
   border: none;
   font-size: 16px;
   cursor: pointer;
+  color: #6c757d;
 }
 
 .dialog-header {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  padding: 15px 15px 0;
+  margin-bottom: 5px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: #a29bfe;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+.dialog-header > div > div:first-child {
+  font-weight: bold;
+  color: #007bff;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: #6c757d;
+  padding: 0 15px 10px;
 }
 
 .dialog-body {
   font-size: 14px;
-  margin-bottom: 10px;
+  color: #343a40;
+  line-height: 1.5;
+  background-color: #f0f3f6;
+  padding: 15px;
+  margin: 0 15px 15px;
+  border-radius: 4px;
 }
 
 .dialog-actions {
   display: flex;
   gap: 10px;
+  justify-content: flex-end;
+  border-top: 1px solid #e9ecef;
+  padding: 10px 15px;
+  background-color: #f8faff;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .dialog-actions button {
@@ -214,16 +251,17 @@
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .dialog-actions button:first-child {
-  background: #007bff;
-  color: #fff;
+  background: transparent;
+  color: #007bff;
 }
 
 .dialog-actions button:last-child {
-  background: #6c757d;
-  color: #fff;
+  background: transparent;
+  color: #6c757d;
 }
 
 .reply-modal, .note-modal {
