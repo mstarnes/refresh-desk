@@ -109,6 +109,17 @@ app.post('/api/tickets', async (req, res) => {
       priority_name: { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }[priority] || 'Low',
       status_name: { 2: 'Open', 3: 'Pending', 4: 'Resolved', 5: 'Closed' }[status || 2] || 'Open',
       responder_name: responder_id ? (await Agent.findById(responder_id))?.name : agent?.name || 'Mitch Starnes',
+      ticket_states: {
+        ticket_id: display_id, // Assigned once at creation
+        opened_at: createdAt,
+        created_at: createdAt,
+        updated_at: createdAt,
+        inbound_count: 1, // Initial creation counts as inbound +1
+        outbound_count: 0,
+        reopened_count: 0,
+        status_updated_at: createdAt,
+        // Other fields default to null/false as per schema
+      },
     });
 
     await ticket.save();
@@ -251,16 +262,45 @@ app.patch('/api/tickets/:id', async (req, res) => {
   try {
     const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at, conversations } = req.body;
     const updates = {};
+    const ticketStatesUpdates = {};
+    const currentTime = new Date().toISOString();
     if (priority !== undefined) updates.priority = priority;
-    if (status !== undefined) updates.status = status;
-    if (responder_id !== undefined) updates.responder_id = responder_id;
+    if (status !== undefined) {
+      updates.status = status;
+      ticketStatesUpdates.status_updated_at = currentTime;
+      if (status === 4 || status === 5) { // Resolved or Closed
+        ticketStatesUpdates.resolved_at = currentTime;
+        ticketStatesUpdates.closed_at = currentTime;
+        ticketStatesUpdates.sla_timer_stopped_at = currentTime;
+        ticketStatesUpdates.resolution_time_updated_at = currentTime;
+        // Calculate resolution_time_by_bhrs, etc. - implement BH calculation logic here
+      } else if (status === 3) { // Pending
+        ticketStatesUpdates.pending_since = currentTime;
+        ticketStatesUpdates.sla_timer_stopped_at = currentTime;
+      } else if (status === 2) { // Open
+        ticketStatesUpdates.pending_since = null;
+        ticketStatesUpdates.resolved_at = null;
+        ticketStatesUpdates.closed_at = null;
+        ticketStatesUpdates.sla_timer_stopped_at = null;
+        ticketStatesUpdates.resolution_time_updated_at = null;
+      }
+    }
+    if (responder_id !== undefined) {
+      updates.responder_id = responder_id;
+      if (!ticket.responder_id) {
+        ticketStatesUpdates.first_assigned_at = currentTime;
+      }
+      ticketStatesUpdates.assigned_at = responder_id ? currentTime : null;
+    }
     if (priority_name) updates.priority_name = priority_name;
     if (status_name) updates.status_name = status_name;
     if (responder_name) updates.responder_name = responder_name;
     //if (closed_at) updates.closed_at = closed_at;
     if (closed_at) updates['ticket_states.closed_at'] = closed_at; // Use dot notation for nested field
     if (conversations) updates.conversations = conversations;
-    const ticket = await Ticket.findByIdAndUpdate(req.params.id, updates, { new: true })
+    updates.updated_at = currentTime;
+    ticketStatesUpdates.updated_at = currentTime;
+    const ticket = await Ticket.findByIdAndUpdate(req.params.id, { $set: { ...updates, 'ticket_states': { ...ticket.ticket_states, ...ticketStatesUpdates } } }, { new: true })
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
     if (!ticket) {
@@ -281,15 +321,51 @@ app.post('/api/tickets/:id/conversations', async (req, res) => {
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
+    const currentTime = new Date().toISOString();
+    const isAgent = await Agent.exists({ _id: user_id });
     ticket.conversations.push({
       id: id || ticket.conversations.length + 1,
       body_text,
       private: isPrivate,
       user_id,
       incoming,
-      created_at,
-      updated_at,
+      created_at: created_at || currentTime,
+      updated_at: updated_at || currentTime,
     });
+    ticket.updated_at = currentTime;
+    ticket.ticket_states.updated_at = currentTime;
+    if (incoming) { // User reply
+      ticket.ticket_states.inbound_count = (ticket.ticket_states.inbound_count || 0) + 1;
+      ticket.ticket_states.requester_responded_at = currentTime;
+      if (ticket.status === 4 || ticket.status === 5) { // Reopen if resolved/closed
+        ticket.status = 2;
+        ticket.status_name = 'Open';
+        ticket.ticket_states.resolved_at = null;
+        ticket.ticket_states.closed_at = null;
+        ticket.ticket_states.reopened_count = (ticket.ticket_states.reopened_count || 0) + 1;
+        ticket.ticket_states.sla_timer_stopped_at = null;
+        ticket.ticket_states.resolution_time_updated_at = null;
+        ticket.ticket_states.status_updated_at = currentTime;
+        // Reset resolution times to null
+        ticket.ticket_states.resolution_time_by_bhrs = null;
+        ticket.ticket_states.avg_response_time_by_bhrs = null;
+      } else if (ticket.status === 3) { // Pending to Open
+        ticket.status = 2;
+        ticket.status_name = 'Open';
+        ticket.ticket_states.pending_since = null;
+        ticket.ticket_states.sla_timer_stopped_at = null;
+        ticket.ticket_states.status_updated_at = currentTime;
+        // Recalculate due_by/frDueBy adding paused time
+      }
+    } else if (!isPrivate) { // Agent reply (not note)
+      ticket.ticket_states.outbound_count = (ticket.ticket_states.outbound_count || 0) + 1;
+      ticket.ticket_states.agent_responded_at = currentTime;
+      if (!ticket.ticket_states.first_response_time) {
+        ticket.ticket_states.first_response_time = (new Date(currentTime) - new Date(ticket.created_at)) / 1000; // Seconds
+        // Calculate first_resp_time_by_bhrs with BH logic
+      }
+      // Update avg_response_time and avg_response_time_by_bhrs with BH logic
+    }
     await ticket.save();
     const populatedTicket = await Ticket.findById(req.params.id)
       .populate('responder_id', 'name')
@@ -309,15 +385,25 @@ app.post('/api/tickets/reply', async (req, res) => {
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
+    const currentTime = new Date().toISOString();
     ticket.conversations.push({
       id: ticket.conversations.length + 1,
       body_text: body,
       private: false,
       user_id,
       incoming: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: currentTime,
+      updated_at: currentTime,
     });
+    ticket.updated_at = currentTime;
+    ticket.ticket_states.updated_at = currentTime;
+    ticket.ticket_states.outbound_count = (ticket.ticket_states.outbound_count || 0) + 1;
+    ticket.ticket_states.agent_responded_at = currentTime;
+    if (!ticket.ticket_states.first_response_time) {
+      ticket.ticket_states.first_response_time = (new Date(currentTime) - new Date(ticket.created_at)) / 1000; // Seconds
+      // Calculate first_resp_time_by_bhrs with BH logic
+    }
+    // Update avg_response_time and avg_response_time_by_bhrs with BH logic
     await ticket.save();
     const populatedTicket = await Ticket.findById(ticketId)
       .populate('responder_id', 'name')
@@ -352,7 +438,13 @@ app.patch('/api/tickets/:id/close', async (req, res) => {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     ticket.status = 'Closed';
-    ticket.updated_at = new Date();
+    ticket.updated_at = new Date().toISOString();
+    ticket.ticket_states.closed_at = ticket.updated_at;
+    ticket.ticket_states.resolved_at = ticket.updated_at;
+    ticket.ticket_states.sla_timer_stopped_at = ticket.updated_at;
+    ticket.ticket_states.status_updated_at = ticket.updated_at;
+    ticket.ticket_states.resolution_time_updated_at = ticket.updated_at;
+    // Calculate resolution_time_by_bhrs, etc. - implement BH calculation logic here
     await ticket.save();
     res.json({ message: 'Ticket closed' });
   } catch (err) {
@@ -383,17 +475,21 @@ app.post('/api/tickets/:id/conversations', async (req, res) => {
       user_id,
       incoming: incoming || false,
     });
-    ticket.updated_at = new Date();
+    ticket.updated_at = new Date().toISOString();
     await ticket.save();
     if (!incoming) {
       const user = await User.findById(ticket.requester);
       const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
-      await transporter.sendMail({
-        from: `"${(await EmailConfig.findOne()).name}" <${(await EmailConfig.findOne()).reply_email}>`,
-        to: user.email,
-        subject: `New comment on ticket: ${ticket.subject} #${mapEntry.display_id}`,
-        text: `A new comment was added:\n\n"${body_text}"\n\nView ticket: http://localhost:5001/tickets/${mapEntry.display_id}\n\nSincerely,\n${process.env.TEAM_NAME || 'Refresh Desk Team'}`,
-      });
+      if (!process.env.DISABLE_EMAILS) {
+        await transporter.sendMail({
+          from: `"${(await EmailConfig.findOne()).name}" <${(await EmailConfig.findOne()).reply_email}>`,
+          to: user.email,
+          subject: `New comment on ticket: ${ticket.subject} #${mapEntry.display_id}`,
+          text: `A new comment was added:\n\n"${body_text}"\n\nView ticket: http://localhost:5001/tickets/${mapEntry.display_id}\n\nSincerely,\n${process.env.TEAM_NAME || 'Refresh Desk Team'}`,
+        });
+      } else {
+        console.log("Would have sent email 1");
+      }
     }
     res.status(201).json({ message: 'Conversation added' });
   } catch (err) {
@@ -410,8 +506,8 @@ app.put('/api/tickets/:id/conversations/:conversationId', async (req, res) => {
     if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
     conversation.body_text = body_text;
     conversation.body = body_text;
-    conversation.updated_at = new Date();
-    ticket.updated_at = new Date();
+    conversation.updated_at = new Date().toISOString();
+    ticket.updated_at = new Date().toISOString();
     await ticket.save();
     res.json({ message: 'Conversation updated' });
   } catch (err) {
@@ -431,15 +527,19 @@ app.post('/api/tickets/reply', async (req, res) => {
       user_id,
       incoming: false,
     });
-    ticket.updated_at = new Date();
+    ticket.updated_at = new Date().toISOString();
     const user = await User.findById(ticket.requester);
     const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: ticket._id });
-    const info = await transporter.sendMail({
-      from: `"${(await EmailConfig.findOne()).name}" <${(await EmailConfig.findOne()).reply_email}>`,
-      to: user.email,
-      subject: `Re: ${ticket.subject} #${mapEntry.display_id}`,
-      text: `${body}\n\nView ticket: http://localhost:5001/tickets/${mapEntry.display_id}\n\nSincerely,\n${process.env.TEAM_NAME || 'Refresh Desk Team'}`,
-    });
+    if (!process.env.DISABLE_EMAILS) {
+      const info = await transporter.sendMail({
+        from: `"${(await EmailConfig.findOne()).name}" <${(await EmailConfig.findOne()).reply_email}>`,
+        to: user.email,
+        subject: `Re: ${ticket.subject} #${mapEntry.display_id}`,
+        text: `${body}\n\nView ticket: http://localhost:5001/tickets/${mapEntry.display_id}\n\nSincerely,\n${process.env.TEAM_NAME || 'Refresh Desk Team'}`,
+      });
+    } else {
+      console.log("Would have send email 2");
+    }
     const newMessageId = info.messageId || `reply-${Date.now()}`;
     ticket.in_reply_to = ticket.in_reply_to || [];
     ticket.in_reply_to.push(newMessageId);
@@ -550,6 +650,7 @@ app.delete('/api/companies/:id', async (req, res) => {
   }
 });
 
+// Agents
 app.get('/api/agents/:id', async (req, res) => {
   try {
     const agent = await Agent.findById(req.params.id);
@@ -1217,7 +1318,7 @@ async function processEmail(mail) {
   const displayIdMatch = subject.match(/#(\d+)/) || (text || '').match(/http:\/\/localhost:5001\/tickets\/(\d+)/);
   if (displayIdMatch) {
     const display_id = parseInt(displayIdMatch[1]);
-    const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: mongoose.Types.ObjectId(display_idMatch[1]) });
+    const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: mongoose.Types.ObjectId(displayIdMatch[1]) });
     if (mapEntry) {
       const ticket = await Ticket.findById(mapEntry.ticket_id);
       if (ticket) {
@@ -1228,7 +1329,7 @@ async function processEmail(mail) {
           user_id: user._id,
           incoming: true,
         });
-        ticket.updated_at = new Date();
+        ticket.updated_at = new Date().toISOString();
         await ticket.save();
         console.log(`Updated ticket ${display_id}`);
         return;
@@ -1256,12 +1357,16 @@ async function processEmail(mail) {
   });
   await mapEntry.save();
 
-  await transporter.sendMail({
-    from: `"${emailConfig.name}" <${emailConfig.reply_email}>`,
-    to: email,
-    subject: `Ticket Received #${mapEntry.display_id}`,
-    text: `Dear ${user.name},\n\nWe would like to acknowledge that we have received your request and a ticket has been created.\nA support representative will be reviewing your request and will send you a personal response (usually within 24 hours).\n\nTo view the status of the ticket or add comments, please visit\nhttp://localhost:5001/tickets/${mapEntry.display_id}\n\nThank you for your patience.\n\nSincerely,\n${emailConfig.name}`,
-  });
+  if (!process.env.DISABLE_EMAILS) {
+    await transporter.sendMail({
+      from: `"${emailConfig.name}" <${emailConfig.reply_email}>`,
+      to: email,
+      subject: `Ticket Received #${mapEntry.display_id}`,
+      text: `Dear ${user.name},\n\nWe would like to acknowledge that we have received your request and a ticket has been created.\nA support representative will be reviewing your request and will send you a personal response (usually within 24 hours).\n\nTo view the status of the ticket or add comments, please visit\nhttp://localhost:5001/tickets/${mapEntry.display_id}\n\nThank you for your patience.\n\nSincerely,\n${emailConfig.name}`,
+    });
+  } else {
+    console.log("Would have sent email 3");
+  }
   console.log(`Created ticket ${mapEntry.display_id}`);
 }
 
