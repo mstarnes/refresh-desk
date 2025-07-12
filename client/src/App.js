@@ -102,7 +102,7 @@ function App() {
             q: query,
             limit: ticketsPerPage,
             page: currentPage,
-            filters: '',
+            filters: filter,
             userId,
             sort: sortConfig.key,
             direction: sortConfig.direction,
@@ -144,7 +144,7 @@ function App() {
       setError(`Error searching tickets: ${err.message}`);
       setLoading(false);
     }
-  }, [ticketsPerPage, currentPage, userId, sortConfig.key, sortConfig.direction, fetchTickets]);
+  }, [ticketsPerPage, currentPage, userId, sortConfig.key, sortConfig.direction, fetchTickets, filter]);
   
   useEffect(() => {
     fetchAgents();
@@ -168,13 +168,18 @@ function App() {
       const query = e.target.value;
       setActiveSearchQuery(query);
       setSearchQuery(query);
-      setFilter('');
       setCurrentPage(1);
-      localStorage.setItem('filter', '');
       localStorage.setItem('searchQuery', query);
     } else {
       setSearchQuery(e.target.value);
     }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setActiveSearchQuery('');
+    setCurrentPage(1);
+    localStorage.setItem('searchQuery', '');
   };
 
   const sortData = (key) => {
@@ -188,10 +193,18 @@ function App() {
 
   const handleFilterChange = (value) => {
     setFilter(value);
+    setCurrentPage(1);
+    localStorage.setItem('filter', value);
+  };
+
+  const handleReset = () => {
+    setFilter('newAndMyOpen');
+    setSortConfig({ key: 'updated_at', direction: 'desc' });
     setSearchQuery('');
     setActiveSearchQuery('');
     setCurrentPage(1);
-    localStorage.setItem('filter', value);
+    localStorage.setItem('filter', 'newAndMyOpen');
+    localStorage.setItem('sortConfig', JSON.stringify({ key: 'updated_at', direction: 'desc' }));
     localStorage.setItem('searchQuery', '');
   };
 
@@ -433,7 +446,6 @@ function App() {
               <option value="newAndMyOpen">New and My Open Tickets</option>
               <option value="openTickets">Open Tickets</option>
               <option value="allTickets">All Tickets</option>
-              <option value="">None</option>
             </select>
           </div>
           <div className="sort">
@@ -454,15 +466,21 @@ function App() {
               <option value="asc">Ascending</option>
             </select>
           </div>
+          <button onClick={handleReset} className="reset-button">Reset</button>
         </div>
-        <input
-          type="text"
-          placeholder="Search tickets... (press Enter)"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={handleSearch}
-          className="search-input"
-        />
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search tickets... (press Enter)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearch}
+            className="search-input"
+          />
+          {searchQuery && (
+            <button onClick={clearSearch} className="clear-search">×</button>
+          )}
+        </div>
       </div>
       <h1>Refresh Desk Dashboard</h1>
       {filteredTickets.length === 0 ? (

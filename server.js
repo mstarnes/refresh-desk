@@ -1,3 +1,4 @@
+// server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -199,16 +200,26 @@ app.get('/api/tickets/search', async (req, res) => {
     };
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
-      query = {
-        ...query,
+      const filterQuery = {
         $or: [
           { responder_id: null },
           { responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') }
         ],
         status: { $in: [2, 3] }
       };
+      query = {
+        $and: [
+          query,
+          filterQuery
+        ]
+      };
     } else if (filters === 'openTickets') {
-      query = { ...query, status: { $in: [2, 3] } };
+      query = {
+        $and: [
+          query,
+          { status: { $in: [2, 3] } }
+        ]
+      };
     }
     const tickets = await Ticket.find(query)
       .sort({ [sort]: direction === 'desc' ? -1 : 1 })
