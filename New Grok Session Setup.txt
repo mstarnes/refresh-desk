@@ -1,0 +1,23 @@
+New Grok Session Setup
+
+My public repo is located at https://github.com/mstarnes/refresh-desk. Refer to the README.md for orientation.
+
+Files and folders are found in the repo at https://github.com/mstarnes/refresh-desk/tree/main.
+
+I'd like help generating code and artifacts in support of project development. Make no assumptions; refer to the repo or ask me for more information. Do not overwrite or omit existing functionality. If you find problems, please report them. Follow the coding style as found in the repo files.
+
+I would like to add a button to the top of the Dashboard (App.js) to create a "New Ticket". The button should be placed below the Reset button. See the refresh-desk-dashboard.png for the current look. Clicking the button will open the New Ticket page as described below.
+
+The new ticket screen should look similar to the freshdesk-new-ticket.png screenshot found in client/screenshots. Notice in freshdesk-new-ticket.png that all the fields are ready for input and many of them have lookups. Contact has lookup capability where I can type a few characters and a list of matching contacts is displayed. See freshdesk-contact-lookup.png. 
+
+Similarly, Type lookup looks like freshdesk-type-lookup.png. The enumerated values can be sourced from the database in the ticketfields table where name=ticket_type and type=default_ticket_type. The enumerated values are listed under .choices. Below is a list of the field lookup choice enumerations:
+
+* Ticket Type: ticketfields.name = ticket_type and .type = default_ticket_type, default Incident
+* Status: ticketfields.name = status and .type = default_status, with default choice Open
+* Priority: ticketfields.name = priority and .type = default_priority, default choice Low
+* Group: ticketfields.name = group and .type = default_group, default choice IT
+* Agent: ticketfields.name = agent and .type = default_agent, default to agent with email = process.env.CURRENT_AGENT_EMAIL
+* Source: ticketfields.name = source and .type = default_source, default Phone // this one does not appear in the Freshdesk screenshot but I want to add it
+
+Below Description on the freshdesk-new-ticket dialog, is a Tags table. Let's omit this for now but we may add it later.
+
