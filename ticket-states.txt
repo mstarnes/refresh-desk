@@ -1,0 +1,30 @@
+Reopened_count: How/when to increment? (E.g., +1 every time status changes from resolved/closed to open/pending?) // exactly
+
+Group_escalated: Since it's unclear, what triggers it? (E.g., automatic on SLA breach or manual group change?) // let's defer until understood and needed
+
+Inbound_count and Outbound_count: Confirm— inbound for user/receiver replies (including CC), outbound for agent replies only (not notes)? // makes sense to me. For inbound, we are counting incrementally any user updates (initial request and responses). For outbound, we are only counting responses the requester receives (i.e., replies, not notes)
+
+Avg_response_time, first_resp_time_by_bhrs, resolution_time_by_bhrs, avg_response_time_by_bhrs: Units (seconds or hours)? Calculation details (e.g., avg_response_time as average agent response time across all replies? Include only business hours?) // avg_response_time is in seconds; the *_bhrs fields are in hours; No, the avg_response_time is for this ticket only. It averages the time between requester reply and agent response. Yes, take business hours into calculation. 
+
+Resolution_time_updated_at: Set on resolved/closed; cleared on reopen/pending? // exactly
+
+Sla_timer_stopped_at: Set on pending/resolved/closed; cleared on open/reopen? (API implies pausing on pending.) // exactly; I agree with the API implication
+
+Auto-closure: For "tickets set to resolved are automatically closed after 72 hours" unless requester updates—need a cron job or event trigger? If requester replies, status to open, clear closed_at/resolved_at. // Yes, we need a setInterval or similar to check to see if we need to close any resolved tickets. Yes, if requester responds then resolved/closed should be set to open. Yes, clear closed_at/resolved_at upon requester reply to resolved/closed ticket.
+
+TicketSchema parallels: For due_by/frDueBy—how to calculate initially (from SLA policy)? // Yes 
+Extend on pending? nr_due_by/nr_escalated/nr_reminded (next response due/escalated/reminded)? // I think the SLA needs to be extended if pending
+
+sl_escalation_level/sla_state: API ties to breaches; your rules? (E.g., increment level on breach, state as 'breached'/'within'?) // let's defer full-blown implementation; maybe we could add a conversation to say the SLA has been breached and maybe we could increment the priority from low to medium or medium to high or high to urgent.
+
+
+Answers given in /* answer */ notation:
+
+*Business Hours Integration for bhrs Fields and Timers: The API emphasizes business hours (BH) for SLA calculations (e.g., first_resp_time_by_bhrs only counts BH from creation to first reply). Your rules mention "take business hours into calculation" for avg_response_time_by_bhrs, but we need specifics: How to define BH (e.g., from BusinessHour schema)? /* Yes */ Should non-BH periods be excluded from all timers (due_by, frDueBy, resolution_time_by_bhrs)? /* Yes */ If a reply happens outside BH, does it count toward averages? /* I love your questions. Outside of BH should count as zero time. If BH ends at 5pm and a ticket comes in at 4:59 pm and the ticket is resolved at 10pm then the resolution time would be 1 minute. Do you think this is appropriate or not? */ 
+
+Escalation and Reminder Handling (nr_escalated/nr_reminded/response_reminded/resolution_reminded): The API auto-escalates on breaches (e.g., increment sl_escalation_level, send reminders). Your rules defer sl_escalation_level but suggest priority bumps on breach. For nr_escalated (next response escalated), what triggers it? Same for reminders—set when approaching due_by, and mark as reminded after sending? /* This is great stuff if we can implement it. I know you can guide me and make recommendations. We have email ingestion and responses in the queue for enhancements. Much of the code is already there (SMTP) in server.js */ 
+
+Reopened and Count Details: You confirmed reopened_count increments on status change from resolved/closed to open/pending—good. But the API also tracks reopened_time or similar; do we need a reopened_at timestamp? /* Yes */ For inbound_count/outbound_count, your confirmation (inbound for user replies including CC, outbound for agent replies only) is clear, but clarify if initial ticket creation counts as inbound +1. /* for initial ticket creation, it seems to me we would be incrementing from 0 to 1, so seems appropriate. In my mind, a ticket creation counts as an inbound. Does the API say something different? Let me know if the Freshdesk API differs in any significant way on any of my answers. */
+
+SLA Breach and State Updates (sla_state, sl_escalation_level): API sets sla_state to 'breached'/'within'/ 'paused'. Your deferral is fine, but if implementing priority bump on breach, define threshold (e.g., past due_by by X hours)? For nr_due_by (next response due), calculate as due_by minus current time, updated on pending/resume. /* This is great stuff if we can implement it. I know you can guide me and make recommendations. We have email ingestion and responses in the queue for enhancements. Much of the code is already there (SMTP) in server.js */
+

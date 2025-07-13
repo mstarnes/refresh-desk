@@ -311,38 +311,7 @@ app.patch('/api/tickets/:id', async (req, res) => {
     updates.updated_at = currentTime;
     ticketStatesUpdates.updated_at = currentTime;
 
-    console.log(JSON.stringify(ticketStatesUpdates));
-    //// Step 1: Fetch the current ticket
-    //const currentTicket = await Ticket.findById(req.params.id);
-    //if (!currentTicket) {
-    //  return res.status(404).json({ error: 'Ticket not found' });
-    //}
-/*
-    // Step 2: Compute the merged states
-    const newTicketStates = { ...currentTicket.ticket_states, ...ticketStatesUpdates };
-    // Step 3: Perform the update with the computed values
-    const ticket = await Ticket.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          ...updates,
-          ticket_states: newTicketStates  // Note: no quotes if the field name doesn't need them
-        }
-      },
-      { new: true }
-    )
-    .populate('responder_id', 'name')
-    .populate('company_id', 'name');
-*/
-    /*
-    const ticket = await Ticket.findByIdAndUpdate(req.params.id, { $set: { ...updates, 'ticket_states': { ...ticket.ticket_states, ...ticketStatesUpdates } } }, { new: true })
-      .populate('responder_id', 'name')
-      .populate('company_id', 'name');
-    if (!ticket) {
-      return res.status(404).json({ error: 'Ticket not found' });
-    }
-    */
-
+    console.log(JSON.stringify(ticketStatesUpdates, null, 2));
     const newTicketStates = { ...currentTicket.ticket_states, ...ticketStatesUpdates };
 
     // Flatten newTicketStates to dotted keys
@@ -374,7 +343,7 @@ app.post('/api/tickets/:id/conversations', async (req, res) => {
       return res.status(404).json({ error: 'Ticket not found' });
     }
     const currentTime = new Date().toISOString();
-    const isAgent = await Agent.exists({ _id: user_id });
+    const isAgent = await Agent.exists({ id: user_id });
     ticket.conversations.push({
       id: id || ticket.conversations.length + 1,
       body_text,
