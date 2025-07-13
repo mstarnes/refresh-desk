@@ -108,7 +108,8 @@ app.post('/api/tickets', async (req, res) => {
       requester_name: requester.name,
       priority_name: { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }[priority] || 'Low',
       status_name: { 2: 'Open', 3: 'Pending', 4: 'Resolved', 5: 'Closed' }[status || 2] || 'Open',
-      responder_name: responder_id ? (await Agent.findById(responder_id))?.name : agent?.name || 'Mitch Starnes',
+      //responder_name: responder_id ? (await Agent.findById(responder_id))?.name : agent?.name || 'Mitch Starnes',
+      responder_name: responder_id ? (await Agent.findOne({ id: responder_id }))?.name : agent?.name || 'Mitch Starnes',
       ticket_states: {
         ticket_id: display_id, // Assigned once at creation
         opened_at: createdAt,
@@ -260,6 +261,13 @@ app.get('/api/agents', async (req, res) => {
 // Update ticket
 app.patch('/api/tickets/:id', async (req, res) => {
   try {
+
+    // Step 1: Fetch the current ticket
+    const currentTicket = await Ticket.findById(req.params.id);
+    if (!currentTicket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
     const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at, conversations } = req.body;
     const updates = {};
     const ticketStatesUpdates = {};
@@ -287,7 +295,9 @@ app.patch('/api/tickets/:id', async (req, res) => {
     }
     if (responder_id !== undefined) {
       updates.responder_id = responder_id;
-      if (!ticket.responder_id) {
+      // currentTicket
+      //if (!ticket.responder_id) {
+      if (!currentTicket.responder_id) {
         ticketStatesUpdates.first_assigned_at = currentTime;
       }
       ticketStatesUpdates.assigned_at = responder_id ? currentTime : null;
@@ -300,12 +310,54 @@ app.patch('/api/tickets/:id', async (req, res) => {
     if (conversations) updates.conversations = conversations;
     updates.updated_at = currentTime;
     ticketStatesUpdates.updated_at = currentTime;
+
+    console.log(JSON.stringify(ticketStatesUpdates));
+    //// Step 1: Fetch the current ticket
+    //const currentTicket = await Ticket.findById(req.params.id);
+    //if (!currentTicket) {
+    //  return res.status(404).json({ error: 'Ticket not found' });
+    //}
+/*
+    // Step 2: Compute the merged states
+    const newTicketStates = { ...currentTicket.ticket_states, ...ticketStatesUpdates };
+    // Step 3: Perform the update with the computed values
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          ...updates,
+          ticket_states: newTicketStates  // Note: no quotes if the field name doesn't need them
+        }
+      },
+      { new: true }
+    )
+    .populate('responder_id', 'name')
+    .populate('company_id', 'name');
+*/
+    /*
     const ticket = await Ticket.findByIdAndUpdate(req.params.id, { $set: { ...updates, 'ticket_states': { ...ticket.ticket_states, ...ticketStatesUpdates } } }, { new: true })
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
+    */
+
+    const newTicketStates = { ...currentTicket.ticket_states, ...ticketStatesUpdates };
+
+    // Flatten newTicketStates to dotted keys
+    const ticketStatesSet = Object.fromEntries(
+      Object.entries(newTicketStates).map(([key, value]) => [`ticket_states.${key}`, value])
+    );
+
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      { $set: { ...updates, ...ticketStatesSet } },
+      { new: true }
+    )
+    .populate('responder_id', 'name')
+    .populate('company_id', 'name');
+
     res.json(ticket);
   } catch (err) {
     console.error('Error updating ticket:', err);
