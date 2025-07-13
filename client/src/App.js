@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import './App.css';
+import './styles/App.css';
 import mongoose from 'mongoose';
 
 function App() {
