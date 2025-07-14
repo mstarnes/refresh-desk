@@ -34,7 +34,7 @@ const RequesterSchema = new mongoose.Schema({
 
 const ConversationSchema = new mongoose.Schema({
   id: { type: Number, required: true },
-  body_text: { type: String }, // Renamed from body
+  body_text: { type: String },
   user_id: { type: Number },
   source: { type: Number },
   incoming: { type: Boolean },
@@ -45,7 +45,7 @@ const ConversationSchema = new mongoose.Schema({
   notable_id: { type: Number },
   notable_type: { type: String },
   account_id: { type: Number },
-  body: { type: String }, // Renamed from body_html
+  body: { type: String },
   support_email: { type: String },
   attachments: { type: [Object], default: [] },
 });
@@ -117,8 +117,7 @@ const TicketStatesSchema = new mongoose.Schema({
 const TicketSchema = new mongoose.Schema({
   id: { type: Number, required: true, unique: true },
   description: { type: String },
-  requester_id: { type: Number },
-  // responder_id: { type: Number },
+  requester_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Updated
   responder_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
   status: { type: Number },
   urgent: { type: Boolean },
@@ -189,8 +188,8 @@ const TicketSchema = new mongoose.Schema({
   attachments: { type: [Object], default: [] },
   ticket_states: TicketStatesSchema,
   requester: RequesterSchema,
-  conversations: [ConversationSchema], // Renamed from notes
-  company_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' }, // Added
+  conversations: [ConversationSchema],
+  company_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
 });
 
 // Add index on display_id

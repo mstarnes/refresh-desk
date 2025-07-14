@@ -350,6 +350,18 @@
   background-color: #5a6268;
 }
 
+.MuiContainer-root {
+  padding: 20px;
+}
+
+.MuiTypography-h4 {
+  margin-bottom: 20px;
+}
+
+.MuiButton-root {
+  margin: 5px;
+}
+
 /* Responsiveness */
 @media (max-width: 768px) {
   .filter-sort-wrapper {

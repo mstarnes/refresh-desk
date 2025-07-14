@@ -14,6 +14,7 @@ app.use(express.json());
 
 // Schemas
 const Ticket = require('./models/Ticket');
+const TicketField = require('./models/TicketField');
 const User = require('./models/User');
 const Company = require('./models/Company');
 const Agent = require('./models/Agent');
@@ -28,7 +29,6 @@ const EmailConfig = require('./models/EmailConfig');
 const SLAPolicy = require('./models/SLAPolicy');
 const BusinessHour = require('./models/BusinessHour');
 const Setting = require('./models/Setting');
-const TicketField = require('./models/TicketField');
 
 // Set strictPopulate to false as a fallback
 mongoose.set('strictPopulate', false);
@@ -156,6 +156,7 @@ app.get('/api/tickets', async (req, res) => {
       .skip((parseInt(page) - 1) * parseInt(limit))
       .limit(parseInt(limit))
       .populate('responder_id', 'name')
+      .populate('requester_id', 'name')
       .populate('company_id', 'name');
     const total = await Ticket.countDocuments(query);
     res.json({ tickets, total });
@@ -195,6 +196,74 @@ app.get('/api/tickets/user/:userId', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+// New endpoint: fetch ticket fields
+app.get('/api/ticketfields', async (req, res) => {
+  try {
+    const fields = await TicketField.find({
+      type: {
+        $in: [
+          'default_ticket_type',
+          'default_status',
+          'default_priority',
+          'default_group',
+          'default_agent',
+          'default_source',
+        ],
+      },
+    });
+    const groups = await Group.find().select('id name');
+    const agents = await Agent.find().select('name email _id');
+
+    const result = fields.map((field) => {
+      if (field.name === 'group') {
+        return {
+          ...field.toObject(),
+          choices: groups.map((g) => ({ name: g.name, id: g.id })),
+        };
+      }
+      if (field.name === 'agent') {
+        return {
+          ...field.toObject(),
+          choices: agents.map((a) => ({ name: a.name, email: a.email, _id: a._id })),
+        };
+      }
+      if (field.name === 'status') {
+        return {
+          ...field.toObject(),
+          choices: Object.entries(field.choices).map(([code, [name]]) => ({
+            name,
+            code: parseInt(code),
+          })),
+        };
+      }
+      if (field.name === 'priority') {
+        return {
+          ...field.toObject(),
+          choices: Object.entries(field.choices).map(([name, code]) => ({
+            name,
+            code,
+          })),
+        };
+      }
+      if (field.name === 'source') {
+        return {
+          ...field.toObject(),
+          choices: Object.entries(field.choices).map(([name, code]) => ({
+            name,
+            code,
+          })),
+        };
+      }
+      return field;
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching ticket fields' });
+  }
+});
+
 
 // Search endpoint
 app.get('/api/tickets/search', async (req, res) => {
@@ -1311,6 +1380,27 @@ app.delete('/api/ticket-fields/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Updated endpoint: Search contacts
+app.get('/api/users/search', async (req, res) => {
+  const { q } = req.query;
+  console.log(q);
+  try {
+    if (!q || q.length < 2) {
+      return res.json([]);
+    }
+    const contacts = await User.find({
+      name: { $regex: q, $options: 'i' },
+    })
+      .select('name email _id id')
+      .limit(10);
+    res.json(contacts);
+  } catch (error) {
+    console.error('Error searching contacts:', error);
+    res.status(500).json({ error: 'Failed to search contacts' });
+  }
+});
+
 
 // IMAP Email Processing
 async function processEmail(mail) {
