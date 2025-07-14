@@ -650,16 +650,6 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-app.get('/api/users/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).populate('company');
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 app.post('/api/users', async (req, res) => {
   try {
     const user = new User(req.body);
@@ -667,6 +657,36 @@ app.post('/api/users', async (req, res) => {
     res.json(user);
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Updated endpoint: Search contacts
+app.get('/api/users/search', async (req, res) => {
+  const { q } = req.query;
+  console.log(q);
+  try {
+    if (!q || q.length < 2) {
+      return res.json([]);
+    }
+    const contacts = await User.find({
+      name: { $regex: q, $options: 'i' },
+    })
+      .select('name email _id id')
+      .limit(10);
+    res.json(contacts);
+  } catch (error) {
+    console.error('Error searching contacts:', error);
+    res.status(500).json({ error: 'Failed to search contacts' });
+  }
+});
+
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).populate('company');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -1381,27 +1401,6 @@ app.delete('/api/ticket-fields/:id', async (req, res) => {
   }
 });
 
-// Updated endpoint: Search contacts
-app.get('/api/users/search', async (req, res) => {
-  const { q } = req.query;
-  console.log(q);
-  try {
-    if (!q || q.length < 2) {
-      return res.json([]);
-    }
-    const contacts = await User.find({
-      name: { $regex: q, $options: 'i' },
-    })
-      .select('name email _id id')
-      .limit(10);
-    res.json(contacts);
-  } catch (error) {
-    console.error('Error searching contacts:', error);
-    res.status(500).json({ error: 'Failed to search contacts' });
-  }
-});
-
-
 // IMAP Email Processing
 async function processEmail(mail) {
   const { from, subject, text, to, date, messageId } = mail;
@@ -1520,7 +1519,9 @@ function connectImap() {
   });
 }
 
-connectImap();
+if (!process.env.DISABLE_EMAILS) {
+  connectImap();
+}
 
 // Start Server
 const PORT = process.env.PORT || 5001;
