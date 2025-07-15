@@ -91,9 +91,10 @@ const NewTicket = () => {
       const groupId = ticketFields.group.find((g) => g.name === formData.group_id)?.id || 9000171202;
 
       const ticketData = {
-        ...formData,
+        subject: formData.subject,
         requester_id: formData.contact ? formData.contact._id : null,
         responder_id: formData.responder_id ? formData.responder_id._id : null,
+        ticket_type: formData.ticket_type,
         status: statusCode,
         priority: priorityCode,
         source: sourceCode,
@@ -105,7 +106,7 @@ const NewTicket = () => {
         responder_name: formData.responder_id ? formData.responder_id.name : null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        account_id: process.env.ACCOUNT_ID,
+        account_id: process.env.ACCOUNT_ID || 320932,
         delta: true,
         requester: formData.contact
           ? {
@@ -118,7 +119,6 @@ const NewTicket = () => {
             }
           : null,
         ticket_states: {
-          ticket_id: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -180,6 +180,7 @@ const NewTicket = () => {
                   className="new-ticket-field"
                   label="Contact"
                   variant="outlined"
+                  fullWidth
                 />
               )}
             />
@@ -195,6 +196,7 @@ const NewTicket = () => {
                   className="new-ticket-field"
                   label="Ticket Type"
                   variant="outlined"
+                  fullWidth
                 />
               )}
             />
@@ -210,6 +212,7 @@ const NewTicket = () => {
                   className="new-ticket-field"
                   label="Status"
                   variant="outlined"
+                  fullWidth
                 />
               )}
             />
@@ -225,6 +228,7 @@ const NewTicket = () => {
                   className="new-ticket-field"
                   label="Priority"
                   variant="outlined"
+                  fullWidth
                 />
               )}
             />
@@ -240,6 +244,7 @@ const NewTicket = () => {
                   className="new-ticket-field"
                   label="Group"
                   variant="outlined"
+                  fullWidth
                 />
               )}
             />
@@ -256,6 +261,7 @@ const NewTicket = () => {
                   className="new-ticket-field"
                   label="Agent"
                   variant="outlined"
+                  fullWidth
                 />
               )}
             />
@@ -271,6 +277,7 @@ const NewTicket = () => {
                   className="new-ticket-field"
                   label="Source"
                   variant="outlined"
+                  fullWidth
                 />
               )}
             />
