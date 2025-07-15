@@ -350,6 +350,20 @@
   background-color: #5a6268;
 }
 
+/* New Ticket Button */
+.new-ticket-button {
+  padding: 5px 10px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.new-ticket-button:hover {
+  background-color: #5a6268;
+}
+
 .MuiContainer-root {
   padding: 20px;
 }

@@ -66,6 +66,7 @@ app.post('/api/tickets', async (req, res) => {
   try {
     const { subject, description, priority, requester, display_id, status, responder_id, company_id } = req.body;
 
+    console.log(JSON.stringify(req.body, null, 2));
     if (!requester || !requester.name) {
       return res.status(400).json({ error: 'Requester name is required' });
     }
@@ -129,7 +130,7 @@ app.post('/api/tickets', async (req, res) => {
       .populate('company_id', 'name');
     res.status(201).json(populatedTicket);
   } catch (err) {
-    console.error('Error creating ticket:', err);
+    console.error('Error creating ticket:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

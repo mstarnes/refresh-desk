@@ -1,7 +1,7 @@
 // client/src/App.js
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './styles/App.css';
 import mongoose from 'mongoose';
 
@@ -17,6 +17,7 @@ function App() {
     key: 'updated_at',
     direction: 'desc',
   });
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = parseInt(process.env.REACT_APP_DEFAULT_LIMIT) || 10;
   const [replyTicket, setReplyTicket] = useState(null);
@@ -467,6 +468,8 @@ function App() {
             </select>
           </div>
           <button onClick={handleReset} className="reset-button">Reset</button>
+          <button onClick={() => navigate("/new-ticket")}>New Ticket</button>
+
         </div>
         <div className="search-container">
           <input

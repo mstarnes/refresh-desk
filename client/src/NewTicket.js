@@ -11,7 +11,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import axios from './axiosConfig';
-import './styles/App.css';
+import './styles/NewTicket.css';
 
 const NewTicket = () => {
   const navigate = useNavigate();
@@ -49,9 +49,8 @@ const NewTicket = () => {
         }, {});
         setTicketFields(fields);
 
-        // Set default agent
         const defaultAgent = fields.agent.find(
-          (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
+          (agent) => agent.email === process.env.CURRENT_AGENT_EMAIL
         );
         setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
       } catch (error) {
@@ -81,6 +80,10 @@ const NewTicket = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.contact) {
+      setError('Please select a contact');
+      return;
+    }
     try {
       const statusCode = ticketFields.status.find((s) => s.name === formData.status)?.code || 2;
       const priorityCode = ticketFields.priority.find((p) => p.name === formData.priority)?.code || 1;
@@ -102,6 +105,8 @@ const NewTicket = () => {
         responder_name: formData.responder_id ? formData.responder_id.name : null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        account_id: process.env.ACCOUNT_ID,
+        delta: true,
         requester: formData.contact
           ? {
               id: formData.contact.id || Math.floor(Math.random() * 1000000),
@@ -113,7 +118,7 @@ const NewTicket = () => {
             }
           : null,
         ticket_states: {
-          ticket_id: 0, // Will be updated by server
+          ticket_id: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -122,7 +127,7 @@ const NewTicket = () => {
       navigate('/');
     } catch (error) {
       console.error('Error creating ticket:', error);
-      setError('Failed to create ticket: ' + (error.response?.data?.details || error.message));
+      setError('Failed to create ticket: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -151,9 +156,10 @@ const NewTicket = () => {
         message={error}
       />
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           <Grid item xs={12}>
             <TextField
+              className="new-ticket-field"
               label="Subject"
               value={formData.subject}
               onChange={handleTextChange('subject')}
@@ -161,67 +167,117 @@ const NewTicket = () => {
               fullWidth
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <Autocomplete
               options={contacts}
               getOptionLabel={(option) => option.name || ''}
               onInputChange={(e, value) => handleContactSearch(value)}
               onChange={handleChange('contact')}
               value={formData.contact}
-              renderInput={(params) => <TextField {...params} label="Contact" variant="outlined" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  className="new-ticket-field"
+                  label="Contact"
+                  variant="outlined"
+                />
+              )}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <Autocomplete
               options={ticketFields.ticket_type}
               value={formData.ticket_type}
               onChange={handleChange('ticket_type')}
-              renderInput={(params) => <TextField {...params} label="Ticket Type" variant="outlined" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  className="new-ticket-field"
+                  label="Ticket Type"
+                  variant="outlined"
+                />
+              )}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <Autocomplete
               options={ticketFields.status.map((s) => s.name)}
               value={formData.status}
               onChange={handleChange('status')}
-              renderInput={(params) => <TextField {...params} label="Status" variant="outlined" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  className="new-ticket-field"
+                  label="Status"
+                  variant="outlined"
+                />
+              )}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <Autocomplete
               options={ticketFields.priority.map((p) => p.name)}
               value={formData.priority}
               onChange={handleChange('priority')}
-              renderInput={(params) => <TextField {...params} label="Priority" variant="outlined" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  className="new-ticket-field"
+                  label="Priority"
+                  variant="outlined"
+                />
+              )}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <Autocomplete
               options={ticketFields.group.map((g) => g.name)}
               value={formData.group_id}
               onChange={handleChange('group_id')}
-              renderInput={(params) => <TextField {...params} label="Group" variant="outlined" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  className="new-ticket-field"
+                  label="Group"
+                  variant="outlined"
+                />
+              )}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <Autocomplete
               options={ticketFields.agent}
               getOptionLabel={(option) => option.name || ''}
               value={formData.responder_id}
               onChange={handleChange('responder_id')}
-              renderInput={(params) => <TextField {...params} label="Agent" variant="outlined" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  className="new-ticket-field"
+                  label="Agent"
+                  variant="outlined"
+                />
+              )}
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
             <Autocomplete
               options={ticketFields.source.map((s) => s.name)}
               value={formData.source}
               onChange={handleChange('source')}
-              renderInput={(params) => <TextField {...params} label="Source" variant="outlined" />}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  className="new-ticket-field"
+                  label="Source"
+                  variant="outlined"
+                />
+              )}
             />
           </Grid>
           <Grid item xs={12}>
             <TextField
+              className="new-ticket-field"
               label="Description"
               multiline
               rows={4}
