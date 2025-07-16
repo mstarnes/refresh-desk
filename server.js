@@ -14,6 +14,7 @@ app.use(express.json());
 
 // Schemas
 const Ticket = require('./models/Ticket');
+const ObjectIdMap = require('./models/ObjectIdMap');
 const TicketField = require('./models/TicketField');
 const User = require('./models/User');
 const Company = require('./models/Company');
