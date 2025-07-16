@@ -1413,6 +1413,8 @@ async function processEmail(mail) {
   const cutoffDate = new Date(process.env.CUTOFF_DATE || '2025-07-05T00:00:00Z');
   if (!toAddresses.includes(targetAddress) || date < cutoffDate) return;
 
+  console.log( "processEmail from " + JSON.stringify(from) + " with Subject: " + subject );
+
   const user = await User.findOne({ email });
   if (!user) {
     console.error('User not found:', email);
@@ -1493,6 +1495,7 @@ function connectImap() {
     imap.openBox('INBOX', true, (err) => {
       if (err) return console.log(`Failed to open INBOX: ${err.message}`);
       function checkNewMail() {
+        console.log( "checkNewMail" );
         imap.search(['UNSEEN', ['SINCE', lastFetchTime]], (err, results) => {
           if (err) return console.log(`Search error: ${err.message}`);
           if (results?.length > 0) {
@@ -1521,7 +1524,10 @@ function connectImap() {
 }
 
 if (!process.env.DISABLE_EMAILS) {
+  console.log( "Email processing is enabled." );
   connectImap();
+} else {
+  console.log( "Email processing is disabled." );
 }
 
 // Start Server
