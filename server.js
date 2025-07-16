@@ -87,8 +87,12 @@ app.post('/api/tickets', async (req, res) => {
     // Set company_id from requester
     let company_id = null;
     if (req.body.requester_id) {
-      const requester = await User.findById(req.body.requester_id).select('company_id');
+      const requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
       company_id = requester?.company_id || null;
+      if (req.body.requester && requester) {
+        req.body.requester.created_at = requester.created_at;
+        req.body.requester.updated_at = requester.updated_at;
+      }
     }
 
     const ticketData = {

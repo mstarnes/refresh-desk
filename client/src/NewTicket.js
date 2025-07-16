@@ -14,7 +14,6 @@ import axios from './axiosConfig';
 import './styles/NewTicket.css';
 
 const NewTicket = () => {
-  console.log('Before handleSubmit'); // Debug rendering
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     subject: '',
@@ -80,9 +79,7 @@ const NewTicket = () => {
   };
 
   const handleSubmit = async (e) => {
-    console.log('Form submitted');
     e.preventDefault();
-    console.log('handleSubmit called');
     if (!formData.contact) {
       setError('Please select a contact');
       return;
@@ -96,7 +93,6 @@ const NewTicket = () => {
       return;
     }
     try {
-      console.log('Sending ticketData:', formData);
       const statusCode = ticketFields.status.find((s) => s.name === formData.status)?.code || 2;
       const priorityCode = ticketFields.priority.find((p) => p.name === formData.priority)?.code || 1;
       const sourceCode = ticketFields.source.find((s) => s.name === formData.source)?.code || 3;
@@ -104,6 +100,7 @@ const NewTicket = () => {
 
       const ticketData = {
         subject: formData.subject,
+        description: formData.description, // Added missing field
         requester_id: formData.contact ? formData.contact._id : null,
         responder_id: formData.responder_id ? formData.responder_id._id : null,
         ticket_type: formData.ticket_type,
@@ -135,9 +132,7 @@ const NewTicket = () => {
           updated_at: new Date().toISOString(),
         },
       };
-      console.log('Posting to /api/tickets:', ticketData);
-      const response = await axios.post('/api/tickets', ticketData);
-      console.log('Ticket created:', response.data);
+      await axios.post('/api/tickets', ticketData);
       navigate('/');
     } catch (error) {
       console.error('Error creating ticket:', error);
@@ -157,7 +152,6 @@ const NewTicket = () => {
     setError(null);
   };
 
-  console.log('After render'); // Debug rendering
   return (
     <form onSubmit={handleSubmit}>
       <Container maxWidth={false}>
