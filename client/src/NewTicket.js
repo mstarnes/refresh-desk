@@ -179,8 +179,8 @@ const NewTicket = () => {
           </Grid>
           <Grid sx={{ width: '100%', my: 2 }}>
             <Autocomplete
-              options={contacts}
-              getOptionLabel={(option) => option.name || ''}
+              options={contacts.length === 0 ? ['Type to search'] : contacts}
+              getOptionLabel={(option) => typeof option === 'string' ? option : `${option.name} <${option.email}>`}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -189,7 +189,6 @@ const NewTicket = () => {
                   variant="outlined"
                   fullWidth
                   sx={{ width: '100% !important' }}
-                  placeholder={contacts.length === 0 && !params.inputProps.value ? 'Type to search' : undefined}
                 />
               )}
               onInputChange={(e, value) => handleContactSearch(value)}
