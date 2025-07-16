@@ -179,8 +179,8 @@ const NewTicket = () => {
           </Grid>
           <Grid sx={{ width: '100%', my: 2 }}>
             <Autocomplete
-              options={contacts.length === 0 ? ['Type to search'] : contacts}
-              getOptionLabel={(option) => typeof option === 'string' ? option : `${option.name} <${option.email}>`}
+              options={contacts.length === 0 && !formData.contact ? ['Type to search'] : contacts}
+              getOptionLabel={(option) => typeof option === 'string' ? option : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
               renderInput={(params) => (
                 <TextField
                   {...params}
