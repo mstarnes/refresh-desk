@@ -7,22 +7,24 @@ mongoose.connect(process.env.MONGODB_URI);
 
 async function initializeIdMaps() {
   try {
-    // Initialize ObjectIdMap with starting id
-    const initialId = 9500000001; // Start after max id 9335552714
+    
+    // Initialize ObjectIdMap
+    const initialId = 9500000001;
     const existingMax = await ObjectIdMap.findOne().sort({ id: -1 }).select('id');
     const startId = existingMax ? Math.max(existingMax.id + 1, initialId) : initialId;
     if (!await ObjectIdMap.findOne({ id: startId })) {
       await new ObjectIdMap({ id: startId }).save();
       console.log(`Initialized ObjectIdMap with id: ${startId}`);
     }
-
-    // Initialize TicketDisplayIdMap (optional starting display_id)
-    const initialDisplayId = 1000;
-    const existingMaxDisplay = await TicketDisplayIdMap.findOne().sort({ display_id: -1 }).select('display_id');
-    const startDisplayId = existingMaxDisplay ? existingMaxDisplay.display_id + 1 : initialDisplayId;
-    if (!await TicketDisplayIdMap.findOne({ display_id: startDisplayId })) {
-      await new TicketDisplayIdMap({ ticket_id: 0, display_id: startDisplayId, account_id: 320932 }).save();
-      console.log(`Initialized TicketDisplayIdMap with display_id: ${startDisplayId}`);
+    
+    // Initialize TicketDisplayIdMap
+    const account_id = parseInt(process.env.ACCOUNT_ID) || 320932;
+    const initialDisplayId = 7001;
+    const existingMap = await TicketDisplayIdMap.findOne({ account_id }).select('next_display_id');
+    const startDisplayId = existingMap ? Math.max(existingMap.next_display_id + 1, initialDisplayId) : initialDisplayId;
+    if (!await TicketDisplayIdMap.findOne({ account_id })) {
+      await new TicketDisplayIdMap({ account_id, next_display_id: startDisplayId }).save();
+      console.log(`Initialized TicketDisplayIdMap with account_id: ${account_id}, next_display_id: ${startDisplayId}`);
     }
 
     console.log('Initialization complete');

@@ -70,13 +70,19 @@ app.post('/api/tickets', async (req, res) => {
 
     // Generate id
     const maxId = await ObjectIdMap.findOne().sort({ id: -1 }).select('id');
-    const newId = (maxId?.id || 9000000000) + 1; // Start at 9000000000 for tickets
+    const newId = (maxId?.id || 9499999999) + 1;
 
     // Generate display_id
-    const maxDisplayId = await TicketDisplayIdMap.findOne({ account_id })
-      .sort({ display_id: -1 })
-      .select('display_id');
-    const newDisplayId = (maxDisplayId?.display_id || 1000) + 1; // Start at 1000 per account
+    const displayMap = await TicketDisplayIdMap.findOne({ account_id });
+    let newDisplayId;
+    if (displayMap) {
+      newDisplayId = displayMap.next_display_id;
+      displayMap.next_display_id += 1;
+      await displayMap.save();
+    } else {
+      newDisplayId = 7001;
+      await new TicketDisplayIdMap({ account_id, next_display_id: newDisplayId + 1 }).save();
+    }
 
     // Set company_id from requester
     let company_id = null;
@@ -102,9 +108,6 @@ app.post('/api/tickets', async (req, res) => {
 
     // Save to ObjectIdMap
     await new ObjectIdMap({ id: newId }).save();
-
-    // Save to TicketDisplayIdMap
-    await new TicketDisplayIdMap({ ticket_id: newId, display_id: newDisplayId, account_id }).save();
 
     const populatedTicket = await Ticket.findById(ticket._id).populate('responder_id requester_id company_id');
     res.status(201).json(populatedTicket);
