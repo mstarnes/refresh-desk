@@ -1,0 +1,9 @@
+.new-ticket-field {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.MuiTextField-root.new-ticket-field .MuiOutlinedInput-root {
+  border-radius: 4px;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}

@@ -11,7 +11,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import axios from './axiosConfig';
-import './styles/NewTicket.css';
+//import './styles/NewTicket.css';
 
 const NewTicket = () => {
   const navigate = useNavigate();
@@ -144,7 +144,7 @@ const NewTicket = () => {
   };
 
   return (
-    <Container>
+    <Container maxWidth={false}>
       <Typography variant="h5" sx={{ mb: 2 }}>
         New Ticket
       </Typography>
@@ -165,6 +165,7 @@ const NewTicket = () => {
               onChange={handleTextChange('subject')}
               variant="outlined"
               fullWidth
+              sx={{ width: '100% !important' }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -181,6 +182,7 @@ const NewTicket = () => {
                   label="Contact"
                   variant="outlined"
                   fullWidth
+                  sx={{ width: '100% !important' }}
                 />
               )}
             />
@@ -197,6 +199,7 @@ const NewTicket = () => {
                   label="Ticket Type"
                   variant="outlined"
                   fullWidth
+                  sx={{ width: '100% !important' }}
                 />
               )}
             />
@@ -213,6 +216,7 @@ const NewTicket = () => {
                   label="Status"
                   variant="outlined"
                   fullWidth
+                  sx={{ width: '100% !important' }}
                 />
               )}
             />
@@ -229,6 +233,7 @@ const NewTicket = () => {
                   label="Priority"
                   variant="outlined"
                   fullWidth
+                  sx={{ width: '100% !important' }}
                 />
               )}
             />
@@ -245,6 +250,7 @@ const NewTicket = () => {
                   label="Group"
                   variant="outlined"
                   fullWidth
+                  sx={{ width: '100% !important' }}
                 />
               )}
             />
@@ -262,6 +268,7 @@ const NewTicket = () => {
                   label="Agent"
                   variant="outlined"
                   fullWidth
+                  sx={{ width: '100% !important' }}
                 />
               )}
             />
@@ -278,6 +285,7 @@ const NewTicket = () => {
                   label="Source"
                   variant="outlined"
                   fullWidth
+                  sx={{ width: '100% !important' }}
                 />
               )}
             />
@@ -292,6 +300,7 @@ const NewTicket = () => {
               onChange={handleTextChange('description')}
               variant="outlined"
               fullWidth
+              sx={{ width: '100% !important' }}
             />
           </Grid>
           <Grid item xs={12}>

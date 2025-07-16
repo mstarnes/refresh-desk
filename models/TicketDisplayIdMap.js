@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const ticketDisplayIdMapSchema = new Schema({
-  ticket_id: { type: Schema.Types.ObjectId, ref: 'Ticket', required: true },
-  display_id: { type: Number, required: true, unique: true },
+const TicketDisplayIdMapSchema = new mongoose.Schema({
+  ticket_id: { type: Number, required: true },
+  display_id: { type: Number, required: true },
+  account_id: { type: Number, required: true },
 });
 
-module.exports = mongoose.model('TicketDisplayIdMap', ticketDisplayIdMapSchema);
+TicketDisplayIdMapSchema.index({ ticket_id: 1, display_id: 1, account_id: 1 }, { unique: true });
+
+module.exports = mongoose.model('TicketDisplayIdMap', TicketDisplayIdMapSchema);

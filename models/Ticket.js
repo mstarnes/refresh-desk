@@ -189,7 +189,7 @@ const TicketSchema = new mongoose.Schema({
   ticket_states: TicketStatesSchema,
   requester: RequesterSchema,
   conversations: [ConversationSchema],
-  company_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+  company_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: false },
 });
 
 // Add index on display_id

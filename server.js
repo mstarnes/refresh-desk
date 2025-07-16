@@ -61,8 +61,63 @@ const imap = new Imap({
 });
 
 // Routes
-// Create a new ticket
+// Create a new ticket new version
 app.post('/api/tickets', async (req, res) => {
+  try {
+    console.log('req.body:', req.body);
+    const account_id = parseInt(process.env.ACCOUNT_ID) || 320932;
+
+    // Generate id
+    const maxId = await ObjectIdMap.findOne().sort({ id: -1 }).select('id');
+    const newId = (maxId?.id || 9000000000) + 1; // Start at 9000000000 for tickets
+
+    // Generate display_id
+    const maxDisplayId = await TicketDisplayIdMap.findOne({ account_id })
+      .sort({ display_id: -1 })
+      .select('display_id');
+    const newDisplayId = (maxDisplayId?.display_id || 1000) + 1; // Start at 1000 per account
+
+    // Set company_id from requester
+    let company_id = null;
+    if (req.body.requester_id) {
+      const requester = await User.findById(req.body.requester_id).select('company_id');
+      company_id = requester?.company_id || null;
+    }
+
+    const ticketData = {
+      ...req.body,
+      id: newId,
+      display_id: newDisplayId,
+      company_id,
+      account_id,
+      delta: true,
+      ticket_states: {
+        ...req.body.ticket_states,
+        ticket_id: newId,
+      },
+    };
+    const ticket = new Ticket(ticketData);
+    await ticket.save();
+
+    // Save to ObjectIdMap
+    await new ObjectIdMap({ id: newId }).save();
+
+    // Save to TicketDisplayIdMap
+    await new TicketDisplayIdMap({ ticket_id: newId, display_id: newDisplayId, account_id }).save();
+
+    const populatedTicket = await Ticket.findById(ticket._id).populate('responder_id requester_id company_id');
+    res.status(201).json(populatedTicket);
+  } catch (error) {
+    console.error('Ticket creation error:', error.message);
+    if (error.name === 'ValidationError') {
+      console.error('Validation errors:', error.errors);
+    }
+    res.status(400).json({ error: error.message, details: error.errors });
+  }
+});
+
+// Create a new ticket old version
+app.post('/api/tickets-old', async (req, res) => {
   try {
     const { subject, description, priority, requester, display_id, status, responder_id, company_id } = req.body;
 
