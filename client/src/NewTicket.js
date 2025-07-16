@@ -11,7 +11,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import axios from './axiosConfig';
-//import './styles/NewTicket.css';
+import './styles/NewTicket.css';
 
 const NewTicket = () => {
   const navigate = useNavigate();
