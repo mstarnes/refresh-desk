@@ -79,6 +79,7 @@ const NewTicket = () => {
   };
 
   const handleSubmit = async (e) => {
+    console.log('Form submitted');
     e.preventDefault();
     console.log('handleSubmit called');
     if (!formData.contact) {
@@ -165,7 +166,7 @@ const NewTicket = () => {
         message={error}
       />
       <Grid container spacing={2} sx={{ width: '100%', display: 'block' }}>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <TextField
             className="new-ticket-field"
             label="Subject"
@@ -176,7 +177,7 @@ const NewTicket = () => {
             sx={{ width: '100% !important' }}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <Autocomplete
             options={contacts}
             getOptionLabel={(option) => `${option.name} <${option.email}>`}
@@ -195,7 +196,7 @@ const NewTicket = () => {
             )}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <Autocomplete
             options={ticketFields.ticket_type}
             value={formData.ticket_type}
@@ -212,7 +213,7 @@ const NewTicket = () => {
             )}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <Autocomplete
             options={ticketFields.status.map((s) => s.name)}
             value={formData.status}
@@ -229,7 +230,7 @@ const NewTicket = () => {
             )}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <Autocomplete
             options={ticketFields.priority.map((p) => p.name)}
             value={formData.priority}
@@ -246,7 +247,7 @@ const NewTicket = () => {
             )}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <Autocomplete
             options={ticketFields.group.map((g) => g.name)}
             value={formData.group_id}
@@ -263,7 +264,7 @@ const NewTicket = () => {
             )}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <Autocomplete
             options={ticketFields.agent}
             getOptionLabel={(option) => option.name || ''}
@@ -281,7 +282,7 @@ const NewTicket = () => {
             )}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <Autocomplete
             options={ticketFields.source.map((s) => s.name)}
             value={formData.source}
@@ -298,7 +299,7 @@ const NewTicket = () => {
             )}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <TextField
             className="new-ticket-field"
             label="Description"
@@ -311,7 +312,7 @@ const NewTicket = () => {
             sx={{ width: '100% !important' }}
           />
         </Grid>
-        <Grid sx={{ width: '100%' }}>
+        <Grid sx={{ width: '100%', my: 2 }}>
           <Button variant="contained" color="primary" type="submit">
             Create Ticket
           </Button>
