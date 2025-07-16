@@ -14,6 +14,7 @@ import axios from './axiosConfig';
 import './styles/NewTicket.css';
 
 const NewTicket = () => {
+  console.log('Before handleSubmit'); // Debug rendering
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     subject: '',
@@ -95,6 +96,7 @@ const NewTicket = () => {
       return;
     }
     try {
+      console.log('Sending ticketData:', formData);
       const statusCode = ticketFields.status.find((s) => s.name === formData.status)?.code || 2;
       const priorityCode = ticketFields.priority.find((p) => p.name === formData.priority)?.code || 1;
       const sourceCode = ticketFields.source.find((s) => s.name === formData.source)?.code || 3;
@@ -133,7 +135,9 @@ const NewTicket = () => {
           updated_at: new Date().toISOString(),
         },
       };
-      await axios.post('/api/tickets', ticketData);
+      console.log('Posting to /api/tickets:', ticketData);
+      const response = await axios.post('/api/tickets', ticketData);
+      console.log('Ticket created:', response.data);
       navigate('/');
     } catch (error) {
       console.error('Error creating ticket:', error);
@@ -153,6 +157,7 @@ const NewTicket = () => {
     setError(null);
   };
 
+  console.log('After render'); // Debug rendering
   return (
     <Container maxWidth={false}>
       <Typography variant="h5" sx={{ mb: 2 }}>
