@@ -96,12 +96,12 @@ app.post('/api/tickets', async (req, res) => {
     let sla_policy_id = null;
     if (req.body.requester_id) {
       const requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
-      company_id = requester?.company_id || null;
+      company_id = requester?.company_id ? mongoose.Types.ObjectId(requester.company_id.toString()) : null;
       if (company_id) {
         const company = await mongoose.model('Company').findById(company_id).select('sla_policy_id');
-        sla_policy_id = company?.sla_policy_id || '9000030757'; // Fallback to default
+        sla_policy_id = company?.sla_policy_id || '9000030757';
       } else {
-        sla_policy_id = '9000030757'; // Default if no company
+        sla_policy_id = '9000030757';
       }
     }
 
@@ -111,12 +111,15 @@ app.post('/api/tickets', async (req, res) => {
       console.warn(`No SLA policy found for id ${sla_policy_id}, using default 9000030757`);
       slaPolicy = await SlaPolicy.findOne({ id: '9000030757' });
     }
+    if (!slaPolicy?.sla_target) {
+      console.error('SLA policy missing sla_target, using fallback values');
+      slaPolicy = { sla_target: { priority_4: { respond_within: 3600, resolve_within: 14400 } } };
+    }
     const priorityName = req.body.priority_name || 'Low';
-    const slaTimes = slaPolicy?.sla_target
-      ? slaPolicy.sla_target[`priority_${priorityName === 'Urgent' ? 1 : priorityName === 'High' ? 2 : priorityName === 'Medium' ? 3 : 4}`]
-      : { respond_within: 3600, resolve_within: 14400 }; // Fallback to Low if no sla_target
-    const fr_due_by = slaTimes.respond_within ? new Date(Date.now() + slaTimes.respond_within * 1000).toISOString() : null;
-    const due_by = slaTimes.resolve_within ? new Date(Date.now() + slaTimes.resolve_within * 1000).toISOString() : null;
+    const slaTimes = slaPolicy.sla_target[`priority_${priorityName === 'Urgent' ? 1 : priorityName === 'High' ? 2 : priorityName === 'Medium' ? 3 : 4}`];
+    console.log('SLA times for priority', priorityName, ':', slaTimes); // Debug log
+    const fr_due_by = slaTimes?.respond_within ? new Date(Date.now() + slaTimes.respond_within * 1000).toISOString() : null;
+    const due_by = slaTimes?.resolve_within ? new Date(Date.now() + slaTimes.resolve_within * 1000).toISOString() : null;
 
     // Preserve requester timestamps
     if (req.body.requester && req.body.requester_id) {

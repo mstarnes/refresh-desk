@@ -65,7 +65,10 @@ const NewTicket = () => {
   }, []);
 
   const handleContactSearch = async (input) => {
-    if (!input || input.length < 2) return;
+    if (!input || input.length < 2) {
+      setContacts([]);
+      return;
+    }
     try {
       setLoading(true);
       const response = await axios.get(`/api/users/search?q=${input}`);
@@ -179,8 +182,9 @@ const NewTicket = () => {
           </Grid>
           <Grid sx={{ width: '100%', my: 2 }}>
             <Autocomplete
-              options={contacts.length === 0 && !formData.contact ? [{ name: 'Type to search', disabled: true }] : contacts}
+              options={formData.contact ? [formData.contact, ...contacts.filter(c => c._id !== formData.contact._id)] : contacts.length === 0 ? [{ name: 'Type to search', disabled: true }] : contacts}
               getOptionLabel={(option) => option.disabled ? option.name : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
+              filterOptions={(options) => options}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -193,7 +197,7 @@ const NewTicket = () => {
               )}
               onInputChange={(e, value) => handleContactSearch(value)}
               onChange={handleChange('contact')}
-              value={formData.contact}
+              value={formData.contact || null}
             />
           </Grid>
           <Grid sx={{ width: '100%', my: 2 }}>
