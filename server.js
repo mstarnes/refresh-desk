@@ -84,12 +84,39 @@ app.post('/api/tickets', async (req, res) => {
       await new TicketDisplayIdMap({ account_id, next_display_id: newDisplayId + 1 }).save();
     }
 
-    // Set company_id from requester
+    // Set company_id and SLA policy
     let company_id = null;
+    let sla_policy_id = null;
     if (req.body.requester_id) {
       const requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
       company_id = requester?.company_id || null;
-      if (req.body.requester && requester) {
+      if (company_id) {
+        const company = await mongoose.model('Company').findById(company_id).select('sla_policy_id account_tier');
+        sla_policy_id = company?.sla_policy_id || null;
+      }
+    }
+
+    // Set SLA fields based on priority and policy
+    const priorityName = req.body.priority_name || 'Low'; // Default to 'Low' if not set
+    const slaPolicy = {
+      '9000030757': { // Default SLA policy
+        priority_4: { respond_within: 3600, resolve_within: 14400 }, // Low
+        priority_3: { respond_within: 14400, resolve_within: 43200 }, // Medium
+        priority_2: { respond_within: 28800, resolve_within: 86400 }, // High
+        priority_1: { respond_within: 86400, resolve_within: 259200 }, // Urgent
+      },
+    };
+    const effectiveSlaPolicyId = sla_policy_id || '9000030757'; // Fallback to default if no policy
+    const slaTimes = slaPolicy[effectiveSlaPolicyId]
+      ? slaPolicy[effectiveSlaPolicyId][`priority_${priorityName === 'Urgent' ? 1 : priorityName === 'High' ? 2 : priorityName === 'Medium' ? 3 : 4}`]
+      : slaPolicy['9000030757'].priority_4; // Fallback to Low if policy missing
+    const fr_due_by = slaTimes ? new Date(Date.now() + slaTimes.respond_within * 1000).toISOString() : null;
+    const due_by = slaTimes ? new Date(Date.now() + slaTimes.resolve_within * 1000).toISOString() : null;
+
+    // Preserve requester timestamps
+    if (req.body.requester && req.body.requester_id) {
+      const requester = await User.findById(req.body.requester_id).select('created_at updated_at');
+      if (requester) {
         req.body.requester.created_at = requester.created_at;
         req.body.requester.updated_at = requester.updated_at;
       }
@@ -101,6 +128,8 @@ app.post('/api/tickets', async (req, res) => {
       display_id: newDisplayId,
       company_id,
       account_id,
+      fr_due_by,
+      due_by,
       delta: true,
       ticket_states: {
         ...req.body.ticket_states,
@@ -112,6 +141,9 @@ app.post('/api/tickets', async (req, res) => {
 
     // Save to ObjectIdMap
     await new ObjectIdMap({ id: newId }).save();
+
+    // Save to TicketDisplayIdMap
+    await new TicketDisplayIdMap({ account_id, next_display_id: newDisplayId + 1 }).save();
 
     const populatedTicket = await Ticket.findById(ticket._id).populate('responder_id requester_id company_id');
     res.status(201).json(populatedTicket);

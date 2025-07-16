@@ -100,7 +100,7 @@ const NewTicket = () => {
 
       const ticketData = {
         subject: formData.subject,
-        description: formData.description, // Added missing field
+        description: formData.description,
         requester_id: formData.contact ? formData.contact._id : null,
         responder_id: formData.responder_id ? formData.responder_id._id : null,
         ticket_type: formData.ticket_type,
@@ -180,10 +180,7 @@ const NewTicket = () => {
           <Grid sx={{ width: '100%', my: 2 }}>
             <Autocomplete
               options={contacts}
-              getOptionLabel={(option) => `${option.name} <${option.email}>`}
-              onInputChange={(e, value) => handleContactSearch(value)}
-              onChange={handleChange('contact')}
-              value={formData.contact}
+              getOptionLabel={(option) => option.name || ''}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -192,8 +189,12 @@ const NewTicket = () => {
                   variant="outlined"
                   fullWidth
                   sx={{ width: '100% !important' }}
+                  placeholder={contacts.length === 0 && !params.inputProps.value ? 'Type to search' : undefined}
                 />
               )}
+              onInputChange={(e, value) => handleContactSearch(value)}
+              onChange={handleChange('contact')}
+              value={formData.contact}
             />
           </Grid>
           <Grid sx={{ width: '100%', my: 2 }}>
