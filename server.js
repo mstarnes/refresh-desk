@@ -22,7 +22,7 @@ const TicketDisplayIdMap = require('./models/TicketDisplayIdMap');
 const Role = require('./models/Role');
 const Skill = require('./models/Skill');
 const EmailConfig = require('./models/EmailConfig');
-const SLAPolicy = require('./models/SlaPolicy');
+const SlaPolicy = require('./models/SlaPolicy');
 const BusinessHour = require('./models/BusinessHour');
 const Setting = require('./models/Setting');
 require('dotenv').config();
@@ -147,9 +147,6 @@ app.post('/api/tickets', async (req, res) => {
     // Save to ObjectIdMap
     await new ObjectIdMap({ id: newId }).save();
 
-    // Save to TicketDisplayIdMap
-    await new TicketDisplayIdMap({ account_id, next_display_id: newDisplayId + 1 }).save();
-
     const populatedTicket = await Ticket.findById(ticket._id).populate('responder_id requester_id company_id');
     res.status(201).json(populatedTicket);
   } catch (error) {
@@ -179,13 +176,13 @@ app.post('/api/tickets-old', async (req, res) => {
       return res.status(400).json({ error: 'Company not found' });
     }
 
-    const slaPolicy = await SLAPolicy.findOne({ id: company.sla_policy_id });
-    if (!slaPolicy) {
+    const SlaPolicy = await SlaPolicy.findOne({ id: company.sla_policy_id });
+    if (!SlaPolicy) {
       return res.status(400).json({ error: 'SLA policy not found' });
     }
 
     const priorityKey = `priority_${priority}`;
-    const resolveWithin = slaPolicy.sla_target[priorityKey]?.resolve_within;
+    const resolveWithin = SlaPolicy.sla_target[priorityKey]?.resolve_within;
     if (!resolveWithin) {
       return res.status(400).json({ error: 'Invalid priority for SLA policy' });
     }
@@ -1305,7 +1302,7 @@ app.delete('/api/email-configs/:id', async (req, res) => {
 // SLA Policies
 app.get('/api/sla-policies', async (req, res) => {
   try {
-    const slaPolicies = await SLAPolicy.find();
+    const slaPolicies = await SlaPolicy.find();
     res.json(slaPolicies);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1314,9 +1311,9 @@ app.get('/api/sla-policies', async (req, res) => {
 
 app.get('/api/sla-policies/:id', async (req, res) => {
   try {
-    const slaPolicy = await SLAPolicy.findById(req.params.id);
-    if (!slaPolicy) return res.status(404).json({ error: 'SLA Policy not found' });
-    res.json(slaPolicy);
+    const SlaPolicy = await SlaPolicy.findById(req.params.id);
+    if (!SlaPolicy) return res.status(404).json({ error: 'SLA Policy not found' });
+    res.json(SlaPolicy);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -1324,9 +1321,9 @@ app.get('/api/sla-policies/:id', async (req, res) => {
 
 app.post('/api/sla-policies', async (req, res) => {
   try {
-    const slaPolicy = new SLAPolicy(req.body);
-    await slaPolicy.save();
-    res.json(slaPolicy);
+    const SlaPolicy = new SlaPolicy(req.body);
+    await SlaPolicy.save();
+    res.json(SlaPolicy);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -1334,9 +1331,9 @@ app.post('/api/sla-policies', async (req, res) => {
 
 app.put('/api/sla-policies/:id', async (req, res) => {
   try {
-    const slaPolicy = await SLAPolicy.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!slaPolicy) return res.status(404).json({ error: 'SLA Policy not found' });
-    res.json(slaPolicy);
+    const SlaPolicy = await SlaPolicy.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!SlaPolicy) return res.status(404).json({ error: 'SLA Policy not found' });
+    res.json(SlaPolicy);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -1344,8 +1341,8 @@ app.put('/api/sla-policies/:id', async (req, res) => {
 
 app.delete('/api/sla-policies/:id', async (req, res) => {
   try {
-    const slaPolicy = await SLAPolicy.findByIdAndDelete(req.params.id);
-    if (!slaPolicy) return res.status(404).json({ error: 'SLA Policy not found' });
+    const SlaPolicy = await SlaPolicy.findByIdAndDelete(req.params.id);
+    if (!SlaPolicy) return res.status(404).json({ error: 'SLA Policy not found' });
     res.json({ message: 'SLA Policy deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
