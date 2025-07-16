@@ -1,25 +1,20 @@
 // server.js
-require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const nodemailer = require('nodemailer');
 
-const app = express();
-app.use(express.json({ limit: '1mb' })); // Increase payload limit to 1mb
-app.use(cors({ origin: 'http://localhost:3000' }));
-app.use(express.json());
 
 // Schemas
-const Ticket = require('./models/Ticket');
-const ObjectIdMap = require('./models/ObjectIdMap');
 const TicketField = require('./models/TicketField');
 const User = require('./models/User');
 const Company = require('./models/Company');
 const Agent = require('./models/Agent');
 const Group = require('./models/Group');
+const Ticket = require('./models/Ticket');
+const ObjectIdMap = require('./models/ObjectIdMap');
 const Solution = require('./models/Solution');
 const CannedResponse = require('./models/CannedResponse');
 const TimeEntry = require('./models/TimeEntry');
@@ -27,9 +22,14 @@ const TicketDisplayIdMap = require('./models/TicketDisplayIdMap');
 const Role = require('./models/Role');
 const Skill = require('./models/Skill');
 const EmailConfig = require('./models/EmailConfig');
-const SLAPolicy = require('./models/SLAPolicy');
+const SLAPolicy = require('./models/SlaPolicy');
 const BusinessHour = require('./models/BusinessHour');
 const Setting = require('./models/Setting');
+require('dotenv').config();
+
+const app = express();
+app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(express.json({ limit: '1mb' })); // Increase payload limit to 1mb
 
 // Set strictPopulate to false as a fallback
 mongoose.set('strictPopulate', false);
@@ -39,7 +39,14 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
-// Email Setup
+// Stub for SLA and email processing
+setInterval(() => {
+  const account_id = process.env.ACCOUNT_ID || 320932;
+  console.log(`SLA escalation check for account_id: ${account_id}`);
+  console.log(`Email processing check for account_id: ${account_id}`);
+}, process.env.CHECK_INTERVAL ? parseInt(process.env.CHECK_INTERVAL) : 60000);
+
+  // Email Setup
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOSTNAME,
   port: parseInt(process.env.SMTP_PORT),
@@ -73,7 +80,7 @@ app.post('/api/tickets', async (req, res) => {
     const newId = (maxId?.id || 9499999999) + 1;
 
     // Generate display_id
-    const displayMap = await TicketDisplayIdMap.findOne({ account_id });
+    let displayMap = await TicketDisplayIdMap.findOne({ account_id });
     let newDisplayId;
     if (displayMap) {
       newDisplayId = displayMap.next_display_id;
@@ -91,27 +98,25 @@ app.post('/api/tickets', async (req, res) => {
       const requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
       company_id = requester?.company_id || null;
       if (company_id) {
-        const company = await mongoose.model('Company').findById(company_id).select('sla_policy_id account_tier');
-        sla_policy_id = company?.sla_policy_id || null;
+        const company = await mongoose.model('Company').findById(company_id).select('sla_policy_id');
+        sla_policy_id = company?.sla_policy_id || '9000030757'; // Fallback to default
+      } else {
+        sla_policy_id = '9000030757'; // Default if no company
       }
     }
 
-    // Set SLA fields based on priority and policy
-    const priorityName = req.body.priority_name || 'Low'; // Default to 'Low' if not set
-    const slaPolicy = {
-      '9000030757': { // Default SLA policy
-        priority_4: { respond_within: 3600, resolve_within: 14400 }, // Low
-        priority_3: { respond_within: 14400, resolve_within: 43200 }, // Medium
-        priority_2: { respond_within: 28800, resolve_within: 86400 }, // High
-        priority_1: { respond_within: 86400, resolve_within: 259200 }, // Urgent
-      },
-    };
-    const effectiveSlaPolicyId = sla_policy_id || '9000030757'; // Fallback to default if no policy
-    const slaTimes = slaPolicy[effectiveSlaPolicyId]
-      ? slaPolicy[effectiveSlaPolicyId][`priority_${priorityName === 'Urgent' ? 1 : priorityName === 'High' ? 2 : priorityName === 'Medium' ? 3 : 4}`]
-      : slaPolicy['9000030757'].priority_4; // Fallback to Low if policy missing
-    const fr_due_by = slaTimes ? new Date(Date.now() + slaTimes.respond_within * 1000).toISOString() : null;
-    const due_by = slaTimes ? new Date(Date.now() + slaTimes.resolve_within * 1000).toISOString() : null;
+    // Fetch SLA policy from database
+    const slaPolicy = await SlaPolicy.findOne({ id: sla_policy_id });
+    if (!slaPolicy) {
+      console.warn(`No SLA policy found for id ${sla_policy_id}, using default 9000030757`);
+      slaPolicy = await SlaPolicy.findOne({ id: '9000030757' });
+    }
+    const priorityName = req.body.priority_name || 'Low';
+    const slaTimes = slaPolicy?.sla_target
+      ? slaPolicy.sla_target[`priority_${priorityName === 'Urgent' ? 1 : priorityName === 'High' ? 2 : priorityName === 'Medium' ? 3 : 4}`]
+      : { respond_within: 3600, resolve_within: 14400 }; // Fallback to Low if no sla_target
+    const fr_due_by = slaTimes.respond_within ? new Date(Date.now() + slaTimes.respond_within * 1000).toISOString() : null;
+    const due_by = slaTimes.resolve_within ? new Date(Date.now() + slaTimes.resolve_within * 1000).toISOString() : null;
 
     // Preserve requester timestamps
     if (req.body.requester && req.body.requester_id) {

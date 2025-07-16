@@ -1,30 +1,23 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const slaTargetSchema = new Schema({
-  respond_within: { type: Number },
-  resolve_within: { type: Number },
-  business_hours: { type: Boolean },
-  escalation_enabled: { type: Boolean },
-});
-
-const slaPolicySchema = new Schema({
+const SlaPolicySchema = new mongoose.Schema({
+  id: { type: Number, required: true },
   name: { type: String, required: true },
-  description: { type: String },
+  description: String,
   active: { type: Boolean, default: true },
   sla_target: {
-    priority_1: slaTargetSchema,
-    priority_2: slaTargetSchema,
-    priority_3: slaTargetSchema,
-    priority_4: slaTargetSchema,
+    priority_1: { respond_within: { type: Number, required: true }, resolve_within: { type: Number, required: true }, business_hours: { type: Boolean, required: true }, escalation_enabled: { type: Boolean, required: true } },
+    priority_2: { respond_within: { type: Number, required: true }, resolve_within: { type: Number, required: true }, business_hours: { type: Boolean, required: true }, escalation_enabled: { type: Boolean, required: true } },
+    priority_3: { respond_within: { type: Number, required: true }, resolve_within: { type: Number, required: true }, business_hours: { type: Boolean, required: true }, escalation_enabled: { type: Boolean, required: true } },
+    priority_4: { respond_within: { type: Number, required: true }, resolve_within: { type: Number, required: true }, business_hours: { type: Boolean, required: true }, escalation_enabled: { type: Boolean, required: true } },
   },
-  applicable_to: { type: Schema.Types.Mixed },
+  group_ids: [Number], // Optional, per your note to ignore for now
   is_default: { type: Boolean, default: false },
-  position: { type: Number },
-  escalation: { type: Schema.Types.Mixed },
-  group_ids: [{ type: Schema.Types.ObjectId, ref: 'Group' }],
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now },
+  position: Number,
+  created_at: Date,
+  updated_at: Date,
 });
 
-module.exports = mongoose.model('SLAPolicy', slaPolicySchema);
+SlaPolicySchema.index({ id: 1 }, { unique: true });
+
+module.exports = mongoose.model('SlaPolicy', SlaPolicySchema);

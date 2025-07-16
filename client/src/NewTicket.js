@@ -65,7 +65,7 @@ const NewTicket = () => {
   }, []);
 
   const handleContactSearch = async (input) => {
-    if (input.length < 2) return;
+    if (!input || input.length < 2) return;
     try {
       setLoading(true);
       const response = await axios.get(`/api/users/search?q=${input}`);
@@ -179,8 +179,8 @@ const NewTicket = () => {
           </Grid>
           <Grid sx={{ width: '100%', my: 2 }}>
             <Autocomplete
-              options={contacts.length === 0 && !formData.contact ? ['Type to search'] : contacts}
-              getOptionLabel={(option) => typeof option === 'string' ? option : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
+              options={contacts.length === 0 && !formData.contact ? [{ name: 'Type to search', disabled: true }] : contacts}
+              getOptionLabel={(option) => option.disabled ? option.name : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
               renderInput={(params) => (
                 <TextField
                   {...params}
