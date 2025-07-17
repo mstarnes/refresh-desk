@@ -134,7 +134,7 @@ const TicketSchema = new mongoose.Schema({
   group_id: { type: Number, default: null },
   due_by: { type: String },
   fr_due_by: { type: String },
-  isescalated: { type: Boolean },
+  is_escalated: { type: Boolean },
   priority: { type: Number },
   fr_escalated: { type: Boolean },
   to_email: { type: String },
