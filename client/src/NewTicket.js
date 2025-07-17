@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -171,182 +171,183 @@ const NewTicket = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Container maxWidth={false}>
-        <Typography variant="h5" sx={{ mb: 2 }}>
-          New Ticket
-        </Typography>
-        {loading && <CircularProgress />}
-        <Snackbar
-          open={!!error}
-          autoHideDuration={6000}
-          onClose={handleCloseError}
-          message={error}
-        />
-        <Grid container spacing={2} sx={{ width: '100%', display: 'block' }}>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <TextField
-              className="new-ticket-field"
-              label="Subject"
-              value={formData.subject}
-              onChange={handleTextChange('subject')}
-              variant="outlined"
-              fullWidth
-              sx={{ width: '100% !important' }}
-            />
+    <ErrorBoundary>
+      <form onSubmit={handleSubmit}>
+        <Container maxWidth={false}>
+          <Typography variant="h5" sx={{ mb: 2 }}>
+            New Ticket
+          </Typography>
+          {loading && <CircularProgress />}
+          <Snackbar
+            open={!!error}
+            autoHideDuration={6000}
+            onClose={handleCloseError}
+            message={error}
+          />
+          <Grid container spacing={2} sx={{ width: '100%', display: 'block' }}>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <TextField
+                className="new-ticket-field"
+                label="Subject"
+                value={formData.subject}
+                onChange={handleTextChange('subject')}
+                variant="outlined"
+                fullWidth
+                sx={{ width: '100% !important' }}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <Autocomplete
+                options={formData.contact ? [formData.contact, ...contacts.filter(c => c._id !== formData.contact._id)] : contacts.length === 0 ? [{ name: 'Type to search', disabled: true }] : contacts}
+                getOptionLabel={(option) => option.disabled ? option.name : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
+                filterOptions={(options) => options}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    className="new-ticket-field"
+                    label="Contact"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ width: '100% !important' }}
+                  />
+                )}
+                onInputChange={(e, value) => handleContactSearch(value)}
+                onChange={handleChange('contact')}
+                value={formData.contact || null}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <Autocomplete
+                options={ticketFields.ticket_type}
+                value={formData.ticket_type}
+                onChange={handleChange('ticket_type')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    className="new-ticket-field"
+                    label="Ticket Type"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ width: '100% !important' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <Autocomplete
+                options={ticketFields.status.map((s) => s.name)}
+                value={formData.status}
+                onChange={handleChange('status')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    className="new-ticket-field"
+                    label="Status"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ width: '100% !important' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <Autocomplete
+                options={ticketFields.priority.map((p) => p.name)}
+                value={formData.priority}
+                onChange={handleChange('priority')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    className="new-ticket-field"
+                    label="Priority"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ width: '100% !important' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <Autocomplete
+                options={ticketFields.group.map((g) => g.name)}
+                value={formData.group_id}
+                onChange={handleChange('group_id')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    className="new-ticket-field"
+                    label="Group"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ width: '100% !important' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <Autocomplete
+                options={ticketFields.agent}
+                getOptionLabel={(option) => option.name || ''}
+                value={formData.responder_id}
+                onChange={handleChange('responder_id')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    className="new-ticket-field"
+                    label="Agent"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ width: '100% !important' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <Autocomplete
+                options={ticketFields.source.map((s) => s.name)}
+                value={formData.source}
+                onChange={handleChange('source')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    className="new-ticket-field"
+                    label="Source"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ width: '100% !important' }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <TextField
+                className="new-ticket-field"
+                label="Description"
+                multiline
+                rows={4}
+                value={formData.description}
+                onChange={handleTextChange('description')}
+                variant="outlined"
+                fullWidth
+                sx={{ width: '100% !important' }}
+              />
+            </Grid>
+            <Grid sx={{ width: '100%', my: 2 }}>
+              <Button variant="contained" color="primary" type="submit">
+                Create Ticket
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => navigate('/')}
+                sx={{ ml: 1 }}
+              >
+                Cancel
+              </Button>
+            </Grid>
           </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <Autocomplete
-              options={formData.contact ? [formData.contact, ...contacts.filter(c => c._id !== formData.contact._id)] : contacts.length === 0 ? [{ name: 'Type to search', disabled: true }] : contacts}
-              getOptionLabel={(option) => option.disabled ? option.name : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
-              filterOptions={(options) => options}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  className="new-ticket-field"
-                  label="Contact"
-                  variant="outlined"
-                  fullWidth
-                  sx={{ width: '100% !important' }}
-                />
-              )}
-              onInputChange={(e, value) => handleContactSearch(value)}
-              onChange={handleChange('contact')}
-              value={formData.contact || null}
-            />
-          </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <Autocomplete
-              options={ticketFields.ticket_type}
-              value={formData.ticket_type}
-              onChange={handleChange('ticket_type')}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  className="new-ticket-field"
-                  label="Ticket Type"
-                  variant="outlined"
-                  fullWidth
-                  sx={{ width: '100% !important' }}
-                />
-              )}
-            />
-          </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <Autocomplete
-              options={ticketFields.status.map((s) => s.name)}
-              value={formData.status}
-              onChange={handleChange('status')}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  className="new-ticket-field"
-                  label="Status"
-                  variant="outlined"
-                  fullWidth
-                  sx={{ width: '100% !important' }}
-                />
-              )}
-            />
-          </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <Autocomplete
-              options={ticketFields.priority.map((p) => p.name)}
-              value={formData.priority}
-              onChange={handleChange('priority')}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  className="new-ticket-field"
-                  label="Priority"
-                  variant="outlined"
-                  fullWidth
-                  sx={{ width: '100% !important' }}
-                />
-              )}
-            />
-          </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <Autocomplete
-              options={ticketFields.group.map((g) => g.name)}
-              value={formData.group_id}
-              onChange={handleChange('group_id')}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  className="new-ticket-field"
-                  label="Group"
-                  variant="outlined"
-                  fullWidth
-                  sx={{ width: '100% !important' }}
-                />
-              )}
-            />
-          </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <Autocomplete
-              options={ticketFields.agent}
-              getOptionLabel={(option) => option.name || ''}
-              value={formData.responder_id}
-              onChange={handleChange('responder_id')}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  className="new-ticket-field"
-                  label="Agent"
-                  variant="outlined"
-                  fullWidth
-                  sx={{ width: '100% !important' }}
-                />
-              )}
-            />
-          </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <Autocomplete
-              options={ticketFields.source.map((s) => s.name)}
-              value={formData.source}
-              onChange={handleChange('source')}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  className="new-ticket-field"
-                  label="Source"
-                  variant="outlined"
-                  fullWidth
-                  sx={{ width: '100% !important' }}
-                />
-              )}
-            />
-          </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <TextField
-              className="new-ticket-field"
-              label="Description"
-              multiline
-              rows={4}
-              value={formData.description}
-              onChange={handleTextChange('description')}
-              variant="outlined"
-              fullWidth
-              sx={{ width: '100% !important' }}
-            />
-          </Grid>
-          <Grid sx={{ width: '100%', my: 2 }}>
-            <Button variant="contained" color="primary" type="submit">
-              Create Ticket
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => navigate('/')}
-              sx={{ ml: 1 }}
-            >
-              Cancel
-            </Button>
-          </Grid>
-        </Grid>
-      </Container>
-    </form>
+        </Container>
+      </form>
     </ErrorBoundary>
   );
 };
