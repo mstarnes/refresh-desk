@@ -20,9 +20,22 @@ class ErrorBoundary extends Component {
     return { hasError: true, error };
   }
 
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+    this.props.resetForm(); // Reset form data
+  };
+
   render() {
     if (this.state.hasError) {
-      return <h1>Something went wrong: {this.state.error.message}</h1>;
+      return (
+        <div>
+          <h1>Oops! Something went wrong.</h1>
+          <p>{this.state.error.message}</p>
+          <Button variant="contained" color="primary" onClick={this.handleRetry}>
+            Try Again
+          </Button>
+        </div>
+      );
     }
     return this.props.children;
   }
@@ -52,6 +65,20 @@ const NewTicket = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const resetForm = () => {
+    setFormData({
+      subject: '',
+      contact: null,
+      ticket_type: 'Incident',
+      status: 'Open',
+      priority: 'Low',
+      group_id: 'IT',
+      responder_id: null,
+      source: 'Phone',
+      description: '',
+    });
+  };
 
   useEffect(() => {
     const fetchTicketFields = async () => {
@@ -252,7 +279,7 @@ const NewTicket = () => {
             </Grid>
             <Grid sx={{ width: '100%', my: 2 }}>
               <Autocomplete
-                options={ticketFields.priority.map((p) => p.name)}
+                options={ticketFields.priority.map((p) => p.name)} // Fixed typo from s.name to p.name
                 value={formData.priority}
                 onChange={handleChange('priority')}
                 renderInput={(params) => (

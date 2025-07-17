@@ -96,10 +96,15 @@ app.post('/api/tickets', async (req, res) => {
     let sla_policy_id = null;
     if (req.body.requester_id) {
       const requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
-      company_id = requester?.company_id ? new mongoose.Types.ObjectId(requester.company_id.toString()) : null; // Fixed ObjectId instantiation
-      if (company_id) {
-        const company = await mongoose.model('Company').findById(company_id).select('sla_policy_id');
-        sla_policy_id = company?.sla_policy_id || '9000030757';
+      if (requester?.company_id && !isNaN(requester.company_id)) {
+        const company = await mongoose.model('Company').findOne({ id: requester.company_id }).select('_id'); // Fetch by id as integer
+        company_id = company?._id || null;
+        if (company_id) {
+          const companyDetails = await mongoose.model('Company').findById(company_id).select('sla_policy_id');
+          sla_policy_id = companyDetails?.sla_policy_id || '9000030757';
+        } else {
+          sla_policy_id = '9000030757';
+        }
       } else {
         sla_policy_id = '9000030757';
       }
@@ -117,7 +122,7 @@ app.post('/api/tickets', async (req, res) => {
     }
     const priorityName = req.body.priority_name || 'Low';
     const slaTimes = slaPolicy.sla_target[`priority_${priorityName === 'Urgent' ? 1 : priorityName === 'High' ? 2 : priorityName === 'Medium' ? 3 : 4}`];
-    console.log('SLA times for priority', priorityName, ':', slaTimes); // Debug log
+    console.log(`SLA times for policy ${sla_policy_id}, priority ${priorityName}:`, slaTimes);
     const fr_due_by = slaTimes?.respond_within ? new Date(Date.now() + slaTimes.respond_within * 1000).toISOString() : null;
     const due_by = slaTimes?.resolve_within ? new Date(Date.now() + slaTimes.resolve_within * 1000).toISOString() : null;
 
