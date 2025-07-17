@@ -96,7 +96,7 @@ app.post('/api/tickets', async (req, res) => {
     let sla_policy_id = null;
     if (req.body.requester_id) {
       const requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
-      company_id = requester?.company_id ? mongoose.Types.ObjectId(requester.company_id.toString()) : null;
+      company_id = requester?.company_id ? new mongoose.Types.ObjectId(requester.company_id.toString()) : null; // Fixed ObjectId instantiation
       if (company_id) {
         const company = await mongoose.model('Company').findById(company_id).select('sla_policy_id');
         sla_policy_id = company?.sla_policy_id || '9000030757';

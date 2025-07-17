@@ -13,6 +13,21 @@ import {
 import axios from './axiosConfig';
 import './styles/NewTicket.css';
 
+class ErrorBoundary extends Component {
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h1>Something went wrong: {this.state.error.message}</h1>;
+    }
+    return this.props.children;
+  }
+}
+
 const NewTicket = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -332,6 +347,7 @@ const NewTicket = () => {
         </Grid>
       </Container>
     </form>
+    </ErrorBoundary>
   );
 };
 
