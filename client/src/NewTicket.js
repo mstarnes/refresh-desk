@@ -198,7 +198,7 @@ const NewTicket = () => {
   };
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary resetForm={resetForm}>
       <form onSubmit={handleSubmit}>
         <Container maxWidth={false}>
           <Typography variant="h5" sx={{ mb: 2 }}>
@@ -279,7 +279,7 @@ const NewTicket = () => {
             </Grid>
             <Grid sx={{ width: '100%', my: 2 }}>
               <Autocomplete
-                options={ticketFields.priority.map((p) => p.name)} // Fixed typo from s.name to p.name
+                options={ticketFields.priority.map((p) => p.name)}
                 value={formData.priority}
                 onChange={handleChange('priority')}
                 renderInput={(params) => (

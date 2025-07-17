@@ -97,7 +97,7 @@ app.post('/api/tickets', async (req, res) => {
     if (req.body.requester_id) {
       const requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
       if (requester?.company_id && !isNaN(requester.company_id)) {
-        const company = await mongoose.model('Company').findOne({ id: requester.company_id }).select('_id'); // Fetch by id as integer
+        const company = await mongoose.model('Company').findOne({ id: requester.company_id }).select('_id');
         company_id = company?._id || null;
         if (company_id) {
           const companyDetails = await mongoose.model('Company').findById(company_id).select('sla_policy_id');
@@ -141,7 +141,7 @@ app.post('/api/tickets', async (req, res) => {
       display_id: newDisplayId,
       company_id,
       account_id,
-      fr_due_by,
+      fr_due_by, // Explicitly included
       due_by,
       delta: true,
       ticket_states: {
@@ -149,6 +149,7 @@ app.post('/api/tickets', async (req, res) => {
         ticket_id: newId,
       },
     };
+    console.log('Ticket data:', ticketData); // Debug ticket data
     const ticket = new Ticket(ticketData);
     await ticket.save();
 
