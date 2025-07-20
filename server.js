@@ -5,7 +5,11 @@ const cors = require('cors');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const nodemailer = require('nodemailer');
+const axios = require('axios');
+const { Mutex } = require('async-mutex');
 
+// Initialize mutex
+const ticketCreationMutex = new Mutex();
 
 // Schemas
 const TicketField = require('./models/TicketField');
@@ -39,11 +43,13 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
+const account_id = process.env.ACCOUNT_ID || 320932;
+
 // Stub for SLA and email processing
 setInterval(() => {
-  const account_id = process.env.ACCOUNT_ID || 320932;
+  // const account_id = process.env.ACCOUNT_ID || 320932;
   console.log(`SLA escalation check for account_id: ${account_id}`);
-  console.log(`Email processing check for account_id: ${account_id}`);
+  // console.log(`Email processing check for account_id: ${account_id}`);
 }, process.env.CHECK_INTERVAL ? parseInt(process.env.CHECK_INTERVAL) : 60000);
 
   // Email Setup
@@ -69,15 +75,77 @@ const imap = new Imap({
 });
 
 // Routes
+/*
+req.body: {
+  subject: 'Deal with this problem',
+  description: 'Tell me more about this issue.',
+  requester_id: '6868527ff5d2b14198b5245e',
+  responder_id: '6868527ff5d2b14198b52653',
+  ticket_type: 'Incident',
+  status: 2,
+  priority: 1,
+  source: 3,
+  group_id: 9000171202,
+  status_name: 'Open',
+  priority_name: 'Low',
+  source_name: 'Phone',
+  requester_name: 'Mitch',
+  responder_name: 'Mitch Starnes',
+  created_at: '2025-07-19T13:32:23.761Z',
+  updated_at: '2025-07-19T13:32:23.761Z',
+  account_id: 320932,
+  delta: true,
+  requester: {
+    id: 9008904650,
+    name: 'Mitch',
+    email: 'mitch@oliverdentalimplants.com',
+    created_at: '2025-07-19T13:32:23.761Z',
+    updated_at: '2025-07-19T13:32:23.761Z',
+    active: true
+  },
+  ticket_states: {
+    created_at: '2025-07-19T13:32:23.761Z',
+    updated_at: '2025-07-19T13:32:23.761Z'
+  }
+}
+
+  const [formData, setFormData] = useState({
+    subject: '',
+    contact: null,
+    ticket_type: 'Incident',
+    status: 'Open',
+    priority: 'Low',
+    group_id: 'IT',
+    responder_id: null,
+    source: 'Phone',
+    description: '',
+  });
+
+Email:
+subject
+description
+requester.email
+requester.name (maybe)
+status: 2 open
+priority: low unless "urgent" in subject
+ticket_type: Incident
+source_name: Email
+
+*/
 // Create a new ticket new version
 app.post('/api/tickets', async (req, res) => {
+  // Acquire the lock
+  const release = await ticketCreationMutex.acquire();
   try {
-    console.log('req.body:', req.body);
-    const account_id = parseInt(process.env.ACCOUNT_ID) || 320932;
+    console.log('post /api/tickets req.body:', req.body);
+    // const account_id = parseInt(process.env.ACCOUNT_ID) || 320932;
 
     // Generate id
     const maxId = await ObjectIdMap.findOne().sort({ id: -1 }).select('id');
     const newId = (maxId?.id || 9499999999) + 1;
+
+    // Save to ObjectIdMap
+    await new ObjectIdMap({ id: newId }).save();
 
     // Generate display_id
     let displayMap = await TicketDisplayIdMap.findOne({ account_id });
@@ -85,29 +153,35 @@ app.post('/api/tickets', async (req, res) => {
     if (displayMap) {
       newDisplayId = displayMap.next_display_id;
       displayMap.next_display_id += 1;
+      console.log( 'next_display_id: ' + displayMap.next_display_id);
       await displayMap.save();
     } else {
       newDisplayId = 7001;
+      console.log( 'newDisplayId: ' + newDisplayId);
       await new TicketDisplayIdMap({ account_id, next_display_id: newDisplayId + 1 }).save();
     }
 
     // Set company_id and SLA policy
+    console.log('Set company_id and SLA policy');
     let company_id = null;
     let sla_policy_id = null;
+    let requester = null;
     if (req.body.requester_id) {
-      const requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
-      if (requester?.company_id && !isNaN(requester.company_id)) {
-        const company = await mongoose.model('Company').findOne({ id: requester.company_id }).select('_id');
-        company_id = company?._id || null;
-        if (company_id) {
-          const companyDetails = await mongoose.model('Company').findById(company_id).select('sla_policy_id');
-          sla_policy_id = companyDetails?.sla_policy_id || '9000030757';
-        } else {
-          sla_policy_id = '9000030757';
-        }
+      requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
+    } else {
+      requester = await User.findOne({ email: req.body.email });
+    }
+    if (requester?.company_id && !isNaN(requester.company_id)) {
+      const company = await mongoose.model('Company').findOne({ id: requester.company_id }).select('_id');
+      company_id = company?._id || null;
+      if (company_id) {
+        const companyDetails = await mongoose.model('Company').findById(company_id).select('sla_policy_id');
+        sla_policy_id = companyDetails?.sla_policy_id || '9000030757';
       } else {
         sla_policy_id = '9000030757';
       }
+    } else {
+      sla_policy_id = '9000030757';
     }
 
     // Fetch SLA policy from database
@@ -149,12 +223,14 @@ app.post('/api/tickets', async (req, res) => {
         ticket_id: newId,
       },
     };
-    console.log('Ticket data:', ticketData); // Debug ticket data
+    console.log('POST /api/tickets - Ticket data:', ticketData); // Debug ticket data
     const ticket = new Ticket(ticketData);
+    console.log('Saving ticket');
     await ticket.save();
+    console.log('Saved ticket');
 
     // Save to ObjectIdMap
-    await new ObjectIdMap({ id: newId }).save();
+    // await new ObjectIdMap({ id: newId }).save();
 
     const populatedTicket = await Ticket.findById(ticket._id).populate('responder_id requester_id company_id');
     res.status(201).json(populatedTicket);
@@ -164,7 +240,11 @@ app.post('/api/tickets', async (req, res) => {
       console.error('Validation errors:', error.errors);
     }
     res.status(400).json({ error: error.message, details: error.errors });
+  } finally {
+    // Release the lock
+    release();
   }
+
 });
 
 // Create a new ticket old version
@@ -1508,18 +1588,177 @@ app.delete('/api/ticket-fields/:id', async (req, res) => {
   }
 });
 
+let cutoffDate = new Date(process.env.CUTOFF_DATE || '2025-07-05T00:00:00Z');
+let lastFetchTime = new Date();
+
 // IMAP Email Processing
 async function processEmail(mail) {
+  //console.log("processEmail()");
   const { from, subject, text, to, date, messageId } = mail;
+  let dupCheck = await Ticket.findOne({ messageId: messageId });
+  if( dupCheck ) {
+    console.log("duplicate messageId: " + messageId);
+    // console.log("DUPCHECK: " + JSON.stringify(dupCheck, null, 2));
+    return;
+  }
+
   const email = from.value[0].address;
   const [name] = from.value[0].name?.split(' ') || ['Customer'];
-  const toAddresses = to?.value?.map(a => a.address.toLowerCase()) || [];
+  //console.log('to: ' + JSON.stringify(to, null, 2));
+  const toAddresses = to?.value?.map(a => a.address?.toLowerCase()) || [];
   const emailConfig = await EmailConfig.findOne();
   const targetAddress = emailConfig?.to_email?.toLowerCase() || 'helpdesk@exotech.pro';
-  const cutoffDate = new Date(process.env.CUTOFF_DATE || '2025-07-05T00:00:00Z');
-  if (!toAddresses.includes(targetAddress) || date < cutoffDate) return;
+  cutoffDate = new Date(process.env.CUTOFF_DATE || '2025-07-05T00:00:00Z');
+  
+  //console.log('cutoffDate: ' + cutoffDate);
+  
+  if (!toAddresses.includes(targetAddress) || (date < cutoffDate  )) return;
 
-  console.log( "processEmail from " + JSON.stringify(from) + " with Subject: " + subject );
+  //console.log(JSON.stringify(mail, null, 2));
+  /*console.log('messageId: ' + messageId);
+  console.log("START");
+  console.log("from: " + JSON.stringify(from));
+  console.log("subject: " + subject);
+  console.log("text: " + text);
+  console.log("to: " + JSON.stringify(to));
+  console.log("date: " + date);
+  console.log("email: " + email);
+  console.log("name: " + name);
+  console.log("emailConfig: " + emailConfig);
+  console.log("targetAddress: " + targetAddress);
+  console.log("cutoffDate: " + cutoffDate);
+  console.log("END");
+  */
+  console.log( "processEmail from " + email + " with Subject: " + subject );
+  /*
+[0] processEmail from {
+[0]   "value": [
+[0]     {
+[0]       "address": "mitch.starnes@gmail.com",
+[0]       "name": "Mitch Starnes"
+[0]     }
+[0]   ],
+[0]   "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Mitch Starnes</span> &lt;<a href=\"mailto:mitch.starnes@gmail.com\" class=\"mp_address_email\">mitch.starnes@gmail.com</a>&gt;</span>",
+[0]   "text": "\"Mitch Starnes\" <mitch.starnes@gmail.com>"
+[0] } with Subject: Testing email ingestion
+[0] Error processing email: Request failed with status code 403
+[0] /Users/mitch/Documents/refresh-desk/server.js:1617
+[0]       throw new Error(`Failed to create ticket: ${error.response.data.error || error.message}`);
+  */
+
+  try {
+
+    // Validate email fields
+    if (!email || !subject || !text) {
+      throw new Error('Missing email fields');
+    }
+
+/*
+    // Prepare payload for POST /api/tickets
+    const ticketData = {
+      subject,
+      description: text,
+      email: email,
+      priority_name: 'Low', // Default, matching POST /api/tickets
+      status: 2,   // Default, matching POST /api/tickets
+      ticket_type: 'Incident',
+      //status: 'Open',
+      priority: 1,
+      group_id: 'IT',
+      responder_id: defaultAgent || null,
+      source: 'Email',
+    };
+*/
+    let ticketFields = null;
+    let defaultAgent = null;
+    const fetchTicketFields = async () => {
+      try {
+        const response = await axios.get(process.env.REACT_APP_API_URL + '/api/ticketfields');
+        const fields = response.data.reduce((acc, field) => {
+          acc[field.name] = field.choices || [];
+          return acc;
+        }, {});
+        // setTicketFields(fields);
+        // console.log('fields: ' + JSON.stringify(fields, null, 2));
+        ticketFields = fields;
+
+        defaultAgent = fields.agent.find(
+          (agent) => agent.email === process.env.CURRENT_AGENT_EMAIL
+        );
+      } catch (error) {
+        console.error('Error fetching ticket fields:', error);
+        setError('Failed to load ticket fields: ' + (error.response?.data?.details || error.message));
+      }
+    };
+
+    await fetchTicketFields();
+
+    // console.log('ticketFields: ' + JSON.stringify(ticketFields, null, 2));
+
+    requester = await User.findOne({ email: email });
+    const statusCode = ticketFields.status.find((s) => s.name === "Open")?.code || 2;
+    const priorityCode = ticketFields.priority.find((p) => p.name === "Low")?.code || 1;
+    const sourceCode = ticketFields.source.find((s) => s.name === "Email")?.code || 1;
+    const groupId = ticketFields.group.find((g) => g.name === "IT")?.code || 9000171202;
+
+    const ticketData = {
+      subject: subject,
+      description: text,
+      requester_id: requester._id || null,
+      responder_id: defaultAgent || null,
+      ticket_type: 'Incident',
+      status: statusCode,
+      priority: priorityCode,
+      source: sourceCode,
+      group_id: groupId,
+      status_name: "Open",
+      priority_name: "Low",
+      source_name: "Email",
+      requester_name: requester.name || null,
+      responder_name: defaultAgent.name || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      account_id: process.env.ACCOUNT_ID || 320932,
+      delta: true,
+      requester: requester
+        ? {
+            id: requester.id || Math.floor(Math.random() * 1000000),
+            name: requester.name,
+            email: requester.email,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            active: true,
+          }
+        : null,
+      ticket_states: {
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      messageId: messageId,
+    };
+    // Message-Id: <522ECF71-10DF-4731-97A3-CB555902BC21@gmail.com>
+    // console.log("ticketData: " + JSON.stringify(ticketData, null, 2));
+
+
+    // Make POST request to /api/tickets
+    const response = await axios.post(process.env.REACT_APP_API_URL + '/api/tickets', ticketData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Return the created ticket
+    return response.data;
+  } catch (error) {
+    console.error('Error processing email:', error.message);
+    if (error.response) {
+      // Handle HTTP errors from the POST request
+      throw new Error(`Failed to create ticket: ${error.response.data.error || error.message}`);
+    }
+    throw error;
+  }
+  console.log("shouldn't get here");
+  return;
 
   const user = await User.findOne({ email });
   if (!user) {
@@ -1591,7 +1830,6 @@ async function processEmail(mail) {
 
 let loginAttempts = 0;
 const maxAttempts = 3;
-let lastFetchTime = new Date();
 
 function connectImap() {
   if (loginAttempts >= maxAttempts) return;
@@ -1601,8 +1839,10 @@ function connectImap() {
     imap.openBox('INBOX', true, (err) => {
       if (err) return console.log(`Failed to open INBOX: ${err.message}`);
       function checkNewMail() {
-        console.log( "checkNewMail" );
-        imap.search(['UNSEEN', ['SINCE', lastFetchTime]], (err, results) => {
+        // console.log( "checkNewMail" );
+        console.log(`Email processing check for account_id: ${account_id} since ${cutoffDate}`);
+
+        imap.search(['UNSEEN', ['SINCE', cutoffDate]], (err, results) => {
           if (err) return console.log(`Search error: ${err.message}`);
           if (results?.length > 0) {
             const f = imap.fetch(results, { bodies: '' });
@@ -1614,6 +1854,7 @@ function connectImap() {
               });
             });
             f.once('end', () => {
+              cutoffDate = lastFetchTime;
               lastFetchTime = new Date();
             });
           }

@@ -190,9 +190,11 @@ const TicketSchema = new mongoose.Schema({
   requester: RequesterSchema,
   conversations: [ConversationSchema],
   company_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: false },
+  messageId: { type: String, default: null },
 });
 
 // Add index on display_id
 TicketSchema.index({ display_id: 1 }, { unique: true });
+TicketSchema.index({ messageId: 1 });
 
 module.exports = mongoose.model('Ticket', TicketSchema);

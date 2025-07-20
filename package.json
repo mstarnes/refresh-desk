@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "async-mutex": "^0.5.0",
     "axios": "^1.10.0",
     "cors": "^2.8.5",
     "dompurify": "^3.2.6",
