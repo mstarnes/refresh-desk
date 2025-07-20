@@ -23,14 +23,37 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './styles/App.css';
 
 // Mock ticketfields data (replace with API call if dynamic)
+// Updated to use Mongoose _id for agent
 const ticketFields = [
   { name: 'priority', choices: { Low: 1, Medium: 2, High: 3, Urgent: 4 } },
-  { name: 'status', choices: { '2': ['Open', 'Being Processed'], '3': ['Pending', 'Awaiting your Reply'], '4': ['Resolved', 'This ticket has been Resolved'], '5': ['Closed', 'This ticket has been Closed'] } },
+  { name: 'status', choices: { '2': ['Open'], '3': ['Pending'], '4': ['Resolved'], '5': ['Closed'] } },
   { name: 'ticket_type', choices: ['Question', 'Incident', 'Problem', 'Feature Request', 'Lead', 'Documentation'] },
   { name: 'source', choices: { Email: 1, Portal: 2, Phone: 3, Forum: 4, Twitter: 5, Facebook: 6, Chat: 7, MobiHelp: 8, 'Feedback Widget': 9, 'Outbound Email': 10, Ecommerce: 11, Bot: 12, Whatsapp: 13, 'Chat - Internal Task': 14 } },
   { name: 'group', choices: { IT: 9000171202, RE: 9000171690 } },
-  { name: 'agent', choices: { 'Mitch Starnes': 9006333765 } },
+  { name: 'agent', choices: { 'Mitch Starnes': '6868527ff5d2b14198b52653' } }, // Corrected to Mongoose _id
 ];
+
+// Utility to map code to label
+const getFieldLabel = (fieldName, code) => {
+  const field = ticketFields.find(f => f.name === fieldName);
+  if (field) {
+    if (fieldName === 'status') {
+      const statusEntry = Object.entries(field.choices).find(([key]) => key === code.toString());
+      return statusEntry ? statusEntry[1][0] : null;
+    }
+    return Object.keys(field.choices).find(key => field.choices[key] === code) || null;
+  }
+  return null;
+};
+
+// Utility to map label to code
+const getFieldCode = (fieldName, label) => {
+  const field = ticketFields.find(f => f.name === fieldName);
+  if (field) {
+    return Object.entries(field.choices).find(([key, value]) => value === label || (Array.isArray(value) && value[0] === label))?.[1] || null;
+  }
+  return null;
+};
 
 const theme = createTheme({
   palette: {
@@ -84,10 +107,18 @@ const App = () => {
         }
       });
       const ticketData = response.data.tickets || [];
-      setTickets(ticketData);
+      // Enrich tickets with derived fields
+      const enrichedTickets = ticketData.map(ticket => ({
+        ...ticket,
+        priority_name: getFieldLabel('priority', ticket.priority) || 'Low',
+        status_name: getFieldLabel('status', ticket.status) || 'Open',
+        responder_id: ticket.responder_id ? { name: getFieldLabel('agent', ticket.responder_id) || 'Mitch Starnes' } : null,
+      }));
+      console.log('Enriched tickets response:', enrichedTickets); // Debug enriched data
+      setTickets(enrichedTickets);
       const totalCount = response.data.total || parseInt(response.headers['x-total-count'], 10) || 0;
       setTotalPages(Math.ceil(totalCount / 10));
-      console.log('Fetched from:', endpoint, 'Tickets:', ticketData, 'Total:', totalCount);
+      console.log('Fetched from:', endpoint, 'Tickets:', enrichedTickets, 'Total:', totalCount);
     } catch (error) {
       console.error('Error fetching tickets:', error);
       setTickets([]);
@@ -101,7 +132,7 @@ const App = () => {
 
   const getSlaStatus = (createdAt) => {
     const created = new Date(createdAt);
-    const now = new Date('2025-07-20T11:29:00-05:00'); // Updated to 11:29 AM CDT, July 20, 2025
+    const now = new Date('2025-07-20T12:26:00-05:00'); // Updated to 12:26 PM CDT, July 20, 2025
     const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
     return diffHours > 3 ? `Overdue by ${diffHours} hours` : 'Within SLA';
   };
@@ -139,19 +170,63 @@ const App = () => {
     setSelectedTicket(ticket);
   };
 
-  const handlePriorityChange = (event) => {
-    console.log('Update priority:', event.target.value);
-    // Add API call here (e.g., PATCH /api/tickets/:id)
+  const handlePriorityChange = async (event, ticket) => {
+    console.log('Priority change triggered for ticket:', ticket._id);
+    const newPriority = event.target.value;
+    const priorityCode = Object.keys(ticketFields.find(f => f.name === 'priority').choices).find(key => key.toLowerCase() === newPriority);
+    if (ticket && priorityCode) {
+      try {
+        const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
+          priority: ticketFields.find(f => f.name === 'priority').choices[priorityCode],
+        });
+        await fetchTickets(); // Re-fetch to update UI
+        console.log('Priority updated:', response.data);
+      } catch (error) {
+        console.error('Error updating priority:', error.response?.data || error.message);
+      }
+    } else {
+      console.warn('No valid ticket or priority code found');
+    }
   };
 
-  const handleAgentChange = (event) => {
-    console.log('Update agent:', event.target.value);
-    // Add API call here (e.g., PATCH /api/tickets/:id)
+  const handleAgentChange = async (event, ticket) => {
+    console.log('Agent change triggered for ticket:', ticket._id, 'New agent:', event.target.value);
+    const newAgent = event.target.value;
+    const agentId = newAgent === 'unassigned' ? null : Object.keys(ticketFields.find(f => f.name === 'agent').choices).find(key => key.toLowerCase() === newAgent.toLowerCase());
+    const agentMongooseId = agentId ? ticketFields.find(f => f.name === 'agent').choices[agentId] : null;
+    console.log('Sending agentId:', agentMongooseId); // Debug sent value
+    if (ticket) {
+      try {
+        const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
+          responder_id: agentMongooseId,
+        });
+        await fetchTickets(); // Re-fetch to update UI
+        console.log('Agent updated:', response.data.responder_id);
+      } catch (error) {
+        console.error('Error updating agent:', error.response?.data || error.message);
+      }
+    } else {
+      console.warn('No valid ticket found');
+    }
   };
 
-  const handleStatusChange = (event) => {
-    console.log('Update status:', event.target.value);
-    // Add API call here (e.g., PATCH /api/tickets/:id)
+  const handleStatusChange = async (event, ticket) => {
+    console.log('Status change triggered for ticket:', ticket._id);
+    const newStatus = event.target.value;
+    const statusCode = Object.keys(ticketFields.find(f => f.name === 'status').choices).find(key => ticketFields.find(f => f.name === 'status').choices[key][0].toLowerCase() === newStatus);
+    if (ticket && statusCode) {
+      try {
+        const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
+          status: parseInt(statusCode),
+        });
+        await fetchTickets(); // Re-fetch to update UI
+        console.log('Status updated:', response.data);
+      } catch (error) {
+        console.error('Error updating status:', error.response?.data || error.message);
+      }
+    } else {
+      console.warn('No valid ticket or status code found');
+    }
   };
 
   return (
@@ -222,7 +297,7 @@ const App = () => {
               <CardActions sx={{ justifyContent: 'flex-end', padding: 2 }}>
                 <Select
                   value={ticket.priority_name.toLowerCase()}
-                  onChange={handlePriorityChange}
+                  onChange={(e) => handlePriorityChange(e, ticket)}
                   sx={{ minWidth: 100, mr: 1 }}
                 >
                   {Object.entries(ticketFields.find(f => f.name === 'priority').choices).map(([label, value]) => (
@@ -231,7 +306,7 @@ const App = () => {
                 </Select>
                 <Select
                   value={ticket.responder_id ? ticket.responder_id.name.toLowerCase() : 'unassigned'}
-                  onChange={handleAgentChange}
+                  onChange={(e) => handleAgentChange(e, ticket)}
                   sx={{ minWidth: 100, mr: 1 }}
                 >
                   {Object.entries(ticketFields.find(f => f.name === 'agent').choices).map(([label, value]) => (
@@ -241,7 +316,7 @@ const App = () => {
                 </Select>
                 <Select
                   value={ticket.status_name.toLowerCase()}
-                  onChange={handleStatusChange}
+                  onChange={(e) => handleStatusChange(e, ticket)}
                   sx={{ minWidth: 100 }}
                 >
                   {Object.entries(ticketFields.find(f => f.name === 'status').choices).map(([code, [validLabel]]) => (
