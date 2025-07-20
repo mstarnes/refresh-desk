@@ -312,6 +312,8 @@ app.get('/api/tickets', async (req, res) => {
         ],
         status: { $in: [2, 3] }
       };
+    } else if (filters === 'closed') {
+      query = { status: { $in: [4, 5] } };
     } else if (filters === 'openTickets') {
       query = { status: { $in: [2, 3] } };
     }
@@ -456,6 +458,13 @@ app.get('/api/tickets/search', async (req, res) => {
         $and: [
           query,
           filterQuery
+        ]
+      };
+    } else if (filters === 'closed') {
+      query = {
+        $and: [
+          query,
+          { status: { $in: [4, 5] } }
         ]
       };
     } else if (filters === 'openTickets') {

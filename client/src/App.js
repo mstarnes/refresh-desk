@@ -1,655 +1,275 @@
-// client/src/App.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Select,
+  MenuItem,
+  TextField,
+  Button,
+  Card,
+  CardContent,
+  CardActions,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  Box,
+  Pagination,
+  Avatar,
+} from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './styles/App.css';
-import mongoose from 'mongoose';
 
-function App() {
+// Mock ticketfields data (replace with API call if dynamic)
+const ticketFields = [
+  { name: 'priority', choices: { Low: 1, Medium: 2, High: 3, Urgent: 4 } },
+  { name: 'status', choices: { '2': ['Open', 'Being Processed'], '3': ['Pending', 'Awaiting your Reply'], '4': ['Resolved', 'This ticket has been Resolved'], '5': ['Closed', 'This ticket has been Closed'] } },
+  { name: 'ticket_type', choices: ['Question', 'Incident', 'Problem', 'Feature Request', 'Lead', 'Documentation'] },
+  { name: 'source', choices: { Email: 1, Portal: 2, Phone: 3, Forum: 4, Twitter: 5, Facebook: 6, Chat: 7, MobiHelp: 8, 'Feedback Widget': 9, 'Outbound Email': 10, Ecommerce: 11, Bot: 12, Whatsapp: 13, 'Chat - Internal Task': 14 } },
+  { name: 'group', choices: { IT: 9000171202, RE: 9000171690 } },
+  { name: 'agent', choices: { 'Mitch Starnes': 9006333765 } },
+];
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    priority: {
+      low: '#4caf50',
+      medium: '#ffca28',
+      high: '#f44336',
+      urgent: '#ff0000',
+    },
+  },
+});
+
+const App = () => {
   const [tickets, setTickets] = useState([]);
-  const [totalTickets, setTotalTickets] = useState(0);
-  const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('searchQuery') || '');
-  const [activeSearchQuery, setActiveSearchQuery] = useState(() => localStorage.getItem('searchQuery') || '');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const storedSortConfig = JSON.parse(localStorage.getItem('sortConfig'));
-  const [sortConfig, setSortConfig] = useState(storedSortConfig || {
-    key: 'updated_at',
-    direction: 'desc',
-  });
-  const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
-  const ticketsPerPage = parseInt(process.env.REACT_APP_DEFAULT_LIMIT) || 10;
-  const [replyTicket, setReplyTicket] = useState(null);
-  const [replyContent, setReplyContent] = useState('');
-  const [noteTicket, setNoteTicket] = useState(null);
-  const [noteContent, setNoteContent] = useState('');
-  const [agents, setAgents] = useState([]);
-  const [priorities, setPriorities] = useState({});
-  const [statuses, setStatuses] = useState({});
-  const [assignedAgents, setAssignedAgents] = useState({});
-  const [filter, setFilter] = useState(() => {
-    const stored = localStorage.getItem('filter');
-    return stored !== null ? stored : 'newAndMyOpen';
-  });
-  const [userId] = useState(process.env.REACT_APP_CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro');
-  const [dialog, setDialog] = useState({ visible: false, ticket: null });
-  const [dialogTimeout, setDialogTimeout] = useState(null);
+  const [filterType, setFilterType] = useState(localStorage.getItem('filterType') || 'newAndMyOpen');
+  const [sortBy, setSortBy] = useState(localStorage.getItem('sortBy') || 'updated_at');
+  const [sortDirection, setSortDirection] = useState((localStorage.getItem('sortDirection') || 'desc').toLowerCase());
+  const [searchQuery, setSearchQuery] = useState(localStorage.getItem('searchQuery') || '');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [showNewTicket, setShowNewTicket] = useState(false);
 
-  const fetchTickets = useCallback(async () => {
+  useEffect(() => {
+    fetchTickets();
+  }, [filterType, sortBy, sortDirection, searchQuery, page]);
+
+  useEffect(() => {
+    localStorage.setItem('filterType', filterType);
+    localStorage.setItem('sortBy', sortBy);
+    localStorage.setItem('sortDirection', sortDirection);
+    localStorage.setItem('searchQuery', searchQuery);
+  }, [filterType, sortBy, sortDirection, searchQuery]);
+
+  const fetchTickets = async () => {
     try {
-      setLoading(true);
-      const response = await axios.get('http://localhost:5001/api/tickets', {
+      const agentId = '6868527ff5d2b14198b52653'; // Default agent _id
+      const endpoint = searchQuery ? '/api/tickets/search' : '/api/tickets';
+      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${endpoint}`, {
         params: {
-          limit: ticketsPerPage,
-          page: currentPage,
-          filters: filter,
-          userId,
-          sort: sortConfig.key,
-          direction: sortConfig.direction,
-        },
+          filters: filterType,
+          sort: sortBy,
+          direction: sortDirection,
+          q: searchQuery,
+          page,
+          limit: 10,
+          userId: agentId,
+        }
       });
-      console.log('Fetched tickets response:', response.data);
-      const { tickets: fetchedTickets, total } = response.data;
-      setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
-      setTotalTickets(total || 0);
-      const initialPriorities = fetchedTickets.reduce(
-        (acc, ticket) => ({
-          ...acc,
-          [ticket._id]: ticket.priority_name || 'Low',
-        }),
-        {}
-      );
-      const initialStatuses = fetchedTickets.reduce(
-        (acc, ticket) => ({
-          ...acc,
-          [ticket._id]: ticket.status_name || 'Open',
-        }),
-        {}
-      );
-      const initialAgents = fetchedTickets.reduce(
-        (acc, ticket) => ({
-          ...acc,
-          [ticket._id]: ticket.responder_id?._id || 'Unassigned',
-        }),
-        {}
-      );
-      setPriorities(initialPriorities);
-      setStatuses(initialStatuses);
-      setAssignedAgents(initialAgents);
-      setLoading(false);
-    } catch (err) {
-      console.error('Failed to fetch tickets:', err);
-      setError(`Failed to fetch tickets: ${err.message}`);
-      setLoading(false);
-    }
-  }, [ticketsPerPage, currentPage, filter, userId, sortConfig.key, sortConfig.direction]);
-    
-  const fetchAgents = useCallback(async () => {
-    try {
-      const response = await axios.get('http://localhost:5001/api/agents');
-      setAgents(response.data);
-    } catch (err) {
-      console.error('Fetch Agents Error:', err);
-    }
-  }, []);
-
-  const performSearch = useCallback(async (query) => {
-    try {
-      setLoading(true);
-      if (query) {
-        const response = await axios.get('http://localhost:5001/api/tickets/search', {
-          params: {
-            q: query,
-            limit: ticketsPerPage,
-            page: currentPage,
-            filters: filter,
-            userId,
-            sort: sortConfig.key,
-            direction: sortConfig.direction,
-          },
-        });
-        const { tickets: fetchedTickets, total } = response.data;
-        setTickets(Array.isArray(fetchedTickets) ? fetchedTickets : []);
-        setTotalTickets(total || 0);
-        const initialPriorities = fetchedTickets.reduce(
-          (acc, ticket) => ({
-            ...acc,
-            [ticket._id]: ticket.priority_name || 'Low',
-          }),
-          {}
-        );
-        const initialStatuses = fetchedTickets.reduce(
-          (acc, ticket) => ({
-            ...acc,
-            [ticket._id]: ticket.status_name || 'Open',
-          }),
-          {}
-        );
-        const initialAgents = fetchedTickets.reduce(
-          (acc, ticket) => ({
-            ...acc,
-            [ticket._id]: ticket.responder_id?._id || 'Unassigned',
-          }),
-          {}
-        );
-        setPriorities(initialPriorities);
-        setStatuses(initialStatuses);
-        setAssignedAgents(initialAgents);
-      } else {
-        await fetchTickets(); // Reset to filtered tickets when query is empty
-      }
-      setLoading(false);
-    } catch (err) {
-      console.error('Error searching tickets:', err);
-      setError(`Error searching tickets: ${err.message}`);
-      setLoading(false);
-    }
-  }, [ticketsPerPage, currentPage, userId, sortConfig.key, sortConfig.direction, fetchTickets, filter]);
-  
-  useEffect(() => {
-    fetchAgents();
-    localStorage.setItem('filter', filter);
-  }, [fetchAgents, filter]); 
-  
-  useEffect(() => {
-    if (activeSearchQuery) {
-      performSearch(activeSearchQuery);
-    } else {
-      fetchTickets();
-    }
-  }, [performSearch, fetchTickets, activeSearchQuery, currentPage, sortConfig]); 
-  
-  useEffect(() => {
-    localStorage.setItem('sortConfig', JSON.stringify(sortConfig));
-  }, [sortConfig]);
-
-    const handleSearch = async (e) => {
-    if (e.key === 'Enter') {
-      const query = e.target.value;
-      setActiveSearchQuery(query);
-      setSearchQuery(query);
-      setCurrentPage(1);
-      localStorage.setItem('searchQuery', query);
-    } else {
-      setSearchQuery(e.target.value);
-    }
-  };
-
-  const clearSearch = () => {
-    setSearchQuery('');
-    setActiveSearchQuery('');
-    setCurrentPage(1);
-    localStorage.setItem('searchQuery', '');
-  };
-
-  const sortData = (key) => {
-    let direction = sortConfig.direction;
-    if (sortConfig.key === key) {
-      direction = sortConfig.direction === 'desc' ? 'asc' : 'desc';
-    }
-    setSortConfig({ key, direction });
-    setCurrentPage(1);
-  };
-
-  const handleFilterChange = (value) => {
-    setFilter(value);
-    setCurrentPage(1);
-    localStorage.setItem('filter', value);
-  };
-
-  const handleReset = () => {
-    setFilter('newAndMyOpen');
-    setSortConfig({ key: 'updated_at', direction: 'desc' });
-    setSearchQuery('');
-    setActiveSearchQuery('');
-    setCurrentPage(1);
-    localStorage.setItem('filter', 'newAndMyOpen');
-    localStorage.setItem('sortConfig', JSON.stringify({ key: 'updated_at', direction: 'desc' }));
-    localStorage.setItem('searchQuery', '');
-  };
-
-  const filteredTickets = tickets;
-
-  const totalPages = Math.ceil(totalTickets / ticketsPerPage);
-
-  const openReplyForm = (ticket) => {
-    setReplyTicket(ticket);
-    setReplyContent('');
-  };
-
-  const closeReplyForm = () => {
-    setReplyTicket(null);
-  };
-
-  const openNoteForm = (ticket) => {
-    setNoteTicket(ticket);
-    setNoteContent('');
-  };
-
-  const closeNoteForm = () => {
-    setNoteTicket(null);
-  };
-
-  const sendReply = async () => {
-    if (replyTicket && replyContent.trim()) {
-      try {
-        const agent = agents.find(a => a.email === userId) || { id: 9006333765, name: 'Mitch Starnes' };
-        await axios.post('http://localhost:5001/api/tickets/reply', {
-          ticketId: replyTicket._id,
-          body: replyContent,
-          user_id: agent.id,
-        });
-        closeReplyForm();
-        fetchTickets();
-      } catch (err) {
-        setError('Failed to send reply');
-        console.error('Reply error:', err);
-      }
-    }
-  };
-
-  const sendNote = async () => {
-    if (noteTicket && noteContent.trim()) {
-      try {
-        const agent = agents.find(a => a.email === userId) || { id: 9006333765, name: 'Mitch Starnes' };
-        await axios.post(`http://localhost:5001/api/tickets/${noteTicket._id}/conversations`, {
-          body_text: noteContent,
-          private: true,
-          user_id: agent.id,
-          incoming: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          id: Math.floor(Math.random() * 1000000),
-        });
-        closeNoteForm();
-        fetchTickets();
-      } catch (err) {
-        setError('Failed to add note');
-        console.error('Note error:', err);
-      }
-    }
-  };
-
-  const updateField = async (ticketId, field, value) => {
-    try {
-      const updates = {};
-      let conversationText = '';
-      const agent = agents.find(a => a.email === userId) || { id: 9006333765, name: 'Mitch Starnes' };
-      if (field === 'priority') {
-        updates.priority = value === 'Low' ? 1 : value === 'Medium' ? 2 : value === 'High' ? 3 : 4;
-        updates.priority_name = value;
-        conversationText = `Agent ${agent.name} changed priority to ${value} on ${new Date().toLocaleString()}`;
-      } else if (field === 'status') {
-        updates.status = value === 'Open' ? 2 : value === 'Pending' ? 3 : value === 'Resolved' ? 4 : 5;
-        updates.status_name = value;
-        if (value === 'Closed') updates.closed_at = new Date().toISOString();
-        conversationText = `Agent ${agent.name} changed status to ${value} on ${new Date().toLocaleString()}`;
-      } else if (field === 'responder_id') {
-        updates.responder_id = value === 'Unassigned' ? null : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653');
-        updates.responder_name = value === 'Unassigned' ? null : agent.name;
-        conversationText = `Agent ${agent.name} ${value === 'Unassigned' ? 'unassigned' : 'assigned'} ticket on ${new Date().toLocaleString()}`;
-      }
-      const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, {
-        ...updates,
-        conversations: conversationText ? [
-          ...(tickets.find(t => t._id === ticketId)?.conversations || []),
-          {
-            id: Math.floor(Math.random() * 1000000),
-            body_text: conversationText,
-            private: false,
-            user_id: agent.id,
-            incoming: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        ] : undefined
-      });
-      const updatedTicket = response.data;
-      setPriorities((prev) => ({
-        ...prev,
-        [ticketId]: updatedTicket.priority_name || 'Low',
-      }));
-      setStatuses((prev) => ({
-        ...prev,
-        [ticketId]: updatedTicket.status_name || 'Open',
-      }));
-      setAssignedAgents((prev) => ({
-        ...prev,
-        [ticketId]: updatedTicket.responder_id?._id || 'Unassigned',
-      }));
-      setTickets((prevTickets) =>
-        prevTickets.map((t) =>
-          t._id === ticketId ? { ...t, ...updatedTicket } : t
-        )
-      );
-      await fetchTickets();
-    } catch (err) {
-      setError('Failed to update ticket');
-      console.error('Error updating ticket:', err);
+      const ticketData = response.data.tickets || [];
+      setTickets(ticketData);
+      const totalCount = response.data.total || parseInt(response.headers['x-total-count'], 10) || 0;
+      setTotalPages(Math.ceil(totalCount / 10));
+      console.log('Fetched from:', endpoint, 'Tickets:', ticketData, 'Total:', totalCount);
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+      setTickets([]);
     }
   };
 
   const getPriorityColor = (priority) => {
-    const safePriority = priority || 'Low';
-    switch (safePriority) {
-      case 'Low':
-      case 1:
-        return '#28a745'; // green
-      case 'Medium':
-      case 2:
-        return '#007bff'; // blue
-      case 'High':
-      case 3:
-        return '#fd7e14'; // orange
-      case 'Urgent':
-      case 4:
-        return '#dc3545'; // red
-      default:
-        return '#6c757d'; // gray
-    }
+    const priorityMap = { '1': '#4caf50', '2': '#ffca28', '3': '#f44336', '4': '#ff0000' };
+    return priorityMap[priority] || '#4caf50';
   };
 
-  const getLastAction = (ticket) => {
-    if (ticket.status === 5 && ticket.ticket_states.closed_at) {
-      return `Closed ${new Date(ticket.ticket_states.closed_at).toLocaleDateString()}`;
-    }
-    const lastConversation = ticket.conversations?.slice(-1)[0];
-    if (lastConversation) {
-      const isAgent = agents.some(agent => agent.id === lastConversation.user_id);
-      return `${isAgent ? 'Agent' : 'User'} Updated ${new Date(lastConversation.updated_at).toLocaleDateString()}`;
-    }
-    return `Created ${new Date(ticket.created_at).toLocaleDateString()}`;
+  const getSlaStatus = (createdAt) => {
+    const created = new Date(createdAt);
+    const now = new Date('2025-07-20T11:29:00-05:00'); // Updated to 11:29 AM CDT, July 20, 2025
+    const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
+    return diffHours > 3 ? `Overdue by ${diffHours} hours` : 'Within SLA';
   };
 
-  const getSLAStatus = (ticket) => {
-    if (ticket.status === 5 && ticket.ticket_states.closed_at && !isNaN(new Date(ticket.ticket_states.closed_at))) {
-      return `Closed ${new Date(ticket.ticket_states.closed_at).toLocaleDateString()} (${new Date(ticket.ticket_states.closed_at) <= new Date(ticket.due_by) ? 'on time' : 'late'})`;
-    }
-    const dueBy = new Date(ticket.due_by);
-    const now = new Date();
-    const diffHours = (dueBy - now) / (1000 * 60 * 60);
-    if (diffHours > 0) {
-      return `Due in ${Math.round(diffHours)} hours`;
-    }
-    return `Overdue by ${Math.abs(Math.round(diffHours))} hours`;
+  const handleFilterChange = (event) => {
+    setFilterType(event.target.value);
+    setPage(1);
+  };
+  const handleSortByChange = (event) => {
+    setSortBy(event.target.value);
+    setPage(1);
+  };
+  const handleSortDirectionChange = (event) => {
+    setSortDirection(event.target.value);
+    setPage(1);
+  };
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+    setPage(1);
+  };
+  const handleReset = () => {
+    setFilterType('newAndMyOpen');
+    setSortBy('updated_at');
+    setSortDirection('desc');
+    setSearchQuery('');
+    setPage(1);
+    localStorage.clear();
+  };
+  const handleNewTicket = () => setShowNewTicket(true);
+  const handlePageChange = (event, value) => {
+    setPage(value);
+    fetchTickets();
+  };
+  const handleTitleClick = (ticket) => {
+    setSelectedTicket(ticket);
   };
 
-  const isTicketNew = (ticket) => !ticket.updated_at;
-
-  const getLastActionDetails = (ticket) => {
-    const lastConversation = ticket.conversations?.slice(-1)[0];
-    if (lastConversation) {
-      const name = lastConversation.user_id === ticket.requester.id
-        ? ticket.requester.name
-        : agents.find((a) => a.id === lastConversation.user_id)?.name || `Agent ${lastConversation.user_id}`;
-      return {
-        initial: getInitials(name),
-        name,
-        verb: lastConversation.private ? 'noted' : 'replied',
-        timestamp: new Date(lastConversation.updated_at).toLocaleString(),
-        preview: lastConversation.body_text.slice(0, 240) + (lastConversation.body_text.length > 240 ? '...' : ''),
-      };
-    }
-    return {
-      initial: getInitials(ticket.requester?.name || 'Unknown'),
-      name: ticket.requester?.name || 'Unknown',
-      verb: 'created a ticket',
-      timestamp: new Date(ticket.created_at).toLocaleString(),
-      preview: ticket.description.slice(0, 240) + (ticket.description.length > 240 ? '...' : ''),
-    };
+  const handlePriorityChange = (event) => {
+    console.log('Update priority:', event.target.value);
+    // Add API call here (e.g., PATCH /api/tickets/:id)
   };
 
-  const handleMouseEnter = (ticket) => {
-    if (dialogTimeout) clearTimeout(dialogTimeout);
-    const timeout = setTimeout(() => {
-      setDialog({ visible: true, ticket });
-    }, parseInt(process.env.REACT_APP_DIALOG_DELAY) || 1000);
-    setDialogTimeout(timeout);
+  const handleAgentChange = (event) => {
+    console.log('Update agent:', event.target.value);
+    // Add API call here (e.g., PATCH /api/tickets/:id)
   };
 
-  const handleMouseLeave = () => {
-    if (dialogTimeout) clearTimeout(dialogTimeout);
+  const handleStatusChange = (event) => {
+    console.log('Update status:', event.target.value);
+    // Add API call here (e.g., PATCH /api/tickets/:id)
   };
-
-  const handleCloseDialog = () => {
-    if (dialogTimeout) clearTimeout(dialogTimeout);
-    setDialog({ visible: false, ticket: null });
-  };
-
-  const handleReply = () => {
-    openReplyForm(dialog.ticket);
-        handleCloseDialog();
-  };
-
-  const handleAddNote = () => {
-    openNoteForm(dialog.ticket);
-    handleCloseDialog();
-  };
-
-  const getInitials = (name) => {
-    if (!name) return 'U';
-    const words = name.split(' ');
-    const initials = words.map(word => word.charAt(0).toUpperCase()).join('');
-    return initials.substring(0, 3);
-  };
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>{error}</p>;
 
   return (
-    <div className="dashboard-container">
-      <div className="top-controls">
-        <div className="filter-sort-wrapper">
-          <div className="filters">
-            <label>Filter: </label>
-            <select value={filter} onChange={(e) => handleFilterChange(e.target.value)}>
-              <option value="newAndMyOpen">New and My Open Tickets</option>
-              <option value="openTickets">Open Tickets</option>
-              <option value="allTickets">All Tickets</option>
-            </select>
-          </div>
-          <div className="sort">
-            <label>Sort by: </label>
-            <select
-              value={sortConfig.key}
-              onChange={(e) => sortData(e.target.value)}
-            >
-              <option value="updated_at">Last Modified</option>
-              <option value="created_at">Date Created</option>
-              <option value="subject">Subject</option>
-            </select>
-            <select
-              value={sortConfig.direction}
-              onChange={(e) => setSortConfig({ ...sortConfig, direction: e.target.value })}
-            >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </select>
-          </div>
-          <button onClick={handleReset} className="reset-button">Reset</button>
-          <button onClick={() => navigate("/new-ticket")}>New Ticket</button>
-
-        </div>
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Search tickets... (press Enter)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearch}
-            className="search-input"
-          />
-          {searchQuery && (
-            <button onClick={clearSearch} className="clear-search">×</button>
-          )}
-        </div>
-      </div>
-      <h1>Refresh Desk Dashboard</h1>
-      {filteredTickets.length === 0 ? (
-        <p>No tickets available or matching your filter/search.</p>
-      ) : (
-        <div className="ticket-list">
-          {filteredTickets.map((ticket) => (
-            <div key={`${ticket._id}-${statuses[ticket._id]}`} className="ticket-card">
-              <input type="checkbox" className="ticket-checkbox" />
-              <div
-                className="ticket-icon"
-                style={{
-                  backgroundColor: getPriorityColor(priorities[ticket._id]),
-                }}
-              >
-                {getInitials(ticket.requester?.name || 'Unknown')}
-              </div>
-              <div className="ticket-info">
-                <div className="ticket-header">
-                  <Link
-                    to={`/ticket/${ticket.display_id}`}
-                    onMouseEnter={() => handleMouseEnter(ticket)}
-                    onMouseLeave={handleMouseLeave}
+    <ThemeProvider theme={theme}>
+      <Box sx={{ minHeight: '100vh', overflow: 'auto' }}>
+        <AppBar position="static">
+          <Toolbar>
+            <Select value={filterType} onChange={handleFilterChange} sx={{ marginRight: 2, color: 'inherit' }}>
+              <MenuItem value="newAndMyOpen">New and My Open Tickets</MenuItem>
+              <MenuItem value="closed">Closed Tickets</MenuItem>
+              <MenuItem value="all">All Tickets</MenuItem>
+            </Select>
+            <Select value={sortBy} onChange={handleSortByChange} sx={{ marginRight: 2, color: 'inherit' }}>
+              <MenuItem value="updated_at">Last Modified</MenuItem>
+              <MenuItem value="created_at">Date Created</MenuItem>
+              <MenuItem value="subject">Subject</MenuItem>
+            </Select>
+            <Select value={sortDirection} onChange={handleSortDirectionChange} sx={{ marginRight: 2, color: 'inherit' }}>
+              <MenuItem value="desc">Descending</MenuItem>
+              <MenuItem value="asc">Ascending</MenuItem>
+            </Select>
+            <Button color="inherit" onClick={handleReset} sx={{ marginRight: 2 }}>Reset</Button>
+            <Button color="inherit" onClick={handleNewTicket}>New Ticket</Button>
+            <TextField
+              variant="outlined"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              sx={{ marginLeft: 'auto', backgroundColor: 'white', borderRadius: 1, color: 'black' }}
+              InputProps={{ sx: { color: 'black' } }}
+            />
+          </Toolbar>
+        </AppBar>
+        <Typography variant="h4" align="center" sx={{ my: 2 }}>
+          Refresh Desk Dashboard
+        </Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2, p: 2 }}>
+          {tickets.map((ticket) => (
+            <Card key={ticket._id} sx={{ cursor: 'pointer', boxShadow: 3 }}>
+              <CardContent sx={{ padding: 2 }}>
+                <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
+                  <Avatar
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      backgroundColor: getPriorityColor(ticket.priority),
+                      color: 'white',
+                      marginRight: 2,
+                    }}
                   >
-                    {ticket.subject || 'No Subject'} #{ticket.display_id}
-                  </Link>
-                  {isTicketNew(ticket) && (
-                    <span className="new-indicator"></span>
-                  )}
-                </div>
-                <div className="ticket-meta">
-                  {ticket.requester && ticket.requester.name ? (
-                    `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'})`
-                  ) : (
-                    `Unknown (${ticket.company_id?.name || 'Unknown Company'})`
-                  )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
-                </div>
-              </div>
-              <div className="selects-container">
-                <select
-                  value={priorities[ticket._id] || 'Low'}
-                  onChange={(e) => updateField(ticket._id, 'priority', e.target.value)}
-                  className="priority-select"
+                    {ticket.requester.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </Avatar>
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      onClick={() => handleTitleClick(ticket)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <strong>{ticket.subject} #{ticket.display_id}</strong>
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {ticket.requester.name} ({ticket.company_id ? 'Company' : 'Unknown Company'}) | Created {new Date(ticket.created_at).toLocaleDateString()} | {getSlaStatus(ticket.created_at)}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'flex-end', padding: 2 }}>
+                <Select
+                  value={ticket.priority_name.toLowerCase()}
+                  onChange={handlePriorityChange}
+                  sx={{ minWidth: 100, mr: 1 }}
                 >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                  <option value="Urgent">Urgent</option>
-                </select>
-                <select
-                  value={assignedAgents[ticket._id] || 'Unassigned'}
-                  onChange={(e) => updateField(ticket._id, 'responder_id', e.target.value)}
-                  className="agent-select"
-                >
-                  <option value="Unassigned">Unassigned</option>
-                  {agents.map((agent) => (
-                    <option key={agent._id} value={agent._id}>
-                      {agent.name}
-                    </option>
+                  {Object.entries(ticketFields.find(f => f.name === 'priority').choices).map(([label, value]) => (
+                    <MenuItem key={value} value={label.toLowerCase()}>{label}</MenuItem>
                   ))}
-                </select>
-                <select
-                  value={statuses[ticket._id] || 'Open'}
-                  onChange={(e) => updateField(ticket._id, 'status', e.target.value)}
-                  className="status-select"
+                </Select>
+                <Select
+                  value={ticket.responder_id ? ticket.responder_id.name.toLowerCase() : 'unassigned'}
+                  onChange={handleAgentChange}
+                  sx={{ minWidth: 100, mr: 1 }}
                 >
-                  <option value="Open">Open</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Resolved">Resolved</option>
-                  <option value="Closed">Closed</option>
-                </select>
-              </div>
-            </div>
+                  {Object.entries(ticketFields.find(f => f.name === 'agent').choices).map(([label, value]) => (
+                    <MenuItem key={value} value={label.toLowerCase()}>{label}</MenuItem>
+                  ))}
+                  <MenuItem value="unassigned">Unassigned</MenuItem>
+                </Select>
+                <Select
+                  value={ticket.status_name.toLowerCase()}
+                  onChange={handleStatusChange}
+                  sx={{ minWidth: 100 }}
+                >
+                  {Object.entries(ticketFields.find(f => f.name === 'status').choices).map(([code, [validLabel]]) => (
+                    <MenuItem key={`${code}-${validLabel}`} value={validLabel.toLowerCase()}>{validLabel}</MenuItem>
+                  ))}
+                </Select>
+              </CardActions>
+            </Card>
           ))}
-        </div>
-      )}
-      <div className="pagination">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
-      </div>
-      {replyTicket && (
-        <div className="modal reply-modal">
-          <div className="modal-content">
-            <h2>Reply to Ticket: {replyTicket.subject}</h2>
-            <textarea
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              placeholder="Type your reply here..."
-              className="reply-textarea"
-              rows="5"
-            />
-            <button
-              onClick={sendReply}
-              className="send-reply-button"
-              disabled={!replyContent.trim()}
-            >
-              Send Reply
-            </button>
-            <button onClick={closeReplyForm} className="close-button">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-      {noteTicket && (
-        <div className="modal note-modal">
-          <div className="modal-content">
-            <h2>Add Note to Ticket: {noteTicket.subject}</h2>
-            <textarea
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              placeholder="Type your note here..."
-              className="note-textarea"
-              rows="5"
-            />
-            <button
-              onClick={sendNote}
-              className="send-note-button"
-              disabled={!noteContent.trim()}
-            >
-              Add Note
-            </button>
-            <button onClick={closeNoteForm} className="close-button">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-      {dialog.visible && (
-        <div className="ticket-dialog">
-          <div className="dialog-content">
-            <button className="dialog-close" onClick={handleCloseDialog}>X</button>
-            <div className="dialog-header">
-              <div className="avatar" style={{ backgroundColor: getPriorityColor(priorities[dialog.ticket._id]) }}>
-                {getLastActionDetails(dialog.ticket).initial}
-              </div>
-              <div>
-                <div>
-                  {getLastActionDetails(dialog.ticket).name} {getLastActionDetails(dialog.ticket).verb}
-                </div>
-                <div className="timestamp">{getLastActionDetails(dialog.ticket).timestamp}</div>
-              </div>
-            </div>
-            <div className="dialog-body">{getLastActionDetails(dialog.ticket).preview}</div>
-            <div className="dialog-actions">
-              <button onClick={handleReply}>Reply</button>
-              <button onClick={handleAddNote}>Add Note</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        </Box>
+        <Dialog open={!!selectedTicket} onClose={() => setSelectedTicket(null)}>
+          <DialogTitle>{selectedTicket?.subject} #{selectedTicket?.display_id}</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              <strong>Requester:</strong> {selectedTicket?.requester?.name} ({selectedTicket?.company_id ? 'Company' : 'Unknown Company'})<br />
+              <strong>Created:</strong> {new Date(selectedTicket?.created_at).toLocaleDateString()}<br />
+              <strong>Last Modified:</strong> {new Date(selectedTicket?.updated_at).toLocaleDateString()}<br />
+              <strong>SLA:</strong> {getSlaStatus(selectedTicket?.created_at)}<br />
+              <strong>Last Activity:</strong> {selectedTicket?.conversations[0]?.private ? 'Private: ' : 'Public: '} {selectedTicket?.conversations[0]?.body_text}
+            </DialogContentText>
+          </DialogContent>
+        </Dialog>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Pagination count={totalPages} page={page} onChange={handlePageChange} />
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
-}
+};
 
 export default App;

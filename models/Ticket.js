@@ -117,7 +117,7 @@ const TicketStatesSchema = new mongoose.Schema({
 const TicketSchema = new mongoose.Schema({
   id: { type: Number, required: true, unique: true },
   description: { type: String },
-  requester_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Updated
+  requester_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Updated
   responder_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
   status: { type: Number },
   urgent: { type: Boolean },
