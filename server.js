@@ -5,6 +5,7 @@ const cors = require('cors');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const nodemailer = require('nodemailer');
+const fs = require('fs');
 const axios = require('axios');
 const { Mutex } = require('async-mutex');
 
@@ -53,7 +54,7 @@ setInterval(() => {
 }, process.env.CHECK_INTERVAL ? parseInt(process.env.CHECK_INTERVAL) : 60000);
 
   // Email Setup
-const transporter = nodemailer.createTransport({
+const transporter_x = nodemailer.createTransport({
   host: process.env.SMTP_HOSTNAME,
   port: parseInt(process.env.SMTP_PORT),
   secure: false,
@@ -62,6 +63,24 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS
   }
 });
+
+const certFile = process.env.CERT_FILE || '/Users/mitch/Documents/refresh-desk/certs/cert.pem';
+const keyFile = process.env.CERT_KEY_FILE || '/Users/mitch/Documents/refresh-desk/certs/key.pem';
+const caCert = fs.readFileSync(certFile, 'utf8');
+const caKey = fs.readFileSync(keyFile, 'utf8');
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOSTNAME,
+  port: parseInt(process.env.SMTP_PORT),
+  secure: false,
+  tls: {
+    ca: [caCert, caKey] // Correctly closed with proper indentation
+  },
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
 
 // IMAP Setup
 const imap = new Imap({
@@ -74,64 +93,6 @@ const imap = new Imap({
   authTimeout: 5000
 });
 
-// Routes
-/*
-req.body: {
-  subject: 'Deal with this problem',
-  description: 'Tell me more about this issue.',
-  requester_id: '6868527ff5d2b14198b5245e',
-  responder_id: '6868527ff5d2b14198b52653',
-  ticket_type: 'Incident',
-  status: 2,
-  priority: 1,
-  source: 3,
-  group_id: 9000171202,
-  status_name: 'Open',
-  priority_name: 'Low',
-  source_name: 'Phone',
-  requester_name: 'Mitch',
-  responder_name: 'Mitch Starnes',
-  created_at: '2025-07-19T13:32:23.761Z',
-  updated_at: '2025-07-19T13:32:23.761Z',
-  account_id: 320932,
-  delta: true,
-  requester: {
-    id: 9008904650,
-    name: 'Mitch',
-    email: 'mitch@oliverdentalimplants.com',
-    created_at: '2025-07-19T13:32:23.761Z',
-    updated_at: '2025-07-19T13:32:23.761Z',
-    active: true
-  },
-  ticket_states: {
-    created_at: '2025-07-19T13:32:23.761Z',
-    updated_at: '2025-07-19T13:32:23.761Z'
-  }
-}
-
-  const [formData, setFormData] = useState({
-    subject: '',
-    contact: null,
-    ticket_type: 'Incident',
-    status: 'Open',
-    priority: 'Low',
-    group_id: 'IT',
-    responder_id: null,
-    source: 'Phone',
-    description: '',
-  });
-
-Email:
-subject
-description
-requester.email
-requester.name (maybe)
-status: 2 open
-priority: low unless "urgent" in subject
-ticket_type: Incident
-source_name: Email
-
-*/
 // Create a new ticket new version
 app.post('/api/tickets', async (req, res) => {
   // Acquire the lock
@@ -228,6 +189,22 @@ app.post('/api/tickets', async (req, res) => {
     console.log('Saving ticket');
     await ticket.save();
     console.log('Saved ticket');
+
+    //const EmailConfig = require('./models/EmailConfig');
+    const emailConfig = await EmailConfig.findOne();
+
+    console.log('ticketData 2: ' + JSON.stringify(ticketData, null, 2));
+
+    if (!process.env.DISABLE_EMAILS) {
+      await transporter.sendMail({
+        from: `"${emailConfig.name}" <${emailConfig.reply_email}>`,
+        to: ticketData.requester.email,
+        subject: `Ticket Received #${ticketData.display_id}`,
+        text: `Dear ${ticketData.requester.name},\n\nWe would like to acknowledge that we have received your request and a ticket has been created.\nA support representative will be reviewing your request and will send you a personal response (usually within 24 hours).\n\nTo view the status of the ticket or add comments, please visit\nhttp://localhost:3000/ticket/${ticketData.display_id}\n\nThank you for your patience.\n\nSincerely,\n${emailConfig.name}`,
+      });
+    } else {
+      console.log("Would have sent email 3");
+    }
 
     // Save to ObjectIdMap
     // await new ObjectIdMap({ id: newId }).save();
@@ -1595,12 +1572,6 @@ let lastFetchTime = new Date();
 async function processEmail(mail) {
   //console.log("processEmail()");
   const { from, subject, text, to, date, messageId } = mail;
-  let dupCheck = await Ticket.findOne({ messageId: messageId });
-  if( dupCheck ) {
-    console.log("duplicate messageId: " + messageId);
-    // console.log("DUPCHECK: " + JSON.stringify(dupCheck, null, 2));
-    return;
-  }
 
   const email = from.value[0].address;
   const [name] = from.value[0].name?.split(' ') || ['Customer'];
@@ -1614,37 +1585,13 @@ async function processEmail(mail) {
   
   if (!toAddresses.includes(targetAddress) || (date < cutoffDate  )) return;
 
-  //console.log(JSON.stringify(mail, null, 2));
-  /*console.log('messageId: ' + messageId);
-  console.log("START");
-  console.log("from: " + JSON.stringify(from));
-  console.log("subject: " + subject);
-  console.log("text: " + text);
-  console.log("to: " + JSON.stringify(to));
-  console.log("date: " + date);
-  console.log("email: " + email);
-  console.log("name: " + name);
-  console.log("emailConfig: " + emailConfig);
-  console.log("targetAddress: " + targetAddress);
-  console.log("cutoffDate: " + cutoffDate);
-  console.log("END");
-  */
+  let dupCheck = await Ticket.findOne({ messageId: messageId });
+  if( dupCheck ) {
+    // console.log("duplicate messageId: " + messageId);
+    // console.log("DUPCHECK: " + JSON.stringify(dupCheck, null, 2));
+    return;
+  }
   console.log( "processEmail from " + email + " with Subject: " + subject );
-  /*
-[0] processEmail from {
-[0]   "value": [
-[0]     {
-[0]       "address": "mitch.starnes@gmail.com",
-[0]       "name": "Mitch Starnes"
-[0]     }
-[0]   ],
-[0]   "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Mitch Starnes</span> &lt;<a href=\"mailto:mitch.starnes@gmail.com\" class=\"mp_address_email\">mitch.starnes@gmail.com</a>&gt;</span>",
-[0]   "text": "\"Mitch Starnes\" <mitch.starnes@gmail.com>"
-[0] } with Subject: Testing email ingestion
-[0] Error processing email: Request failed with status code 403
-[0] /Users/mitch/Documents/refresh-desk/server.js:1617
-[0]       throw new Error(`Failed to create ticket: ${error.response.data.error || error.message}`);
-  */
 
   try {
 
@@ -1653,22 +1600,6 @@ async function processEmail(mail) {
       throw new Error('Missing email fields');
     }
 
-/*
-    // Prepare payload for POST /api/tickets
-    const ticketData = {
-      subject,
-      description: text,
-      email: email,
-      priority_name: 'Low', // Default, matching POST /api/tickets
-      status: 2,   // Default, matching POST /api/tickets
-      ticket_type: 'Incident',
-      //status: 'Open',
-      priority: 1,
-      group_id: 'IT',
-      responder_id: defaultAgent || null,
-      source: 'Email',
-    };
-*/
     let ticketFields = null;
     let defaultAgent = null;
     const fetchTicketFields = async () => {
@@ -1692,8 +1623,6 @@ async function processEmail(mail) {
     };
 
     await fetchTicketFields();
-
-    // console.log('ticketFields: ' + JSON.stringify(ticketFields, null, 2));
 
     requester = await User.findOne({ email: email });
     const statusCode = ticketFields.status.find((s) => s.name === "Open")?.code || 2;
@@ -1736,9 +1665,6 @@ async function processEmail(mail) {
       },
       messageId: messageId,
     };
-    // Message-Id: <522ECF71-10DF-4731-97A3-CB555902BC21@gmail.com>
-    // console.log("ticketData: " + JSON.stringify(ticketData, null, 2));
-
 
     // Make POST request to /api/tickets
     const response = await axios.post(process.env.REACT_APP_API_URL + '/api/tickets', ticketData, {
@@ -1757,75 +1683,6 @@ async function processEmail(mail) {
     }
     throw error;
   }
-  console.log("shouldn't get here");
-  return;
-
-  const user = await User.findOne({ email });
-  if (!user) {
-    console.error('User not found:', email);
-    return;
-  }
-
-  const ticketFields = await TicketField.find();
-  const ticketTypeField = ticketFields.find(f => f.name === 'ticket_type');
-  const sourceField = ticketFields.find(f => f.name === 'source');
-  const statusField = ticketFields.find(f => f.name === 'status');
-  const priorityField = ticketFields.find(f => f.name === 'priority');
-  const groupField = ticketFields.find(f => f.name === 'group');
-
-  const displayIdMatch = subject.match(/#(\d+)/) || (text || '').match(/http:\/\/localhost:5001\/tickets\/(\d+)/);
-  if (displayIdMatch) {
-    const display_id = parseInt(displayIdMatch[1]);
-    const mapEntry = await TicketDisplayIdMap.findOne({ ticket_id: mongoose.Types.ObjectId(displayIdMatch[1]) });
-    if (mapEntry) {
-      const ticket = await Ticket.findById(mapEntry.ticket_id);
-      if (ticket) {
-        ticket.conversations = ticket.conversations || [];
-        ticket.conversations.push({
-          body_text: text,
-          body: mail.html || text,
-          user_id: user._id,
-          incoming: true,
-        });
-        ticket.updated_at = new Date().toISOString();
-        await ticket.save();
-        console.log(`Updated ticket ${display_id}`);
-        return;
-      }
-    }
-  }
-
-  const ticketCount = await Ticket.countDocuments();
-  const ticket = new Ticket({
-    subject: subject || 'No Subject',
-    description: text || 'No Description',
-    status: statusField.choices['2'][0], // Open
-    priority: priorityField.choices.Low, // Low
-    requester: user._id,
-    group_id: groupField.choices.IT, // IT
-    source: sourceField.choices.Email, // Email
-    ticket_type: ticketTypeField.choices[0], // First type
-    created_at: new Date(),
-  });
-  await ticket.save();
-
-  const mapEntry = new TicketDisplayIdMap({
-    ticket_id: ticket._id,
-    display_id: ticketCount + 1,
-  });
-  await mapEntry.save();
-
-  if (!process.env.DISABLE_EMAILS) {
-    await transporter.sendMail({
-      from: `"${emailConfig.name}" <${emailConfig.reply_email}>`,
-      to: email,
-      subject: `Ticket Received #${mapEntry.display_id}`,
-      text: `Dear ${user.name},\n\nWe would like to acknowledge that we have received your request and a ticket has been created.\nA support representative will be reviewing your request and will send you a personal response (usually within 24 hours).\n\nTo view the status of the ticket or add comments, please visit\nhttp://localhost:5001/tickets/${mapEntry.display_id}\n\nThank you for your patience.\n\nSincerely,\n${emailConfig.name}`,
-    });
-  } else {
-    console.log("Would have sent email 3");
-  }
-  console.log(`Created ticket ${mapEntry.display_id}`);
 }
 
 let loginAttempts = 0;
