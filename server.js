@@ -1580,7 +1580,7 @@ let lastFetchTime = new Date();
 // IMAP Email Processing
 async function processEmail(mail) {
   //console.log("processEmail()");
-  const { from, subject, text, to, date, messageId } = mail;
+  const { from, subject, text, html, to, date, messageId } = mail;
 
   const email = from.value[0].address;
   const [name] = from.value[0].name?.split(' ') || ['Customer'];
@@ -1593,6 +1593,8 @@ async function processEmail(mail) {
   //console.log('cutoffDate: ' + cutoffDate);
   
   if (!toAddresses.includes(targetAddress) || (date < cutoffDate  )) return;
+
+  // console.log('html: ' + html);
 
   let dupCheck = await Ticket.findOne({ messageId: messageId });
   if( dupCheck ) {
@@ -1642,6 +1644,7 @@ async function processEmail(mail) {
     const ticketData = {
       subject: subject,
       description: text,
+      description_html: html || null,
       requester_id: requester._id || null,
       responder_id: defaultAgent || null,
       ticket_type: 'Incident',
