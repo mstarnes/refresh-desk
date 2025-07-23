@@ -87,20 +87,31 @@ const App = () => {
   const [showNewTicket, setShowNewTicket] = useState(false);
   const [showTicketDetails, setShowTicketDetails] = useState(false);
   const [tags, setTags] = useState('');
+  const [subject, setSubject] = useState('');
   const [formData, setFormData] = useState({
     requester_id: '6868527ef5d2b14198b52400',
-    subject: '',
+    subject: 'Not set',
     ticket_type: 'Incident',
     status: 'Open',
     priority: 'Low',
     group: 'IT',
     agent: 'Mitch Starnes',
-    description_html: '',
+    source: 'Phone',
+    description_html: 'Not set',
+  });
+
+  const [ticketFields1, setTicketFields1] = useState({
+    ticket_type: [],
+    status: [],
+    priority: [],
+    group: [],
+    agent: [],
+    source: [],
   });
 
   const fetchTickets = useCallback(async () => {
     try {
-      const agentId = '6868527ff5d2b14198b52653'; // Default agent _id
+      const agentId = '6868527ff5d2b14198b52653';
       const endpoint = searchQuery ? '/api/tickets/search' : '/api/tickets';
       const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${endpoint}`, {
         params: {
@@ -136,6 +147,32 @@ const App = () => {
   }, [fetchTickets]);
 
   useEffect(() => {
+    const fetchTicketFields = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/ticketfields');
+        const fields = response.data.reduce((acc, field) => {
+          acc[field.name] = field.choices || [];
+          return acc;
+        }, {});
+        setTicketFields1(fields);
+
+        const defaultAgent = fields.agent.find(
+          (agent) => agent.email === process.env.CURRENT_AGENT_EMAIL
+        );
+        setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
+      } catch (error) {
+        console.error('Error fetching ticket fields:', error);
+        setError('Failed to load ticket fields: ' + (error.response?.data?.details || error.message));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTicketFields();
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('filterType', filterType);
     localStorage.setItem('sortBy', sortBy);
     localStorage.setItem('sortDirection', sortDirection);
@@ -149,7 +186,7 @@ const App = () => {
 
   const getSlaStatus = (createdAt) => {
     const created = new Date(createdAt);
-    const now = new Date('2025-07-21T13:48:00-05:00'); // Updated to 01:48 PM CDT, July 21, 2025
+    const now = new Date('2025-07-21T00:00:00-05:00'); // Updated to 12:00 AM CDT, July 21, 2025
     const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
     return diffHours > 3 ? `Overdue by ${diffHours} hours` : 'Within SLA';
   };
@@ -199,18 +236,13 @@ const App = () => {
       setContacts(response.data);
     } catch (error) {
       console.error('Error searching contacts:', error);
-      setError('Failed to search contacts: ' + (error.response?.data?.details || error.message));
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (field) => (event, value) => {
-    if (event && event.target) {
-      setFormData(prev => ({ ...prev, [field]: event.target.value }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handlePriorityChange = async (event, ticket) => {
@@ -222,7 +254,7 @@ const App = () => {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
           priority: ticketFields.find(f => f.name === 'priority').choices[priorityCode],
         });
-        setSelectedTicket(prev => prev ? { ...prev, priority_name: newPriority } : prev);
+        setSelectedTicket(prev => prev ? { ...prev, priority_name: newPriority } : prev); // Update dialog state
         await fetchTickets();
         console.log('Priority updated:', response.data);
       } catch (error) {
@@ -236,15 +268,15 @@ const App = () => {
   const handleAgentChange = async (event, ticket) => {
     console.log('Agent change triggered for ticket:', ticket._id, 'New agent:', event.target.value);
     const newAgent = event.target.value;
-    const agentKey = Object.keys(ticketFields.find(f => f.name === 'agent').choices).find(key => key.toLowerCase() === newAgent.toLowerCase());
-    const agentId = agentKey ? ticketFields.find(f => f.name === 'agent').choices[agentKey] : null;
-    console.log('Sending agentId:', agentId);
+    const agentId = newAgent === 'unassigned' ? null : Object.keys(ticketFields.find(f => f.name === 'agent').choices).find(key => key.toLowerCase() === newAgent.toLowerCase());
+    const agentMongooseId = agentId ? ticketFields.find(f => f.name === 'agent').choices[agentId] : null;
+    console.log('Sending agentId:', agentMongooseId);
     if (ticket) {
       try {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          responder_id: agentId,
+          responder_id: agentMongooseId,
         });
-        setSelectedTicket(prev => prev ? { ...prev, responder_id: agentId ? { name: newAgent } : null } : prev);
+        setSelectedTicket(prev => prev ? { ...prev, responder_id: agentMongooseId ? { name: newAgent } : null } : prev); // Update dialog state
         await fetchTickets();
         console.log('Agent updated:', response.data.responder_id);
       } catch (error) {
@@ -264,7 +296,7 @@ const App = () => {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
           status: parseInt(statusCode),
         });
-        setSelectedTicket(prev => prev ? { ...prev, status_name: newStatus } : prev);
+        setSelectedTicket(prev => prev ? { ...prev, status_name: newStatus } : prev); // Update dialog state
         await fetchTickets();
         console.log('Status updated:', response.data);
       } catch (error) {
@@ -283,7 +315,7 @@ const App = () => {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
           group_id: groupCode,
         });
-        setSelectedTicket(prev => prev ? { ...prev, group_id: groupCode, group_name: newGroup } : prev); // Update group name for display
+        setSelectedTicket(prev => prev ? { ...prev, group_id: groupCode } : prev); // Update dialog state
         await fetchTickets();
         console.log('Group updated:', response.data);
       } catch (error) {
@@ -307,17 +339,85 @@ const App = () => {
       }
     }
   };
+  const handleNewTicketSubmit = async (e) => {
+    e.preventDefault();
+    console.log('handleNewTicketSubmit formData: ' + JSON.stringify(formData, null, 2));
+/*
+    if (!formData.requester_id) {
+      console.error('requester_id is required');
+      return;
+      setError('Please select a contact');
+    }
+    if (!formData.subject) {
+      console.error('Subject is required');
+      setError('Subject is required');
+      return;
+    }
+    if (!formData.description_html.trim() || formData.description.trim()) {
+      console.error('Description is required');
+      setError('Description is required');
+      return;
+    }
+*/
+    try {
+      const statusCode = ticketFields1.status.find((s) => s.name === formData.status)?.code || 2;
+      const priorityCode = ticketFields1.priority.find((p) => p.name === formData.priority)?.code || 1;
+      const sourceCode = ticketFields1.source.find((s) => s.name === formData.source)?.code || 3;
+      const groupId = ticketFields1.group.find((g) => g.name === formData.group_id)?.id || 9000171202;
 
-  const handleNewTicketSubmit = async (event) => {
+      const ticketData = {
+        subject: formData.subject,
+        description: formData.description,
+        requester_id: formData.requester_id,
+        responder_id: formData.responder_id ? formData.responder_id._id : null,
+        ticket_type: formData.ticket_type,
+        status: statusCode,
+        priority: priorityCode,
+        source: sourceCode,
+        group_id: groupId,
+        status_name: formData.status,
+        priority_name: formData.priority,
+        source_name: formData.source,
+        requester_name: formData.contact ? formData.contact.name : null,
+        responder_name: formData.responder_id ? formData.responder_id.name : null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        account_id: process.env.ACCOUNT_ID || 320932,
+        delta: true,
+        requester: formData.contact
+          ? {
+              id: formData.contact.id || Math.floor(Math.random() * 1000000),
+              name: formData.contact.name,
+              email: formData.contact.email,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              active: true,
+            }
+          : null,
+        ticket_states: {
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      };
+      await axios.post('/api/tickets', ticketData);
+      console.log('ticketData: ' + JSON.stringify(ticketData, null, 2));
+      // navigate('/');
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      setError('Failed to create ticket: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleNewTicketSubmitOld = async (event) => {
     event.preventDefault();
     const newTicket = {
-      subject: formData.subject || 'No Subject', // Fallback to prevent undefined
+      subject: formData.subject || 'No Subject',
       description_html: formData.description_html,
-      priority: getFieldCode('priority', formData.priority) || 1, // Default to Low (1)
-      status: getFieldCode('status', formData.status) || 2, // Default to Open (2)
+      priority: getFieldCode('priority', formData.priority) || 1,
+      status: getFieldCode('status', formData.status) || 2,
       requester_id: formData.requester_id || '6868527ef5d2b14198b52400',
       responder_id: formData.agent === 'unassigned' ? null : getFieldCode('agent', formData.agent),
-      source: 1, // Default to Email
+      source: getFieldCode('source', formData.source) || 3, // Default to Phone (3)
       ticket_type: formData.ticket_type || 'Incident',
       group_id: getFieldCode('group', formData.group) || 9000171202,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -338,7 +438,8 @@ const App = () => {
         group: 'IT',
         agent: 'Mitch Starnes',
         description_html: '',
-      }); // Reset form
+        source: 'Phone',
+      });
       console.log('New ticket created:', response.data);
     } catch (error) {
       console.error('Error creating ticket:', error.response?.data || error.message);
@@ -447,36 +548,36 @@ const App = () => {
           <DialogTitle>New Ticket</DialogTitle>
           <DialogContent>
             <form onSubmit={handleNewTicketSubmit}>
-              <Autocomplete
-                options={contacts.length === 0 ? [{ name: 'Type to search', disabled: true }] : contacts}
-                getOptionLabel={(option) => option.disabled ? option.name : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
-                filterOptions={(options) => options}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Contact"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                    required
-                    InputProps={{ ...params.InputProps, endAdornment: loading ? <CircularProgress color="inherit" size={20} /> : null }}
-                  />
-                )}
-                onInputChange={(e, value) => handleContactSearch(value.split('<')[0].trim())} // Extract name only
-                onChange={(event, value) => value && setFormData(prev => ({ ...prev, requester_id: value._id }))} // Update with _id
-                value={contacts.find(c => c._id === formData.requester_id) || null}
-                sx={{ my: 2 }}
-              />
               <TextField
                 fullWidth
                 label="Subject"
                 value={formData.subject}
                 onChange={handleChange('subject')}
+                //onChange={(e) => setSubject(e.target.value)}
                 margin="normal"
                 required
                 placeholder="Enter subject"
-                InputLabelProps={{ shrink: true }} // Force label to shrink when text is present
-                variant="outlined"
+                //sx={{ '& .MuiInputLabel-shrink': { transform: 'translate(14px, -9px) scale(0.75)' } }} // Custom styling to float label
+                //variant="outlined"
+              />
+              <Autocomplete
+                options={formData.contact ? [formData.contact, ...contacts.filter(c => c._id !== formData.contact._id)] : contacts.length === 0 ? [{ name: 'Type to search', disabled: true }] : contacts}
+                getOptionLabel={(option) => option.disabled ? option.name : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
+                filterOptions={(options) => options}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    className="new-ticket-field"
+                    label="Contact"
+                    variant="outlined"
+                    fullWidth
+                    margin="normal"
+                    required
+                  />
+                )}
+                onInputChange={(e, value) => handleContactSearch(value)}
+                onChange={handleChange('contact')}
+                value={formData.contact || null}
               />
               <Autocomplete
                 options={ticketFields.find(f => f.name === 'ticket_type').choices}
@@ -534,6 +635,22 @@ const App = () => {
                   <TextField
                     {...params}
                     label="Group"
+                    variant="outlined"
+                    fullWidth
+                    margin="normal"
+                    required
+                  />
+                )}
+                sx={{ my: 2 }}
+              />
+              <Autocomplete
+                options={Object.keys(ticketFields.find(f => f.name === 'source').choices).map(key => key)}
+                value={formData.source}
+                onChange={handleChange('source')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Source"
                     variant="outlined"
                     fullWidth
                     margin="normal"

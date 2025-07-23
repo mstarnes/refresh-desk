@@ -128,9 +128,14 @@ app.post('/api/tickets', async (req, res) => {
     let sla_policy_id = null;
     let requester = null;
     if (req.body.requester_id) {
+      // const requester_id = new mongoose.Types.ObjectId(req.body.requester_id);
       requester = await User.findById(req.body.requester_id).select('company_id created_at updated_at');
-    } else {
+      console.log('requester: ' + JSON.stringify(requester, null, 2));
+    } else if(req.body.email){
       requester = await User.findOne({ email: req.body.email });
+    } else {
+      console.error('Requester: ', "no requester data");
+      console.error('req.body: ' + JSON.stringify(req.body, null, 2));
     }
     if (requester?.company_id && !isNaN(requester.company_id)) {
       const company = await mongoose.model('Company').findOne({ id: requester.company_id }).select('_id');
