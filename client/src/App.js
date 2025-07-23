@@ -19,43 +19,12 @@ import {
   Avatar,
   Autocomplete,
   CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './styles/App.css';
-
-// Mock ticketfields data
-let ticketFields = [
-  { name: 'priority', choices: { Low: 1, Medium: 2, High: 3, Urgent: 4 } },
-  { name: 'status', choices: { '2': ['Open'], '3': ['Pending'], '4': ['Resolved'], '5': ['Closed'] } },
-  { name: 'ticket_type', choices: ['Question', 'Incident', 'Problem', 'Feature Request', 'Lead', 'Documentation'] },
-  { name: 'source', choices: { Email: 1, Portal: 2, Phone: 3, Forum: 4, Twitter: 5, Facebook: 6, Chat: 7, MobiHelp: 8, 'Feedback Widget': 9, 'Outbound Email': 10, Ecommerce: 11, Bot: 12, Whatsapp: 13, 'Chat - Internal Task': 14 } },
-  { name: 'group', choices: { IT: 9000171202, RE: 9000171690 } },
-  { name: 'agent', choices: { 'Mitch Starnes': '6868527ff5d2b14198b52653' } },
-];
-
-// Utility functions
-const getFieldLabel = (fieldName, code) => {
-  const field = ticketFields.find(f => f.name === fieldName);
-  if (field) {
-    if (fieldName === 'status') {
-      const statusEntry = Object.entries(field.choices).find(([key]) => key === code.toString());
-      return statusEntry ? statusEntry[1][0] : null;
-    }
-    return Object.keys(field.choices).find(key => field.choices[key] === code) || null;
-  }
-  return null;
-};
-
-const getFieldCode = (fieldName, label) => {
-  const field = ticketFields.find(f => f.name === fieldName);
-  if (field) {
-    const entry = Object.entries(field.choices).find(([key, value]) => value === label || (Array.isArray(value) && value[0] === label));
-    return entry ? (fieldName === 'status' || fieldName === 'group' ? parseInt(entry[0]) : entry[1]) : null;
-  }
-  return null;
-};
 
 const theme = createTheme({
   palette: {
@@ -86,21 +55,20 @@ const App = () => {
   const [showNewTicket, setShowNewTicket] = useState(false);
   const [showTicketDetails, setShowTicketDetails] = useState(false);
   const [tags, setTags] = useState('');
-  const [subject, setSubject] = useState('');
+  const [agents, setAgents] = useState([]);
   const [formData, setFormData] = useState({
-    requester_id: '6868527ef5d2b14198b52400',
+    requester_id: null,
     subject: '',
-    ticket_type: 'Incident',
-    status: 'Open',
-    priority: 'Low',
-    group: 'IT',
-    agent: 'Mitch Starnes',
-    source: 'Phone',
-    description_html: 'Not set',
-    responder_id: null, // Use responder_id
+    ticket_type: '',
+    status: '',
+    priority: '',
+    group: '',
+    responder_id: null,
+    source: '',
+    description_html: '',
+    contact: null,
   });
-
-  const [ticketFields1, setTicketFields1] = useState({
+  const [ticketFields, setTicketFields] = useState({
     ticket_type: [],
     status: [],
     priority: [],
@@ -109,9 +77,55 @@ const App = () => {
     source: [],
   });
 
+  const getFieldLabel = (fieldName, code) => {
+    const field = ticketFields[fieldName];
+    if (field) {
+      if (fieldName === 'status' || fieldName === 'priority' || fieldName === 'source') {
+        const item = field.find(item => item.code === code);
+        return item ? item.name : null;
+      } else if (fieldName === 'group') {
+        const item = field.find(item => item.id === code);
+        return item ? item.name : null;
+      } else if (fieldName === 'agent') {
+        const item = field.find(item => item._id === code);
+        return item ? item.name : null;
+      }
+    }
+    return null;
+  };
+
+  const getFieldCode = (fieldName, label) => {
+    const field = ticketFields[fieldName];
+    if (field) {
+      if (fieldName === 'status' || fieldName === 'priority' || fieldName === 'source') {
+        const item = field.find(item => item.name === label);
+        return item ? item.code : null;
+      } else if (fieldName === 'group') {
+        const item = field.find(item => item.name === label);
+        return item ? item.id : null;
+      } else if (fieldName === 'agent') {
+        const item = field.find(item => item.name === label);
+        return item ? item._id : null;
+      }
+    }
+    return null;
+  };
+
   const fetchTickets = useCallback(async () => {
     try {
-      const agentId = '6868527ff5d2b14198b52653';
+      //const agent = await Agent.findOne({ email: process.env.CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro' });
+      //const agent = agents.find(a => a.email === process.env.CURRENT_AGENT_EMAIL) || { id: 9006333765, name: 'Mitch Starnes' };
+      const agent = ticketFields.agent.find(
+        (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
+      );
+      //console.log('Default agent:', agent);
+
+      const agentId = agent ? agent._id : null;
+      if (!agentId) {
+        console.warn('No agent found for REACT_APP_CURRENT_AGENT_EMAIL:', process.env.REACT_APP_CURRENT_AGENT_EMAIL);
+        setTickets([]);
+        return;
+      }
       const endpoint = searchQuery ? '/api/tickets/search' : '/api/tickets';
       const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${endpoint}`, {
         params: {
@@ -129,7 +143,7 @@ const App = () => {
         ...ticket,
         priority_name: getFieldLabel('priority', ticket.priority) || 'Low',
         status_name: getFieldLabel('status', ticket.status) || 'Open',
-        responder_id: ticket.responder_id ? { name: getFieldLabel('agent', ticket.responder_id) || 'Mitch Starnes' } : null,
+        responder_id: ticket.responder_id ? { name: getFieldLabel('agent', ticket.responder_id) || 'Unassigned' } : null,
       }));
       console.log('Enriched tickets response:', enrichedTickets);
       setTickets(enrichedTickets);
@@ -140,10 +154,21 @@ const App = () => {
       console.error('Error fetching tickets:', error);
       setTickets([]);
     }
-  }, [filterType, sortBy, sortDirection, searchQuery, page, setTickets]);
+  }, [filterType, sortBy, sortDirection, searchQuery, page, ticketFields]);
+
+
+  const fetchAgents = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/agents');
+      setAgents(response.data);
+    } catch (err) {
+      console.error('Fetch Agents Error:', err);
+    }
+  };
 
   useEffect(() => {
     fetchTickets();
+    fetchAgents();
   }, [fetchTickets]);
 
   useEffect(() => {
@@ -155,11 +180,11 @@ const App = () => {
           acc[field.name] = field.choices || [];
           return acc;
         }, {});
-        console.log('Fetched ticketFields1:', fields);
-        setTicketFields1(fields);
-        console.log('ticketFields1.agent:', fields.agent);
+        console.log('Fetched ticketFields:', fields);
+        setTicketFields(fields);
+
         const defaultAgent = fields.agent.find(
-          (agent) => agent.email === process.env.CURRENT_AGENT_EMAIL
+          (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
         );
         console.log('Default agent:', defaultAgent);
         setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
@@ -170,7 +195,6 @@ const App = () => {
         setLoading(false);
       }
     };
-
     fetchTicketFields();
   }, []);
 
@@ -188,7 +212,7 @@ const App = () => {
 
   const getSlaStatus = (createdAt) => {
     const created = new Date(createdAt);
-    const now = new Date('2025-07-21T00:00:00-05:00');
+    const now = new Date('2025-07-23T11:31:00-05:00');
     const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
     return diffHours > 3 ? `Overdue by ${diffHours} hours` : 'Within SLA';
   };
@@ -254,11 +278,11 @@ const App = () => {
   const handlePriorityChange = async (event, ticket) => {
     console.log('Priority change triggered for ticket:', ticket._id);
     const newPriority = event.target.value;
-    const priorityCode = Object.keys(ticketFields.find(f => f.name === 'priority').choices).find(key => key.toLowerCase() === newPriority);
+    const priorityCode = ticketFields.priority.find(item => item.name.toLowerCase() === newPriority)?.code;
     if (ticket && priorityCode) {
       try {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          priority: ticketFields.find(f => f.name === 'priority').choices[priorityCode],
+          priority: priorityCode,
         });
         setSelectedTicket(prev => prev ? { ...prev, priority_name: newPriority } : prev);
         await fetchTickets();
@@ -274,15 +298,13 @@ const App = () => {
   const handleAgentChange = async (event, ticket) => {
     console.log('Agent change triggered for ticket:', ticket._id, 'New agent:', event.target.value);
     const newAgent = event.target.value;
-    const agentId = newAgent === 'unassigned' ? null : Object.keys(ticketFields.find(f => f.name === 'agent').choices).find(key => key.toLowerCase() === newAgent.toLowerCase());
-    const agentMongooseId = agentId ? ticketFields.find(f => f.name === 'agent').choices[agentId] : null;
-    console.log('Sending agentId:', agentMongooseId);
+    const agentId = newAgent === 'unassigned' ? null : ticketFields.agent.find(item => item.name.toLowerCase() === newAgent.toLowerCase())?._id;
     if (ticket) {
       try {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          responder_id: agentMongooseId,
+          responder_id: agentId,
         });
-        setSelectedTicket(prev => prev ? { ...prev, responder_id: agentMongooseId ? { name: newAgent } : null } : prev);
+        setSelectedTicket(prev => prev ? { ...prev, responder_id: agentId ? { name: newAgent } : null } : prev);
         await fetchTickets();
         console.log('Agent updated:', response.data.responder_id);
       } catch (error) {
@@ -296,11 +318,11 @@ const App = () => {
   const handleStatusChange = async (event, ticket) => {
     console.log('Status change triggered for ticket:', ticket._id);
     const newStatus = event.target.value;
-    const statusCode = Object.keys(ticketFields.find(f => f.name === 'status').choices).find(key => ticketFields.find(f => f.name === 'status').choices[key][0].toLowerCase() === newStatus);
+    const statusCode = ticketFields.status.find(item => item.name.toLowerCase() === newStatus)?.code;
     if (ticket && statusCode) {
       try {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          status: parseInt(statusCode),
+          status: statusCode,
         });
         setSelectedTicket(prev => prev ? { ...prev, status_name: newStatus } : prev);
         await fetchTickets();
@@ -315,7 +337,7 @@ const App = () => {
 
   const handleGroupChange = async (event, ticket) => {
     const newGroup = event.target.value;
-    const groupCode = getFieldCode('group', newGroup) || 9000171202;
+    const groupCode = ticketFields.group.find(item => item.name === newGroup)?.id || 9000171202;
     if (ticket) {
       try {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
@@ -350,14 +372,43 @@ const App = () => {
     e.preventDefault();
     console.log('handleNewTicketSubmit formData:', JSON.stringify(formData, null, 2));
 
+    if (!formData.requester_id) {
+      setError('Please select a contact');
+      return;
+    }
+    if (!formData.subject.trim()) {
+      setError('Subject is required');
+      return;
+    }
+    if (!formData.ticket_type) {
+      setError('Ticket Type is required');
+      return;
+    }
+    if (!formData.status) {
+      setError('Status is required');
+      return;
+    }
+    if (!formData.priority) {
+      setError('Priority is required');
+      return;
+    }
+    if (!formData.group) {
+      setError('Group is required');
+      return;
+    }
+    if (!formData.source) {
+      setError('Source is required');
+      return;
+    }
+
     try {
-      const statusCode = ticketFields1.status.find((s) => s.name === formData.status)?.code || 2;
-      const priorityCode = ticketFields1.priority.find((p) => p.name === formData.priority)?.code || 1;
-      const sourceCode = ticketFields1.source.find((s) => s.name === formData.source)?.code || 3;
-      const groupId = ticketFields1.group.find((g) => g.name === formData.group)?.id || 9000171202;
+      const statusCode = ticketFields.status.find((s) => s.name === formData.status)?.code || 2;
+      const priorityCode = ticketFields.priority.find((p) => p.name === formData.priority)?.code || 1;
+      const sourceCode = ticketFields.source.find((s) => s.name === formData.source)?.code || 3;
+      const groupId = ticketFields.group.find((g) => g.name === formData.group)?.id || 9000171202;
 
       const ticketData = {
-        subject: formData.subject || 'No Subject',
+        subject: formData.subject,
         description_html: formData.description_html || '<p>No description</p>',
         requester_id: formData.requester_id,
         responder_id: formData.responder_id ? formData.responder_id._id : null,
@@ -398,21 +449,25 @@ const App = () => {
       setShowNewTicket(false);
       setTags('');
       setFormData({
-        requester_id: '6868527ef5d2b14198b52400',
+        requester_id: null,
         subject: '',
-        ticket_type: 'Incident',
-        status: 'Open',
-        priority: 'Low',
-        group: 'IT',
+        ticket_type: '',
+        status: '',
+        priority: '',
+        group: '',
         responder_id: null,
-        source: 'Phone',
+        source: '',
         description_html: '',
-        source: 'Phone',
+        contact: null,
       });
     } catch (error) {
       console.error('Error creating ticket:', error);
       setError('Failed to create ticket: ' + (error.response?.data?.error || error.message));
     }
+  };
+
+  const handleCloseError = () => {
+    setError(null);
   };
 
   return (
@@ -486,8 +541,8 @@ const App = () => {
                   onChange={(e) => handlePriorityChange(e, ticket)}
                   sx={{ minWidth: 100, mr: 1 }}
                 >
-                  {Object.entries(ticketFields.find(f => f.name === 'priority').choices).map(([label, value]) => (
-                    <MenuItem key={value} value={label.toLowerCase()}>{label}</MenuItem>
+                  {ticketFields.priority.map(item => (
+                    <MenuItem key={item.code} value={item.name.toLowerCase()}>{item.name}</MenuItem>
                   ))}
                 </Select>
                 <Select
@@ -495,8 +550,8 @@ const App = () => {
                   onChange={(e) => handleAgentChange(e, ticket)}
                   sx={{ minWidth: 100, mr: 1 }}
                 >
-                  {Object.entries(ticketFields.find(f => f.name === 'agent').choices).map(([label, value]) => (
-                    <MenuItem key={value} value={label.toLowerCase()}>{label}</MenuItem>
+                  {ticketFields.agent.map(item => (
+                    <MenuItem key={item._id} value={item.name.toLowerCase()}>{item.name}</MenuItem>
                   ))}
                   <MenuItem value="unassigned">Unassigned</MenuItem>
                 </Select>
@@ -505,8 +560,8 @@ const App = () => {
                   onChange={(e) => handleStatusChange(e, ticket)}
                   sx={{ minWidth: 100 }}
                 >
-                  {Object.entries(ticketFields.find(f => f.name === 'status').choices).map(([code, [validLabel]]) => (
-                    <MenuItem key={`${code}-${validLabel}`} value={validLabel.toLowerCase()}>{validLabel}</MenuItem>
+                  {ticketFields.status.map(item => (
+                    <MenuItem key={item.code} value={item.name.toLowerCase()}>{item.name}</MenuItem>
                   ))}
                 </Select>
               </CardActions>
@@ -517,6 +572,12 @@ const App = () => {
           <DialogTitle>New Ticket</DialogTitle>
           <DialogContent>
             <form onSubmit={handleNewTicketSubmit}>
+              <Snackbar
+                open={!!error}
+                autoHideDuration={6000}
+                onClose={handleCloseError}
+                message={error}
+              />
               <TextField
                 fullWidth
                 label="Subject"
@@ -546,7 +607,7 @@ const App = () => {
                 value={formData.contact || null}
               />
               <Autocomplete
-                options={ticketFields.find(f => f.name === 'ticket_type').choices}
+                options={ticketFields.ticket_type.map(item => item.name)}
                 value={formData.ticket_type}
                 onChange={handleChange('ticket_type')}
                 renderInput={(params) => (
@@ -562,7 +623,7 @@ const App = () => {
                 sx={{ my: 2 }}
               />
               <Autocomplete
-                options={Object.keys(ticketFields.find(f => f.name === 'status').choices).map(code => ticketFields.find(f => f.name === 'status').choices[code][0])}
+                options={ticketFields.status.map(item => item.name)}
                 value={formData.status}
                 onChange={handleChange('status')}
                 renderInput={(params) => (
@@ -578,7 +639,7 @@ const App = () => {
                 sx={{ my: 2 }}
               />
               <Autocomplete
-                options={Object.keys(ticketFields.find(f => f.name === 'priority').choices)}
+                options={ticketFields.priority.map(item => item.name)}
                 value={formData.priority}
                 onChange={handleChange('priority')}
                 renderInput={(params) => (
@@ -594,7 +655,7 @@ const App = () => {
                 sx={{ my: 2 }}
               />
               <Autocomplete
-                options={Object.keys(ticketFields.find(f => f.name === 'group').choices).map(key => key)}
+                options={ticketFields.group.map(item => item.name)}
                 value={formData.group}
                 onChange={handleChange('group')}
                 renderInput={(params) => (
@@ -610,7 +671,7 @@ const App = () => {
                 sx={{ my: 2 }}
               />
               <Autocomplete
-                options={Object.keys(ticketFields.find(f => f.name === 'source').choices).map(key => key)}
+                options={ticketFields.source.map(item => item.name)}
                 value={formData.source}
                 onChange={handleChange('source')}
                 renderInput={(params) => (
@@ -626,7 +687,7 @@ const App = () => {
                 sx={{ my: 2 }}
               />
               <Autocomplete
-                options={ticketFields1.agent.length ? ticketFields1.agent : [{ name: 'Mitch Starnes', _id: '6868527ff5d2b14198b52653' }]}
+                options={[{ name: 'Unassigned', _id: null }, ...ticketFields.agent]}
                 getOptionLabel={(option) => option.name || 'Unassigned'}
                 value={formData.responder_id}
                 onChange={handleChange('responder_id')}
@@ -644,12 +705,14 @@ const App = () => {
               <ReactQuill
                 value={formData.description_html}
                 onChange={(value) => setFormData(prev => ({ ...prev, description_html: value }))}
-                modules={{ toolbar: [
-                  [{ 'header': [1, 2, false] }],
-                  ['bold', 'italic', 'underline', 'strike'],
-                  ['link'],
-                  [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                ] }}
+                modules={{
+                  toolbar: [
+                    [{ 'header': [1, 2, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['link'],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                  ]
+                }}
                 formats={['header', 'bold', 'italic', 'underline', 'strike', 'link', 'list']}
                 placeholder="Enter description (HTML)"
                 style={{ marginBottom: '16px' }}
@@ -719,8 +782,8 @@ const App = () => {
                     fullWidth
                     sx={{ mb: 2, border: '1px solid #ccc', borderRadius: 4 }}
                   >
-                    {Object.entries(ticketFields.find(f => f.name === 'priority').choices).map(([label, value]) => (
-                      <MenuItem key={value} value={label.toLowerCase()}>{label}</MenuItem>
+                    {ticketFields.priority.map(item => (
+                      <MenuItem key={item.code} value={item.name.toLowerCase()}>{item.name}</MenuItem>
                     ))}
                   </Select>
                   <Select
@@ -729,8 +792,8 @@ const App = () => {
                     fullWidth
                     sx={{ mb: 2, border: '1px solid #ccc', borderRadius: 4 }}
                   >
-                    {Object.entries(ticketFields.find(f => f.name === 'agent').choices).map(([label, value]) => (
-                      <MenuItem key={value} value={label.toLowerCase()}>{label}</MenuItem>
+                    {ticketFields.agent.map(item => (
+                      <MenuItem key={item._id} value={item.name.toLowerCase()}>{item.name}</MenuItem>
                     ))}
                     <MenuItem value="unassigned">Unassigned</MenuItem>
                   </Select>
@@ -740,8 +803,8 @@ const App = () => {
                     fullWidth
                     sx={{ mb: 2, border: '1px solid #ccc', borderRadius: 4 }}
                   >
-                    {Object.entries(ticketFields.find(f => f.name === 'status').choices).map(([code, [validLabel]]) => (
-                      <MenuItem key={`${code}-${validLabel}`} value={validLabel.toLowerCase()}>{validLabel}</MenuItem>
+                    {ticketFields.status.map(item => (
+                      <MenuItem key={item.code} value={item.name.toLowerCase()}>{item.name}</MenuItem>
                     ))}
                   </Select>
                   <Select
@@ -750,8 +813,8 @@ const App = () => {
                     fullWidth
                     sx={{ mb: 2, border: '1px solid #ccc', borderRadius: 4 }}
                   >
-                    {Object.entries(ticketFields.find(f => f.name === 'group').choices).map(([label, value]) => (
-                      <MenuItem key={value} value={label}>{label}</MenuItem>
+                    {ticketFields.group.map(item => (
+                      <MenuItem key={item.id} value={item.name}>{item.name}</MenuItem>
                     ))}
                   </Select>
                   <Select
@@ -760,8 +823,8 @@ const App = () => {
                     fullWidth
                     sx={{ border: '1px solid #ccc', borderRadius: 4 }}
                   >
-                    {ticketFields.find(f => f.name === 'ticket_type').choices.map((type, index) => (
-                      <MenuItem key={index} value={type}>{type}</MenuItem>
+                    {ticketFields.ticket_type.map((type, index) => (
+                      <MenuItem key={index} value={type.name}>{type.name}</MenuItem>
                     ))}
                   </Select>
                 </Box>
