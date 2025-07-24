@@ -47,7 +47,7 @@ const App = () => {
   const [error, setError] = useState(null);
   const [filterType, setFilterType] = useState(localStorage.getItem('filterType') || 'newAndMyOpen');
   const [sortBy, setSortBy] = useState(localStorage.getItem('sortBy') || 'updated_at');
-  const [sortDirection, setSortDirection] = useState(localStorage.getItem('sortDirection') || 'desc');
+  const [sortDirection, setSortDirection] = useState((localStorage.getItem('sortDirection') || 'desc').toLowerCase());
   const [searchQuery, setSearchQuery] = useState(localStorage.getItem('searchQuery') || '');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -55,6 +55,7 @@ const App = () => {
   const [showNewTicket, setShowNewTicket] = useState(false);
   const [showTicketDetails, setShowTicketDetails] = useState(false);
   const [tags, setTags] = useState('');
+  const [agents, setAgents] = useState([]);
   const [formData, setFormData] = useState({
     requester_id: null,
     subject: '',
@@ -87,7 +88,7 @@ const App = () => {
         return item ? item.name : null;
       } else if (fieldName === 'agent') {
         const item = field.find(item => item._id === code);
-        return item ? item.name : 'Unassigned';
+        return item ? item.name : null;
       }
     }
     return null;
@@ -110,7 +111,6 @@ const App = () => {
     return null;
   };
 
-  // Fetch ticket fields
   useEffect(() => {
     const fetchTicketFields = async () => {
       try {
@@ -121,12 +121,11 @@ const App = () => {
           return acc;
         }, {});
         console.log('Fetched ticketFields:', fields);
-        console.log('Agent data:', fields.agent);
         setTicketFields(fields);
 
         const defaultAgent = fields.agent.find(
-          (agent) => agent.email.toLowerCase() === process.env.REACT_APP_CURRENT_AGENT_EMAIL?.toLowerCase()
-        ) || fields.agent.find(agent => agent._id === '6868527ff5d2b14198b52653') || null;
+          (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
+        );
         console.log('Default agent:', defaultAgent);
         setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
       } catch (error) {
@@ -139,16 +138,19 @@ const App = () => {
     fetchTicketFields();
   }, []);
 
-  // Fetch tickets
   const fetchTickets = useCallback(async () => {
-    if (!ticketFields.agent.length) {
-      console.log('Waiting for ticketFields to load');
-      return;
-    }
     try {
-      const agent = ticketFields.agent.find(agent => agent.email.toLowerCase() === process.env.REACT_APP_CURRENT_AGENT_EMAIL?.toLowerCase()) || 
-        ticketFields.agent.find(agent => agent._id === '6868527ff5d2b14198b52653') || null;
-      const agentId = agent ? agent._id : null;
+      // console.log('ticketFields: ' + JSON.stringify( ticketFields, null, 2));
+      const agent = ticketFields.agent.find(
+        (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
+      );
+
+      const agentId = agent ? agent._id : "6868527ff5d2b14198b52653";
+      //if (!agentId) {
+      //  console.warn('No agent found for REACT_APP_CURRENT_AGENT_EMAIL:', process.env.REACT_APP_CURRENT_AGENT_EMAIL);
+      //  setTickets([]);
+      //  return;
+      //}
       const endpoint = searchQuery ? '/api/tickets/search' : '/api/tickets';
       const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${endpoint}`, {
         params: {
@@ -158,11 +160,10 @@ const App = () => {
           q: searchQuery,
           page,
           limit: 10,
-          ...(agentId && filterType === 'newAndMyOpen' ? { userId: agentId } : {}),
+          userId: agentId,
         }
       });
       const ticketData = response.data.tickets || [];
-      console.log('Raw ticket data:', ticketData);
       const enrichedTickets = ticketData.map(ticket => ({
         ...ticket,
         priority_name: getFieldLabel('priority', ticket.priority) || 'Low',
@@ -176,14 +177,24 @@ const App = () => {
       console.log('Fetched from:', endpoint, 'Tickets:', enrichedTickets, 'Total:', totalCount);
     } catch (error) {
       console.error('Error fetching tickets:', error);
-      setError('Failed to fetch tickets: ' + (error.response?.data?.error || error.message));
       setTickets([]);
     }
   }, [filterType, sortBy, sortDirection, searchQuery, page, ticketFields]);
 
+
+  const fetchAgents = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/agents');
+      setAgents(response.data);
+    } catch (err) {
+      console.error('Fetch Agents Error:', err);
+    }
+  };
+
   useEffect(() => {
+    fetchAgents();
     fetchTickets();
-  }, [fetchTickets, filterType, sortBy, sortDirection, searchQuery, page]);
+  }, [fetchTickets]);
 
   useEffect(() => {
     localStorage.setItem('filterType', filterType);
@@ -199,7 +210,7 @@ const App = () => {
 
   const getSlaStatus = (createdAt) => {
     const created = new Date(createdAt);
-    const now = new Date('2025-07-23T11:36:00-05:00');
+    const now = new Date('2025-07-23T11:31:00-05:00');
     const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
     return diffHours > 3 ? `Overdue by ${diffHours} hours` : 'Within SLA';
   };
@@ -231,6 +242,7 @@ const App = () => {
   const handleNewTicket = () => setShowNewTicket(true);
   const handlePageChange = (event, value) => {
     setPage(value);
+    fetchTickets();
   };
   const handleTitleClick = (ticket) => {
     setSelectedTicket(ticket);
@@ -490,7 +502,6 @@ const App = () => {
         <Typography variant="h4" align="center" sx={{ my: 2 }}>
           Refresh Desk Dashboard
         </Typography>
-        {loading && <CircularProgress sx={{ display: 'block', margin: 'auto', mt: 2 }} />}
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2, p: 2 }}>
           {tickets.map((ticket) => (
             <Card key={ticket._id} sx={{ cursor: 'pointer', boxShadow: 3 }}>
