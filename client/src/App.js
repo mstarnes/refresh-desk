@@ -87,7 +87,7 @@ const App = () => {
         return item ? item.name : null;
       } else if (fieldName === 'agent') {
         const item = field.find(item => item._id === code);
-        return item ? item.name : null;
+        return item ? item.name : 'Unassigned';
       }
     }
     return null;
@@ -121,10 +121,11 @@ const App = () => {
           return acc;
         }, {});
         console.log('Fetched ticketFields:', fields);
+        console.log('Agent data:', fields.agent);
         setTicketFields(fields);
 
         const defaultAgent = fields.agent.find(
-          (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
+          (agent) => agent.email.toLowerCase() === process.env.REACT_APP_CURRENT_AGENT_EMAIL?.toLowerCase()
         ) || fields.agent.find(agent => agent._id === '6868527ff5d2b14198b52653') || null;
         console.log('Default agent:', defaultAgent);
         setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
@@ -136,24 +137,18 @@ const App = () => {
       }
     };
     fetchTicketFields();
-  }, []); // Empty dependency array to run only once on mount
+  }, []);
 
   // Fetch tickets
   const fetchTickets = useCallback(async () => {
     if (!ticketFields.agent.length) {
       console.log('Waiting for ticketFields to load');
-      return; // Skip fetching if ticketFields is not yet loaded
+      return;
     }
     try {
-      const agent = ticketFields.agent.find(agent => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL) || 
+      const agent = ticketFields.agent.find(agent => agent.email.toLowerCase() === process.env.REACT_APP_CURRENT_AGENT_EMAIL?.toLowerCase()) || 
         ticketFields.agent.find(agent => agent._id === '6868527ff5d2b14198b52653') || null;
       const agentId = agent ? agent._id : null;
-      if (!agentId) {
-        setError('No agent found for the current user. Please contact support.');
-        console.warn('No agent found for REACT_APP_CURRENT_AGENT_EMAIL:', process.env.REACT_APP_CURRENT_AGENT_EMAIL);
-        setTickets([]);
-        return;
-      }
       const endpoint = searchQuery ? '/api/tickets/search' : '/api/tickets';
       const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${endpoint}`, {
         params: {
@@ -163,10 +158,11 @@ const App = () => {
           q: searchQuery,
           page,
           limit: 10,
-          userId: agentId,
+          ...(agentId && filterType === 'newAndMyOpen' ? { userId: agentId } : {}),
         }
       });
       const ticketData = response.data.tickets || [];
+      console.log('Raw ticket data:', ticketData);
       const enrichedTickets = ticketData.map(ticket => ({
         ...ticket,
         priority_name: getFieldLabel('priority', ticket.priority) || 'Low',
@@ -185,7 +181,6 @@ const App = () => {
     }
   }, [filterType, sortBy, sortDirection, searchQuery, page, ticketFields]);
 
-  // Fetch tickets when dependencies change
   useEffect(() => {
     fetchTickets();
   }, [fetchTickets, filterType, sortBy, sortDirection, searchQuery, page]);
@@ -236,7 +231,6 @@ const App = () => {
   const handleNewTicket = () => setShowNewTicket(true);
   const handlePageChange = (event, value) => {
     setPage(value);
-    // Remove fetchTickets() call here; rely on useEffect
   };
   const handleTitleClick = (ticket) => {
     setSelectedTicket(ticket);
