@@ -511,8 +511,80 @@ app.get('/api/agents/email/:email', async (req, res) => {
   }
 });
 
-// Update ticket
 app.patch('/api/tickets/:id', async (req, res) => {
+  try {
+    const currentTicket = await Ticket.findById(req.params.id);
+    if (!currentTicket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+
+    const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at, conversations, description_html, description, group_id, ...other } = req.body;
+    const updates = {};
+    const ticketStatesUpdates = {};
+    const currentTime = new Date().toISOString();
+
+    if (priority !== undefined) updates.priority = priority;
+    if (status !== undefined) {
+      updates.status = status;
+      ticketStatesUpdates.status_updated_at = currentTime;
+      if (status === 4 || status === 5) {
+        ticketStatesUpdates.resolved_at = currentTime;
+        ticketStatesUpdates.closed_at = currentTime;
+        ticketStatesUpdates.sla_timer_stopped_at = currentTime;
+        ticketStatesUpdates.resolution_time_updated_at = currentTime;
+      } else if (status === 3) {
+        ticketStatesUpdates.pending_since = currentTime;
+        ticketStatesUpdates.sla_timer_stopped_at = currentTime;
+      } else if (status === 2) {
+        ticketStatesUpdates.pending_since = null;
+        ticketStatesUpdates.resolved_at = null;
+        ticketStatesUpdates.closed_at = null;
+        ticketStatesUpdates.sla_timer_stopped_at = null;
+        ticketStatesUpdates.resolution_time_updated_at = null;
+      }
+    }
+    if (responder_id !== undefined) {
+      updates.responder_id = responder_id;
+      if (!currentTicket.responder_id) {
+        ticketStatesUpdates.first_assigned_at = currentTime;
+      }
+      ticketStatesUpdates.assigned_at = responder_id ? currentTime : null;
+    }
+    if (priority_name) updates.priority_name = priority_name;
+    if (status_name) updates.status_name = status_name;
+    if (responder_name) updates.responder_name = responder_name;
+    if (closed_at) updates['ticket_states.closed_at'] = closed_at;
+    if (conversations) updates.conversations = conversations;
+    if (description_html || description) {
+      updates.description_html = description_html || description || '';
+      updates.description = description || description_html || '';
+    }
+    if (group_id !== undefined) updates.group_id = group_id || null; // Supports ObjectId
+    updates.updated_at = currentTime;
+    ticketStatesUpdates.updated_at = currentTime;
+
+    const ticketStatesSet = Object.fromEntries(
+      Object.entries({ ...currentTicket.ticket_states, ...ticketStatesUpdates }).map(([key, value]) => [`ticket_states.${key}`, value])
+    );
+
+    const ticket = await Ticket.findByIdAndUpdate(
+      req.params.id,
+      { $set: { ...updates, ...ticketStatesSet, ...other } },
+      { new: true }
+    )
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    res.json(ticket);
+  } catch (err) {
+    console.error('Error updating ticket:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update ticket
+app.patch('/api/tickets/:id-old', async (req, res) => {
   try {
 
     // Step 1: Fetch the current ticket
@@ -587,8 +659,67 @@ app.patch('/api/tickets/:id', async (req, res) => {
   }
 });
 
-// Add conversation
 app.post('/api/tickets/:id/conversations', async (req, res) => {
+  try {
+    const { body, body_text, private: isPrivate, user_id, incoming, created_at, updated_at, id } = req.body;
+    const ticket = await Ticket.findById(req.params.id);
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    const currentTime = new Date().toISOString();
+    const isAgent = await Agent.exists({ _id: user_id });
+    ticket.conversations.push({
+      id: id || ticket.conversations.length + 1,
+      body: body || body_text || '',
+      body_text: body_text || (body ? body.replace(/<[^>]+>/g, '') : ''),
+      private: isPrivate,
+      user_id,
+      incoming,
+      created_at: created_at || currentTime,
+      updated_at: updated_at || currentTime,
+    });
+    ticket.updated_at = currentTime;
+    ticket.ticket_states.updated_at = currentTime;
+    if (incoming) {
+      ticket.ticket_states.inbound_count = (ticket.ticket_states.inbound_count || 0) + 1;
+      ticket.ticket_states.requester_responded_at = currentTime;
+      if (ticket.status === 4 || ticket.status === 5) {
+        ticket.status = 2;
+        ticket.status_name = 'Open';
+        ticket.ticket_states.resolved_at = null;
+        ticket.ticket_states.closed_at = null;
+        ticket.ticket_states.reopened_count = (ticket.ticket_states.reopened_count || 0) + 1;
+        ticket.ticket_states.sla_timer_stopped_at = null;
+        ticket.ticket_states.resolution_time_updated_at = null;
+        ticket.ticket_states.resolution_time_by_bhrs = null;
+        ticket.ticket_states.avg_response_time_by_bhrs = null;
+      } else if (ticket.status === 3) {
+        ticket.status = 2;
+        ticket.status_name = 'Open';
+        ticket.ticket_states.pending_since = null;
+        ticket.ticket_states.sla_timer_stopped_at = null;
+        ticket.ticket_states.status_updated_at = currentTime;
+      }
+    } else if (!isPrivate) {
+      ticket.ticket_states.outbound_count = (ticket.ticket_states.outbound_count || 0) + 1;
+      ticket.ticket_states.agent_responded_at = currentTime;
+      if (!ticket.ticket_states.first_response_time) {
+        ticket.ticket_states.first_response_time = (new Date(currentTime) - new Date(ticket.created_at)) / 1000;
+      }
+    }
+    await ticket.save();
+    const populatedTicket = await Ticket.findById(req.params.id)
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.json(populatedTicket);
+  } catch (err) {
+    console.error('Error adding conversation:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Add conversation
+app.post('/api/tickets/:id/conversations-old', async (req, res) => {
   try {
     const { body_text, private: isPrivate, user_id, incoming, created_at, updated_at, id } = req.body;
     const ticket = await Ticket.findById(req.params.id);
@@ -651,8 +782,44 @@ app.post('/api/tickets/:id/conversations', async (req, res) => {
   }
 });
 
-// Reply endpoint
 app.post('/api/tickets/reply', async (req, res) => {
+  try {
+    const { ticketId, body, body_text, user_id } = req.body;
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found' });
+    }
+    const currentTime = new Date().toISOString();
+    ticket.conversations.push({
+      id: ticket.conversations.length + 1,
+      body: body || body_text || '',
+      body_text: body_text || (body ? body.replace(/<[^>]+>/g, '') : ''),
+      private: false,
+      user_id,
+      incoming: false,
+      created_at: currentTime,
+      updated_at: currentTime,
+    });
+    ticket.updated_at = currentTime;
+    ticket.ticket_states.updated_at = currentTime;
+    ticket.ticket_states.outbound_count = (ticket.ticket_states.outbound_count || 0) + 1;
+    ticket.ticket_states.agent_responded_at = currentTime;
+    if (!ticket.ticket_states.first_response_time) {
+      ticket.ticket_states.first_response_time = (new Date(currentTime) - new Date(ticket.created_at)) / 1000;
+    }
+    await ticket.save();
+    const populatedTicket = await Ticket.findById(ticketId)
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    res.json(populatedTicket);
+  } catch (err) {
+    console.error('Error adding reply:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reply endpoint
+app.post('/api/tickets/reply-old', async (req, res) => {
   try {
     const { ticketId, body, user_id } = req.body;
     const ticket = await Ticket.findById(ticketId);
@@ -844,8 +1011,52 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+app.get('/api/tickets/search', async (req, res) => {
+  try {
+    const { q, limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
+    let query = {
+      $or: [
+        { display_id: parseInt(q) || -1 },
+        { subject: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { description_html: { $regex: q, $options: 'i' } },
+        { 'conversations.body_text': { $regex: q, $options: 'i' } },
+        { 'conversations.body': { $regex: q, $options: 'i' } },
+        { 'requester.name': { $regex: q, $options: 'i' } },
+        { responder_name: { $regex: q, $options: 'i' } },
+      ],
+    };
+    if (filters === 'newAndMyOpen') {
+      const agent = await Agent.findOne({ email: userId });
+      const filterQuery = {
+        $or: [
+          { responder_id: null },
+          { responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') },
+        ],
+        status: { $in: [2, 3] },
+      };
+      query = { $and: [query, filterQuery] };
+    } else if (filters === 'closed') {
+      query = { $and: [query, { status: { $in: [4, 5] } }] };
+    } else if (filters === 'openTickets') {
+      query = { $and: [query, { status: { $in: [2, 3] } }] };
+    }
+    const tickets = await Ticket.find(query)
+      .sort({ [sort]: direction === 'desc' ? -1 : 1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit))
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    const total = await Ticket.countDocuments(query);
+    res.json({ tickets, total });
+  } catch (err) {
+    console.error('Error searching tickets:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Updated endpoint: Search contacts
-app.get('/api/users/search', async (req, res) => {
+app.get('/api/users/search-old', async (req, res) => {
   const { q } = req.query;
   console.log(q);
   try {
@@ -1538,10 +1749,46 @@ app.delete('/api/settings/:id', async (req, res) => {
 // Ticket Fields
 app.get('/api/ticket-fields', async (req, res) => {
   try {
-    const ticketFields = await TicketField.find();
-    res.json(ticketFields);
+    const ticketFields = await TicketField.find({});
+    const groups = await Group.find({ account_id: 320932 });
+    const agents = await Agent.find({ account_id: 320932 });
+
+    const fieldMap = ticketFields.reduce((acc, field) => {
+      if (field.type === 'default_status') {
+        acc.status = Object.entries(field.choices).map(([key, value]) => ({
+          value: parseInt(key),
+          label: value[0],
+        }));
+      } else if (field.type === 'default_priority') {
+        acc.priority = Object.entries(field.choices).map(([label, value]) => ({
+          value,
+          label,
+        }));
+      } else if (field.type === 'default_ticket_type') {
+        acc.ticket_type = field.choices;
+      } else if (field.type === 'default_source') {
+        acc.source = Object.entries(field.choices).map(([label, value]) => ({
+          value,
+          label,
+        }));
+      } else if (field.type === 'default_group') {
+        acc.group = groups.map((g) => ({
+          value: g._id,
+          label: Object.keys(field.choices).find((key) => field.choices[key] === g.id) || g.name,
+        }));
+      } else if (field.type === 'default_agent') {
+        acc.agent = agents.map((a) => ({
+          value: a._id,
+          label: Object.keys(field.choices).find((key) => field.choices[key] === a.id) || a.name,
+        }));
+      }
+      return acc;
+    }, {});
+
+    res.json(fieldMap);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching ticket fields:', err);
+    res.status(500).json({ error: 'Failed to fetch ticket fields' });
   }
 });
 
