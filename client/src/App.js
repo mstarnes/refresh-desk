@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   AppBar,
@@ -14,17 +14,46 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   Box,
   Pagination,
   Avatar,
-  Autocomplete,
-  CircularProgress,
-  Snackbar,
 } from '@mui/material';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './styles/App.css';
+
+// Mock ticketfields data (replace with API call if dynamic)
+// Updated to use Mongoose _id for agent
+const ticketFields = [
+  { name: 'priority', choices: { Low: 1, Medium: 2, High: 3, Urgent: 4 } },
+  { name: 'status', choices: { '2': ['Open'], '3': ['Pending'], '4': ['Resolved'], '5': ['Closed'] } },
+  { name: 'ticket_type', choices: ['Question', 'Incident', 'Problem', 'Feature Request', 'Lead', 'Documentation'] },
+  { name: 'source', choices: { Email: 1, Portal: 2, Phone: 3, Forum: 4, Twitter: 5, Facebook: 6, Chat: 7, MobiHelp: 8, 'Feedback Widget': 9, 'Outbound Email': 10, Ecommerce: 11, Bot: 12, Whatsapp: 13, 'Chat - Internal Task': 14 } },
+  { name: 'group', choices: { IT: 9000171202, RE: 9000171690 } },
+  { name: 'agent', choices: { 'Mitch Starnes': '6868527ff5d2b14198b52653' } }, // Corrected to Mongoose _id
+];
+
+// Utility to map code to label
+const getFieldLabel = (fieldName, code) => {
+  const field = ticketFields.find(f => f.name === fieldName);
+  if (field) {
+    if (fieldName === 'status') {
+      const statusEntry = Object.entries(field.choices).find(([key]) => key === code.toString());
+      return statusEntry ? statusEntry[1][0] : null;
+    }
+    return Object.keys(field.choices).find(key => field.choices[key] === code) || null;
+  }
+  return null;
+};
+
+// Utility to map label to code
+const getFieldCode = (fieldName, label) => {
+  const field = ticketFields.find(f => f.name === fieldName);
+  if (field) {
+    return Object.entries(field.choices).find(([key, value]) => value === label || (Array.isArray(value) && value[0] === label))?.[1] || null;
+  }
+  return null;
+};
 
 const theme = createTheme({
   palette: {
@@ -42,9 +71,6 @@ const theme = createTheme({
 
 const App = () => {
   const [tickets, setTickets] = useState([]);
-  const [contacts, setContacts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [filterType, setFilterType] = useState(localStorage.getItem('filterType') || 'newAndMyOpen');
   const [sortBy, setSortBy] = useState(localStorage.getItem('sortBy') || 'updated_at');
   const [sortDirection, setSortDirection] = useState((localStorage.getItem('sortDirection') || 'desc').toLowerCase());
@@ -53,104 +79,21 @@ const App = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [showNewTicket, setShowNewTicket] = useState(false);
-  const [showTicketDetails, setShowTicketDetails] = useState(false);
-  const [tags, setTags] = useState('');
-  const [agents, setAgents] = useState([]);
-  const [formData, setFormData] = useState({
-    requester_id: null,
-    subject: '',
-    ticket_type: '',
-    status: '',
-    priority: '',
-    group: '',
-    responder_id: null,
-    source: '',
-    description_html: '',
-    contact: null,
-  });
-  const [ticketFields, setTicketFields] = useState({
-    ticket_type: [],
-    status: [],
-    priority: [],
-    group: [],
-    agent: [],
-    source: [],
-  });
-
-  const getFieldLabel = (fieldName, code) => {
-    const field = ticketFields[fieldName];
-    if (field) {
-      if (fieldName === 'status' || fieldName === 'priority' || fieldName === 'source') {
-        const item = field.find(item => item.code === code);
-        return item ? item.name : null;
-      } else if (fieldName === 'group') {
-        const item = field.find(item => item.id === code);
-        return item ? item.name : null;
-      } else if (fieldName === 'agent') {
-        const item = field.find(item => item._id === code);
-        return item ? item.name : null;
-      }
-    }
-    return null;
-  };
-
-  const getFieldCode = (fieldName, label) => {
-    const field = ticketFields[fieldName];
-    if (field) {
-      if (fieldName === 'status' || fieldName === 'priority' || fieldName === 'source') {
-        const item = field.find(item => item.name === label);
-        return item ? item.code : null;
-      } else if (fieldName === 'group') {
-        const item = field.find(item => item.name === label);
-        return item ? item.id : null;
-      } else if (fieldName === 'agent') {
-        const item = field.find(item => item.name === label);
-        return item ? item._id : null;
-      }
-    }
-    return null;
-  };
 
   useEffect(() => {
-    const fetchTicketFields = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/ticketfields');
-        const fields = response.data.reduce((acc, field) => {
-          acc[field.name] = field.choices || [];
-          return acc;
-        }, {});
-        console.log('Fetched ticketFields:', fields);
-        setTicketFields(fields);
+    fetchTickets();
+  }, [filterType, sortBy, sortDirection, searchQuery, page]);
 
-        const defaultAgent = fields.agent.find(
-          (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
-        );
-        console.log('Default agent:', defaultAgent);
-        setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
-      } catch (error) {
-        console.error('Error fetching ticket fields:', error);
-        setError('Failed to load ticket fields: ' + (error.response?.data?.details || error.message));
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTicketFields();
-  }, []);
+  useEffect(() => {
+    localStorage.setItem('filterType', filterType);
+    localStorage.setItem('sortBy', sortBy);
+    localStorage.setItem('sortDirection', sortDirection);
+    localStorage.setItem('searchQuery', searchQuery);
+  }, [filterType, sortBy, sortDirection, searchQuery]);
 
-  const fetchTickets = useCallback(async () => {
+  const fetchTickets = async () => {
     try {
-      // console.log('ticketFields: ' + JSON.stringify( ticketFields, null, 2));
-      const agent = ticketFields.agent.find(
-        (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
-      );
-
-      const agentId = agent ? agent._id : "6868527ff5d2b14198b52653";
-      //if (!agentId) {
-      //  console.warn('No agent found for REACT_APP_CURRENT_AGENT_EMAIL:', process.env.REACT_APP_CURRENT_AGENT_EMAIL);
-      //  setTickets([]);
-      //  return;
-      //}
+      const agentId = '6868527ff5d2b14198b52653'; // Default agent _id
       const endpoint = searchQuery ? '/api/tickets/search' : '/api/tickets';
       const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${endpoint}`, {
         params: {
@@ -164,13 +107,14 @@ const App = () => {
         }
       });
       const ticketData = response.data.tickets || [];
+      // Enrich tickets with derived fields
       const enrichedTickets = ticketData.map(ticket => ({
         ...ticket,
         priority_name: getFieldLabel('priority', ticket.priority) || 'Low',
         status_name: getFieldLabel('status', ticket.status) || 'Open',
-        responder_id: ticket.responder_id ? { name: getFieldLabel('agent', ticket.responder_id) || 'Unassigned' } : null,
+        responder_id: ticket.responder_id ? { name: getFieldLabel('agent', ticket.responder_id) || 'Mitch Starnes' } : null,
       }));
-      console.log('Enriched tickets response:', enrichedTickets);
+      console.log('Enriched tickets response:', enrichedTickets); // Debug enriched data
       setTickets(enrichedTickets);
       const totalCount = response.data.total || parseInt(response.headers['x-total-count'], 10) || 0;
       setTotalPages(Math.ceil(totalCount / 10));
@@ -179,29 +123,7 @@ const App = () => {
       console.error('Error fetching tickets:', error);
       setTickets([]);
     }
-  }, [filterType, sortBy, sortDirection, searchQuery, page, ticketFields]);
-
-
-  const fetchAgents = async () => {
-    try {
-      const response = await axios.get('http://localhost:5001/api/agents');
-      setAgents(response.data);
-    } catch (err) {
-      console.error('Fetch Agents Error:', err);
-    }
   };
-
-  useEffect(() => {
-    fetchAgents();
-    fetchTickets();
-  }, [fetchTickets]);
-
-  useEffect(() => {
-    localStorage.setItem('filterType', filterType);
-    localStorage.setItem('sortBy', sortBy);
-    localStorage.setItem('sortDirection', sortDirection);
-    localStorage.setItem('searchQuery', searchQuery);
-  }, [filterType, sortBy, sortDirection, searchQuery]);
 
   const getPriorityColor = (priority) => {
     const priorityMap = { '1': '#4caf50', '2': '#ffca28', '3': '#f44336', '4': '#ff0000' };
@@ -210,7 +132,7 @@ const App = () => {
 
   const getSlaStatus = (createdAt) => {
     const created = new Date(createdAt);
-    const now = new Date('2025-07-23T11:31:00-05:00');
+    const now = new Date('2025-07-20T12:26:00-05:00'); // Updated to 12:26 PM CDT, July 20, 2025
     const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
     return diffHours > 3 ? `Overdue by ${diffHours} hours` : 'Within SLA';
   };
@@ -246,44 +168,18 @@ const App = () => {
   };
   const handleTitleClick = (ticket) => {
     setSelectedTicket(ticket);
-    setShowTicketDetails(true);
-  };
-
-  const handleContactSearch = async (input) => {
-    if (!input || input.length < 2) {
-      setContacts([]);
-      return;
-    }
-    try {
-      setLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/users/search?q=${encodeURIComponent(input)}`);
-      setContacts(response.data);
-    } catch (error) {
-      console.error('Error searching contacts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (field) => (event, value) => {
-    if (field === 'subject' || field === 'description_html') {
-      setFormData(prev => ({ ...prev, [field]: event.target.value }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
   };
 
   const handlePriorityChange = async (event, ticket) => {
     console.log('Priority change triggered for ticket:', ticket._id);
     const newPriority = event.target.value;
-    const priorityCode = ticketFields.priority.find(item => item.name.toLowerCase() === newPriority)?.code;
+    const priorityCode = Object.keys(ticketFields.find(f => f.name === 'priority').choices).find(key => key.toLowerCase() === newPriority);
     if (ticket && priorityCode) {
       try {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          priority: priorityCode,
+          priority: ticketFields.find(f => f.name === 'priority').choices[priorityCode],
         });
-        setSelectedTicket(prev => prev ? { ...prev, priority_name: newPriority } : prev);
-        await fetchTickets();
+        await fetchTickets(); // Re-fetch to update UI
         console.log('Priority updated:', response.data);
       } catch (error) {
         console.error('Error updating priority:', error.response?.data || error.message);
@@ -296,14 +192,15 @@ const App = () => {
   const handleAgentChange = async (event, ticket) => {
     console.log('Agent change triggered for ticket:', ticket._id, 'New agent:', event.target.value);
     const newAgent = event.target.value;
-    const agentId = newAgent === 'unassigned' ? null : ticketFields.agent.find(item => item.name.toLowerCase() === newAgent.toLowerCase())?._id;
+    const agentId = newAgent === 'unassigned' ? null : Object.keys(ticketFields.find(f => f.name === 'agent').choices).find(key => key.toLowerCase() === newAgent.toLowerCase());
+    const agentMongooseId = agentId ? ticketFields.find(f => f.name === 'agent').choices[agentId] : null;
+    console.log('Sending agentId:', agentMongooseId); // Debug sent value
     if (ticket) {
       try {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          responder_id: agentId,
+          responder_id: agentMongooseId,
         });
-        setSelectedTicket(prev => prev ? { ...prev, responder_id: agentId ? { name: newAgent } : null } : prev);
-        await fetchTickets();
+        await fetchTickets(); // Re-fetch to update UI
         console.log('Agent updated:', response.data.responder_id);
       } catch (error) {
         console.error('Error updating agent:', error.response?.data || error.message);
@@ -316,14 +213,13 @@ const App = () => {
   const handleStatusChange = async (event, ticket) => {
     console.log('Status change triggered for ticket:', ticket._id);
     const newStatus = event.target.value;
-    const statusCode = ticketFields.status.find(item => item.name.toLowerCase() === newStatus)?.code;
+    const statusCode = Object.keys(ticketFields.find(f => f.name === 'status').choices).find(key => ticketFields.find(f => f.name === 'status').choices[key][0].toLowerCase() === newStatus);
     if (ticket && statusCode) {
       try {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          status: statusCode,
+          status: parseInt(statusCode),
         });
-        setSelectedTicket(prev => prev ? { ...prev, status_name: newStatus } : prev);
-        await fetchTickets();
+        await fetchTickets(); // Re-fetch to update UI
         console.log('Status updated:', response.data);
       } catch (error) {
         console.error('Error updating status:', error.response?.data || error.message);
@@ -331,141 +227,6 @@ const App = () => {
     } else {
       console.warn('No valid ticket or status code found');
     }
-  };
-
-  const handleGroupChange = async (event, ticket) => {
-    const newGroup = event.target.value;
-    const groupCode = ticketFields.group.find(item => item.name === newGroup)?.id || 9000171202;
-    if (ticket) {
-      try {
-        const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          group_id: groupCode,
-        });
-        setSelectedTicket(prev => prev ? { ...prev, group_id: groupCode } : prev);
-        await fetchTickets();
-        console.log('Group updated:', response.data);
-      } catch (error) {
-        console.error('Error updating group:', error.response?.data || error.message);
-      }
-    }
-  };
-
-  const handleTicketTypeChange = async (event, ticket) => {
-    const newType = event.target.value;
-    if (ticket) {
-      try {
-        const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
-          ticket_type: newType,
-        });
-        setSelectedTicket(prev => prev ? { ...prev, ticket_type: newType } : prev);
-        await fetchTickets();
-        console.log('Ticket type updated:', response.data);
-      } catch (error) {
-        console.error('Error updating ticket type:', error.response?.data || error.message);
-      }
-    }
-  };
-
-  const handleNewTicketSubmit = async (e) => {
-    e.preventDefault();
-    console.log('handleNewTicketSubmit formData:', JSON.stringify(formData, null, 2));
-
-    if (!formData.requester_id) {
-      setError('Please select a contact');
-      return;
-    }
-    if (!formData.subject.trim()) {
-      setError('Subject is required');
-      return;
-    }
-    if (!formData.ticket_type) {
-      setError('Ticket Type is required');
-      return;
-    }
-    if (!formData.status) {
-      setError('Status is required');
-      return;
-    }
-    if (!formData.priority) {
-      setError('Priority is required');
-      return;
-    }
-    if (!formData.group) {
-      setError('Group is required');
-      return;
-    }
-    if (!formData.source) {
-      setError('Source is required');
-      return;
-    }
-
-    try {
-      const statusCode = ticketFields.status.find((s) => s.name === formData.status)?.code || 2;
-      const priorityCode = ticketFields.priority.find((p) => p.name === formData.priority)?.code || 1;
-      const sourceCode = ticketFields.source.find((s) => s.name === formData.source)?.code || 3;
-      const groupId = ticketFields.group.find((g) => g.name === formData.group)?.id || 9000171202;
-
-      const ticketData = {
-        subject: formData.subject,
-        description_html: formData.description_html || '<p>No description</p>',
-        requester_id: formData.requester_id,
-        responder_id: formData.responder_id ? formData.responder_id._id : null,
-        ticket_type: formData.ticket_type,
-        status: statusCode,
-        priority: priorityCode,
-        source: sourceCode,
-        group_id: groupId,
-        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        status_name: formData.status,
-        priority_name: formData.priority,
-        source_name: formData.source,
-        requester_name: formData.contact ? formData.contact.name : null,
-        responder_name: formData.responder_id ? formData.responder_id.name : null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        account_id: process.env.ACCOUNT_ID || 320932,
-        delta: true,
-        requester: formData.contact
-          ? {
-              id: formData.contact.id || Math.floor(Math.random() * 1000000),
-              name: formData.contact.name,
-              email: formData.contact.email,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              active: true,
-            }
-          : null,
-        ticket_states: {
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      };
-      console.log('ticketData before POST:', JSON.stringify(ticketData, null, 2));
-      await axios.post('/api/tickets', ticketData);
-      console.log('ticketData after POST:', JSON.stringify(ticketData, null, 2));
-      await fetchTickets();
-      setShowNewTicket(false);
-      setTags('');
-      setFormData({
-        requester_id: null,
-        subject: '',
-        ticket_type: '',
-        status: '',
-        priority: '',
-        group: '',
-        responder_id: null,
-        source: '',
-        description_html: '',
-        contact: null,
-      });
-    } catch (error) {
-      console.error('Error creating ticket:', error);
-      setError('Failed to create ticket: ' + (error.response?.data?.error || error.message));
-    }
-  };
-
-  const handleCloseError = () => {
-    setError(null);
   };
 
   return (
@@ -539,8 +300,8 @@ const App = () => {
                   onChange={(e) => handlePriorityChange(e, ticket)}
                   sx={{ minWidth: 100, mr: 1 }}
                 >
-                  {ticketFields.priority.map(item => (
-                    <MenuItem key={item.code} value={item.name.toLowerCase()}>{item.name}</MenuItem>
+                  {Object.entries(ticketFields.find(f => f.name === 'priority').choices).map(([label, value]) => (
+                    <MenuItem key={value} value={label.toLowerCase()}>{label}</MenuItem>
                   ))}
                 </Select>
                 <Select
@@ -548,8 +309,8 @@ const App = () => {
                   onChange={(e) => handleAgentChange(e, ticket)}
                   sx={{ minWidth: 100, mr: 1 }}
                 >
-                  {ticketFields.agent.map(item => (
-                    <MenuItem key={item._id} value={item.name.toLowerCase()}>{item.name}</MenuItem>
+                  {Object.entries(ticketFields.find(f => f.name === 'agent').choices).map(([label, value]) => (
+                    <MenuItem key={value} value={label.toLowerCase()}>{label}</MenuItem>
                   ))}
                   <MenuItem value="unassigned">Unassigned</MenuItem>
                 </Select>
@@ -558,276 +319,24 @@ const App = () => {
                   onChange={(e) => handleStatusChange(e, ticket)}
                   sx={{ minWidth: 100 }}
                 >
-                  {ticketFields.status.map(item => (
-                    <MenuItem key={item.code} value={item.name.toLowerCase()}>{item.name}</MenuItem>
+                  {Object.entries(ticketFields.find(f => f.name === 'status').choices).map(([code, [validLabel]]) => (
+                    <MenuItem key={`${code}-${validLabel}`} value={validLabel.toLowerCase()}>{validLabel}</MenuItem>
                   ))}
                 </Select>
               </CardActions>
             </Card>
           ))}
         </Box>
-        <Dialog open={showNewTicket} onClose={() => setShowNewTicket(false)}>
-          <DialogTitle>New Ticket</DialogTitle>
+        <Dialog open={!!selectedTicket} onClose={() => setSelectedTicket(null)}>
+          <DialogTitle>{selectedTicket?.subject} #{selectedTicket?.display_id}</DialogTitle>
           <DialogContent>
-            <form onSubmit={handleNewTicketSubmit}>
-              <Snackbar
-                open={!!error}
-                autoHideDuration={6000}
-                onClose={handleCloseError}
-                message={error}
-              />
-              <TextField
-                fullWidth
-                label="Subject"
-                value={formData.subject}
-                onChange={handleChange('subject')}
-                margin="normal"
-                required
-                placeholder="Enter subject"
-              />
-              <Autocomplete
-                options={formData.contact ? [formData.contact, ...contacts.filter(c => c._id !== formData.contact._id)] : contacts.length === 0 ? [{ name: 'Type to search', disabled: true }] : contacts}
-                getOptionLabel={(option) => option.disabled ? option.name : option.email ? `${option.name} <${option.email}>` : `${option.name} <no email address on file>`}
-                filterOptions={(options) => options}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    className="new-ticket-field"
-                    label="Contact"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                    required
-                  />
-                )}
-                onInputChange={(e, value) => handleContactSearch(value)}
-                onChange={handleChange('contact')}
-                value={formData.contact || null}
-              />
-              <Autocomplete
-                options={ticketFields.ticket_type.map(item => item.name)}
-                value={formData.ticket_type}
-                onChange={handleChange('ticket_type')}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Ticket Type"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                    required
-                  />
-                )}
-                sx={{ my: 2 }}
-              />
-              <Autocomplete
-                options={ticketFields.status.map(item => item.name)}
-                value={formData.status}
-                onChange={handleChange('status')}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Status"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                    required
-                  />
-                )}
-                sx={{ my: 2 }}
-              />
-              <Autocomplete
-                options={ticketFields.priority.map(item => item.name)}
-                value={formData.priority}
-                onChange={handleChange('priority')}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Priority"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                    required
-                  />
-                )}
-                sx={{ my: 2 }}
-              />
-              <Autocomplete
-                options={ticketFields.group.map(item => item.name)}
-                value={formData.group}
-                onChange={handleChange('group')}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Group"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                    required
-                  />
-                )}
-                sx={{ my: 2 }}
-              />
-              <Autocomplete
-                options={ticketFields.source.map(item => item.name)}
-                value={formData.source}
-                onChange={handleChange('source')}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Source"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                    required
-                  />
-                )}
-                sx={{ my: 2 }}
-              />
-              <Autocomplete
-                options={[{ name: 'Unassigned', _id: null }, ...ticketFields.agent]}
-                getOptionLabel={(option) => option.name || 'Unassigned'}
-                value={formData.responder_id}
-                onChange={handleChange('responder_id')}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Agent"
-                    variant="outlined"
-                    fullWidth
-                    margin="normal"
-                  />
-                )}
-                sx={{ my: 2 }}
-              />
-              <ReactQuill
-                value={formData.description_html}
-                onChange={(value) => setFormData(prev => ({ ...prev, description_html: value }))}
-                modules={{
-                  toolbar: [
-                    [{ 'header': [1, 2, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    ['link'],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                  ]
-                }}
-                formats={['header', 'bold', 'italic', 'underline', 'strike', 'link', 'list']}
-                placeholder="Enter description (HTML)"
-                style={{ marginBottom: '16px' }}
-              />
-              <TextField
-                fullWidth
-                label="Tags"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                margin="normal"
-                placeholder="Enter tags, comma-separated"
-              />
-              <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-                Create Ticket
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-        <Dialog open={showTicketDetails} onClose={() => setShowTicketDetails(false)} maxWidth="md" fullWidth>
-          <DialogTitle>Ticket Details #{selectedTicket?.display_id}</DialogTitle>
-          <DialogContent>
-            {selectedTicket && (
-              <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2 }}>
-                <Box>
-                  <Typography variant="h6">Subject: {selectedTicket.subject}</Typography>
-                  <Box sx={{ mt: 2 }}>
-                    <strong>Description:</strong>
-                    <div dangerouslySetInnerHTML={{ __html: selectedTicket.description_html || selectedTicket.description || '<p>No description</p>' }} />
-                  </Box>
-                  <Box sx={{ mt: 2 }}>
-                    <strong>Conversations:</strong>
-                    {[...selectedTicket.conversations].reverse().map((conv, index) => (
-                      <div
-                        key={index}
-                        className={`conversation ${conv.private ? 'conversation-private' : ''}`}
-                        dangerouslySetInnerHTML={{ __html: conv.body || conv.body_text || '<p>No content</p>' }}
-                        sx={{ mt: 1, borderLeft: conv.private ? '3px solid #FF4500' : '3px solid #007bff', paddingLeft: '10px', marginBottom: '10px' }}
-                      />
-                    ))}
-                  </Box>
-                  <Box sx={{ mt: 2 }} className="ticket-timeline">
-                    <Typography variant="h6">Requester History</Typography>
-                    {selectedTicket.requester && selectedTicket.requester._id ? (
-                      tickets.filter(t => t.requester_id === selectedTicket.requester._id && t._id !== selectedTicket._id).length ? (
-                        tickets.filter(t => t.requester_id === selectedTicket.requester._id && t._id !== selectedTicket._id).map((t) => (
-                          <div key={t._id} className="timeline-item">
-                            <Typography component="span">
-                              {t.subject || 'No Subject'} #{t.display_id}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {t.requester?.name || 'Unknown'} ({t.company_id?.name || 'Unknown Company'}) | {getSlaStatus(t.created_at)}
-                            </Typography>
-                          </div>
-                        ))
-                      ) : (
-                        <Typography variant="body2">No other tickets from this requester</Typography>
-                      )
-                    ) : (
-                      <Typography variant="body2">No requester history available</Typography>
-                    )}
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Select
-                    value={selectedTicket.priority_name.toLowerCase()}
-                    onChange={(e) => handlePriorityChange(e, selectedTicket)}
-                    fullWidth
-                    sx={{ mb: 2, border: '1px solid #ccc', borderRadius: 4 }}
-                  >
-                    {ticketFields.priority.map(item => (
-                      <MenuItem key={item.code} value={item.name.toLowerCase()}>{item.name}</MenuItem>
-                    ))}
-                  </Select>
-                  <Select
-                    value={selectedTicket.responder_id ? selectedTicket.responder_id.name.toLowerCase() : 'unassigned'}
-                    onChange={(e) => handleAgentChange(e, selectedTicket)}
-                    fullWidth
-                    sx={{ mb: 2, border: '1px solid #ccc', borderRadius: 4 }}
-                  >
-                    {ticketFields.agent.map(item => (
-                      <MenuItem key={item._id} value={item.name.toLowerCase()}>{item.name}</MenuItem>
-                    ))}
-                    <MenuItem value="unassigned">Unassigned</MenuItem>
-                  </Select>
-                  <Select
-                    value={selectedTicket.status_name.toLowerCase()}
-                    onChange={(e) => handleStatusChange(e, selectedTicket)}
-                    fullWidth
-                    sx={{ mb: 2, border: '1px solid #ccc', borderRadius: 4 }}
-                  >
-                    {ticketFields.status.map(item => (
-                      <MenuItem key={item.code} value={item.name.toLowerCase()}>{item.name}</MenuItem>
-                    ))}
-                  </Select>
-                  <Select
-                    value={getFieldLabel('group', selectedTicket.group_id) || 'IT'}
-                    onChange={(e) => handleGroupChange(e, selectedTicket)}
-                    fullWidth
-                    sx={{ mb: 2, border: '1px solid #ccc', borderRadius: 4 }}
-                  >
-                    {ticketFields.group.map(item => (
-                      <MenuItem key={item.id} value={item.name}>{item.name}</MenuItem>
-                    ))}
-                  </Select>
-                  <Select
-                    value={selectedTicket.ticket_type || 'Incident'}
-                    onChange={(e) => handleTicketTypeChange(e, selectedTicket)}
-                    fullWidth
-                    sx={{ border: '1px solid #ccc', borderRadius: 4 }}
-                  >
-                    {ticketFields.ticket_type.map((type, index) => (
-                      <MenuItem key={index} value={type.name}>{type.name}</MenuItem>
-                    ))}
-                  </Select>
-                </Box>
-              </Box>
-            )}
+            <DialogContentText>
+              <strong>Requester:</strong> {selectedTicket?.requester?.name} ({selectedTicket?.company_id ? 'Company' : 'Unknown Company'})<br />
+              <strong>Created:</strong> {new Date(selectedTicket?.created_at).toLocaleDateString()}<br />
+              <strong>Last Modified:</strong> {new Date(selectedTicket?.updated_at).toLocaleDateString()}<br />
+              <strong>SLA:</strong> {getSlaStatus(selectedTicket?.created_at)}<br />
+              <strong>Last Activity:</strong> {selectedTicket?.conversations[0]?.private ? 'Private: ' : 'Public: '} {selectedTicket?.conversations[0]?.body_text}
+            </DialogContentText>
           </DialogContent>
         </Dialog>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
