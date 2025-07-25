@@ -500,6 +500,17 @@ app.get('/api/agents', async (req, res) => {
   }
 });
 
+// Add agent lookup route
+app.get('/api/agents/email/:email', async (req, res) => {
+  try {
+    const agent = await Agent.findOne({ email: req.params.email });
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+    res.json(agent);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Update ticket
 app.patch('/api/tickets/:id', async (req, res) => {
   try {

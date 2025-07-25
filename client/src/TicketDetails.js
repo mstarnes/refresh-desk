@@ -1,261 +1,290 @@
-// client/src/TicketDetails.js
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Grid, TextField, Select, MenuItem, Button, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Alert, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import axios from 'axios';
-import './styles/TicketDetails.css';
-import mongoose from 'mongoose';
+
+const ConversationItem = styled(ListItem)(({ theme, isPrivate }) => ({
+  backgroundColor: isPrivate ? theme.palette.grey[200] : 'inherit',
+  marginBottom: theme.spacing(1),
+  borderRadius: theme.shape.borderRadius,
+}));
 
 function TicketDetails() {
-  const { display_id } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const [ticket, setTicket] = useState(null);
-  const [timeline, setTimeline] = useState([]);
+  const [formData, setFormData] = useState({});
+  const [ticketFields, setTicketFields] = useState({});
+  const [agentId, setAgentId] = useState('');
+  const [conversationText, setConversationText] = useState('');
   const [error, setError] = useState(null);
-  const [priorities, setPriorities] = useState({});
-  const [statuses, setStatuses] = useState({});
-  const [assignedAgents, setAssignedAgents] = useState({});
-  const [agents, setAgents] = useState([]);
-  const [userId] = useState(process.env.REACT_APP_CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro');
+  const [loading, setLoading] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [requesterHistory, setRequesterHistory] = useState([]);
 
   useEffect(() => {
-    const fetchTicket = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5001/api/tickets/display/${display_id}`);
-        console.log('Fetched ticket data:', response.data);
-        setTicket(response.data);
-        setPriorities({ [response.data._id]: response.data.priority_name || 'Low' });
-        setStatuses({ [response.data._id]: response.data.status_name || 'Open' });
-        setAssignedAgents({ [response.data._id]: response.data.responder_id?._id || 'Unassigned' });
+        const [ticketResponse, fieldsResponse, agentResponse] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/${id}`),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`),
+        ]);
+        setTicket(ticketResponse.data);
+        setFormData({
+          subject: ticketResponse.data.subject,
+          description_html: ticketResponse.data.description_html || ticketResponse.data.description || '',
+          status: ticketResponse.data.status,
+          priority: ticketResponse.data.priority,
+          ticket_type: ticketResponse.data.ticket_type || '',
+          source: ticketResponse.data.source,
+          group_id: ticketResponse.data.group_id || '',
+          agent: ticketResponse.data.responder_id || '',
+          tags: ticketResponse.data.tags?.join(', ') || '',
+        });
+        setTicketFields(fieldsResponse.data);
+        setAgentId(agentResponse.data._id);
+        const historyResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets`, {
+          params: { requester_id: ticketResponse.data.requester_id, account_id: process.env.REACT_APP_ACCOUNT_ID },
+        });
+        setRequesterHistory(historyResponse.data.filter((t) => t._id !== id));
       } catch (err) {
-        setError(`Failed to fetch ticket: ${err.message}`);
+        setError('Failed to load ticket data');
+      } finally {
+        setLoading(false);
       }
     };
+    fetchData();
+  }, [id]);
 
-    const fetchTimeline = async () => {
-      if (ticket?.requester_id) {
-        try {
-          const response = await axios.get(`http://localhost:5001/api/tickets/user/${ticket.requester_id}`);
-          setTimeline(response.data);
-        } catch (err) {
-          setError(`Failed to fetch timeline: ${err.message}`);
-        }
-      }
-    };
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-    const fetchAgents = async () => {
-      try {
-        const response = await axios.get('http://localhost:5001/api/agents');
-        setAgents(response.data);
-      } catch (err) {
-        console.error('Fetch Agents Error:', err);
-      }
-    };
+  const handleQuillChange = (value) => {
+    setFormData({ ...formData, description_html: value });
+  };
 
-    fetchTicket();
-    fetchAgents();
-    if (ticket?.requester_id) {
-      fetchTimeline();
+  const handleUpdate = async () => {
+    if (!formData.subject || !formData.description_html) {
+      setError('Subject and description are required');
+      return;
     }
-  }, [display_id, ticket?.requester_id]);
-
-  const updateField = async (ticketId, field, value) => {
+    setLoading(true);
     try {
-      const updates = {};
-      let conversationText = '';
-      const agent = agents.find(a => a.email === userId) || { id: 9006333765, name: 'Mitch Starnes' };
-      if (field === 'priority') {
-        updates.priority = value === 'Low' ? 1 : value === 'Medium' ? 2 : value === 'High' ? 3 : 4;
-        updates.priority_name = value;
-        conversationText = `Agent ${agent.name} changed priority to ${value} on ${new Date().toLocaleString()}`;
-      } else if (field === 'status') {
-        updates.status = value === 'Open' ? 2 : value === 'Pending' ? 3 : value === 'Resolved' ? 4 : 5;
-        updates.status_name = value;
-        if (value === 'Closed') updates.closed_at = new Date().toISOString();
-        conversationText = `Agent ${agent.name} changed status to ${value} on ${new Date().toLocaleString()}`;
-      } else if (field === 'responder_id') {
-        updates.responder_id = value === 'Unassigned' ? null : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653');
-        updates.responder_name = value === 'Unassigned' ? null : agent.name;
-        conversationText = `Agent ${agent.name} ${value === 'Unassigned' ? 'unassigned' : 'assigned'} ticket on ${new Date().toLocaleString()}`;
-      }
-      const response = await axios.patch(`http://localhost:5001/api/tickets/${ticketId}`, {
-        ...updates,
-        conversations: conversationText ? [
-          ...(ticket?.conversations || []),
-          {
-            id: Math.floor(Math.random() * 1000000),
-            body_text: conversationText,
-            private: true,
-            user_id: agent.id,
-            incoming: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        ] : undefined
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${id}`, {
+        ...formData,
+        tags: formData.tags ? formData.tags.split(',').map((tag) => tag.trim()) : [],
       });
-      const updatedTicket = response.data;
-      setTicket(updatedTicket);
-      setPriorities({ [ticketId]: updatedTicket.priority_name || 'Low' });
-      setStatuses({ [ticketId]: updatedTicket.status_name || 'Open' });
-      setAssignedAgents({ [ticketId]: updatedTicket.responder_id?._id || 'Unassigned' });
+      navigate(`/dashboard?ticketId=${id}`);
     } catch (err) {
       setError('Failed to update ticket');
-      console.error('Error updating ticket:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getPriorityColor = (priority) => {
-    const safePriority = priority || 'Low';
-    switch (safePriority) {
-      case 'Low':
-      case 1:
-        return 'green';
-      case 'Medium':
-      case 2:
-        return 'blue';
-      case 'High':
-      case 3:
-        return '#FFA500';
-      case 'Urgent':
-      case 4:
-        return 'red';
-      default:
-        return 'gray';
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/tickets/${id}`);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Failed to delete ticket');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getLastAction = (ticket) => {
-    if (ticket.status === 5 && ticket.closed_at && !isNaN(new Date(ticket.closed_at))) {
-      return `Closed ${new Date(ticket.closed_at).toLocaleDateString()}`;
+  const handleAddConversation = async () => {
+    if (!conversationText) {
+      setError('Conversation text is required');
+      return;
     }
-    const lastConversation = ticket.conversations?.slice(-1)[0];
-    if (lastConversation) {
-      const isAgent = agents.some(agent => agent.id === lastConversation.user_id);
-      return `${isAgent ? 'Agent' : 'User'} Updated ${new Date(lastConversation.updated_at).toLocaleDateString()}`;
+    setLoading(true);
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/tickets/${id}/conversations`, {
+        body: conversationText,
+        user_id: agentId,
+        private: false,
+      });
+      setConversationText('');
+      const ticketResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/${id}`);
+      setTicket(ticketResponse.data);
+    } catch (err) {
+      setError('Failed to add conversation');
+    } finally {
+      setLoading(false);
     }
-    return `Created ${new Date(ticket.created_at).toLocaleDateString()}`;
   };
-
-  const getSLAStatus = (ticket) => {
-    if (ticket.status === 5 && ticket.closed_at && !isNaN(new Date(ticket.closed_at))) {
-      return `Closed ${new Date(ticket.closed_at).toLocaleDateString()} (${new Date(ticket.closed_at) <= new Date(ticket.due_by) ? 'on time' : 'late'})`;
-    }
-    const dueBy = new Date(ticket.due_by);
-    const now = new Date();
-    const diffHours = (dueBy - now) / (1000 * 60 * 60);
-    if (diffHours > 0) {
-      return `Due in ${Math.round(diffHours)} hours`;
-    }
-    return `Overdue by ${Math.abs(Math.round(diffHours))} hours`;
-  };
-
-  if (error) return <p>Error: {error}</p>;
-  if (!ticket) return <p>Loading...</p>;
 
   return (
-    <div className="ticket-details">
-      <button onClick={() => navigate("/")}>Back to List</button>
-      <div className="ticket-header">
-        <div className="ticket-info">
-          <h2>{ticket.subject || 'No Subject'} #{ticket.display_id}</h2>
-        <div className="ticket-meta">
-          {ticket.requester && ticket.requester.name ? (
-            `${ticket.requester.name} (${ticket.company_id?.name || 'Unknown Company'})`
-          ) : (
-            `Unknown (${ticket.company_id?.name || 'Unknown Company'})`
-          )} | {getLastAction(ticket)} | {getSLAStatus(ticket)}
-          </div>
-        </div>
-        <div className="ticket-controls">
-          <select
-            value={priorities[ticket._id] || 'Low'}
-            onChange={(e) => updateField(ticket._id, 'priority', e.target.value)}
-            className="priority-select"
-          >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Urgent">Urgent</option>
-          </select>
-          <select
-            value={assignedAgents[ticket._id] || 'Unassigned'}
-            onChange={(e) => updateField(ticket._id, 'responder_id', e.target.value)}
-            className="agent-select"
-          >
-            <option value="Unassigned">Unassigned</option>
-            {agents.map((agent) => (
-              <option key={agent._id} value={agent._id}>
-                {agent.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={statuses[ticket._id] || 'Open'}
-            onChange={(e) => updateField(ticket._id, 'status', e.target.value)}
-            className="status-select"
-          >
-            <option value="Open">Open</option>
-            <option value="Pending">Pending</option>
-            <option value="Resolved">Resolved</option>
-            <option value="Closed">Closed</option>
-          </select>
-        </div>
-      </div>
-      <div className="ticket-description">
-        <h3>Description</h3>
-        <div
-          className="description-html"
-          dangerouslySetInnerHTML={{ __html: ticket.description_html || 'No description' }}
-        />
-      </div>
-      <div className="ticket-conversations">
-        <h3>Updates</h3>
-        {ticket.conversations?.length ? (
-          [...ticket.conversations]
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .map((conv) => (
-              <div
-                key={conv.id}
-                className={`conversation ${conv.private ? 'conversation-private' : ''}`}
-              >
-                <div
-                  className="conversation-html"
-                  dangerouslySetInnerHTML={{ __html: conv.body || (conv.body_text || 'No content') }}
-                />
-                <p className="conversation-meta">
-                  {conv.user_id === ticket.requester.id
-                    ? ticket.requester.name
-                    : agents.find((a) => a.id === conv.user_id)?.name || `Agent ${conv.user_id}`} |{' '}
-                  {conv.private ? 'Note' : 'Reply'} | {new Date(conv.created_at).toLocaleString()}
-                </p>
-              </div>
-            ))
-        ) : (
-          <p>No conversations</p>
-        )}
-      </div>
-      <div className="ticket-timeline">
-        <h3>Requester History</h3>
-        {timeline.length ? (
-          timeline.map((t) => (
-            <div key={t._id} className="timeline-item">
-              <Link to={`/ticket/${t.display_id}`}>
-                {t.subject || 'No Subject'} #{t.display_id}
-              </Link>
-              <div className="timeline-meta">
-                {t.requester && t.requester.name ? (
-                  `${t.requester.name} (${t.company_id?.name || 'Unknown Company'})`
-                ) : (
-                  `Unknown (${t.company_id?.name || 'Unknown Company'})`
-                )} | {getLastAction(t)} | {getSLAStatus(t)}
-              </div>
-              <div className="timeline-spacer"></div>
-            </div>
-          ))
-        ) : (
-          <p>No other tickets from this requester</p>
-        )}
-      </div>
-    </div>
+    <Grid container spacing={2} sx={{ padding: 2, maxWidth: 1000, margin: 'auto' }}>
+      <Grid item xs={12}>
+        <Typography variant="h4">Ticket #{ticket?.display_id}</Typography>
+      </Grid>
+      {error && (
+        <Grid item xs={12}>
+          <Alert severity="error">{error}</Alert>
+        </Grid>
+      )}
+      {loading ? (
+        <CircularProgress sx={{ m: 'auto' }} />
+      ) : (
+        <>
+          <Grid item xs={12} md={6}>
+            <TextField
+              label="Subject"
+              name="subject"
+              value={formData.subject || ''}
+              onChange={handleChange}
+              fullWidth
+              required
+              error={!formData.subject}
+            />
+            <Typography>Description</Typography>
+            <ReactQuill value={formData.description_html} onChange={handleQuillChange} />
+            <Select
+              label="Status"
+              name="status"
+              value={formData.status || ''}
+              onChange={handleChange}
+              fullWidth
+            >
+              {ticketFields.status?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <Select
+              label="Priority"
+              name="priority"
+              value={formData.priority || ''}
+              onChange={handleChange}
+              fullWidth
+            >
+              {ticketFields.priority?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <Select
+              label="Ticket Type"
+              name="ticket_type"
+              value={formData.ticket_type || ''}
+              onChange={handleChange}
+              fullWidth
+            >
+              <MenuItem value="">None</MenuItem>
+              {ticketFields.ticket_type?.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+            <Select
+              label="Source"
+              name="source"
+              value={formData.source || ''}
+              onChange={handleChange}
+              fullWidth
+            >
+              {ticketFields.source?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <Select
+              label="Group"
+              name="group_id"
+              value={formData.group_id || ''}
+              onChange={handleChange}
+              fullWidth
+            >
+              <MenuItem value="">None</MenuItem>
+              {ticketFields.group?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <Select
+              label="Agent"
+              name="agent"
+              value={formData.agent || ''}
+              onChange={handleChange}
+              fullWidth
+            >
+              <MenuItem value="">Unassigned</MenuItem>
+              {ticketFields.agent?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <TextField
+              label="Tags (comma-separated)"
+              name="tags"
+              value={formData.tags || ''}
+              onChange={handleChange}
+              fullWidth
+            />
+            <Button variant="contained" onClick={handleUpdate} disabled={loading}>
+              {loading ? 'Updating...' : 'Update Ticket'}
+            </Button>
+            <Button color="error" onClick={() => setOpenDeleteDialog(true)} disabled={loading}>
+              Delete Ticket
+            </Button>
+            <Button onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography variant="h6">Conversation History</Typography>
+            <List>
+              {ticket?.conversations?.map((conv) => (
+                <ConversationItem key={conv._id} isPrivate={conv.private}>
+                  <ListItemText
+                    primary={<div dangerouslySetInnerHTML={{ __html: conv.body || conv.body_text }} />}
+                    secondary={`By ${conv.user_id === agentId ? 'You' : conv.user_id} on ${new Date(conv.created_at).toLocaleString()}`}
+                  />
+                </ConversationItem>
+              ))}
+            </List>
+            <Typography>Add Conversation</Typography>
+            <ReactQuill value={conversationText} onChange={setConversationText} />
+            <Button variant="contained" onClick={handleAddConversation} disabled={loading}>
+              {loading ? 'Adding...' : 'Add Conversation'}
+            </Button>
+            <Typography variant="h6" sx={{ mt: 2 }}>Requester History</Typography>
+            <List>
+              {requesterHistory.map((t) => (
+                <ListItem key={t._id} button component={Link} to={`/tickets/${t._id}`}>
+                  <ListItemText primary={t.subject} secondary={`#${t.display_id} - ${t.status_name}`} />
+                </ListItem>
+              ))}
+            </List>
+          </Grid>
+          <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+            <DialogTitle>Confirm Delete</DialogTitle>
+            <DialogContent>
+              <Typography>Are you sure you want to delete ticket #{ticket?.display_id}?</Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+              <Button color="error" onClick={handleDelete} disabled={loading}>
+                Delete
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      )}
+    </Grid>
   );
 }
 
