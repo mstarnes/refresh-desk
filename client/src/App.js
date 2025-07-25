@@ -111,46 +111,21 @@ const App = () => {
     return null;
   };
 
-  useEffect(() => {
-    const fetchTicketFields = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/ticketfields');
-        const fields = response.data.reduce((acc, field) => {
-          acc[field.name] = field.choices || [];
-          return acc;
-        }, {});
-        console.log('Fetched ticketFields:', fields);
-        setTicketFields(fields);
-
-        const defaultAgent = fields.agent.find(
-          (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
-        );
-        console.log('Default agent:', defaultAgent);
-        setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
-      } catch (error) {
-        console.error('Error fetching ticket fields:', error);
-        setError('Failed to load ticket fields: ' + (error.response?.data?.details || error.message));
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTicketFields();
-  }, []);
-
   const fetchTickets = useCallback(async () => {
     try {
-      // console.log('ticketFields: ' + JSON.stringify( ticketFields, null, 2));
+      //const agent = await Agent.findOne({ email: process.env.CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro' });
+      //const agent = agents.find(a => a.email === process.env.CURRENT_AGENT_EMAIL) || { id: 9006333765, name: 'Mitch Starnes' };
       const agent = ticketFields.agent.find(
         (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
       );
+      //console.log('Default agent:', agent);
 
-      const agentId = agent ? agent._id : "6868527ff5d2b14198b52653";
-      //if (!agentId) {
-      //  console.warn('No agent found for REACT_APP_CURRENT_AGENT_EMAIL:', process.env.REACT_APP_CURRENT_AGENT_EMAIL);
-      //  setTickets([]);
-      //  return;
-      //}
+      const agentId = agent ? agent._id : null;
+      if (!agentId) {
+        console.warn('No agent found for REACT_APP_CURRENT_AGENT_EMAIL:', process.env.REACT_APP_CURRENT_AGENT_EMAIL);
+        setTickets([]);
+        return;
+      }
       const endpoint = searchQuery ? '/api/tickets/search' : '/api/tickets';
       const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${endpoint}`, {
         params: {
@@ -192,9 +167,36 @@ const App = () => {
   };
 
   useEffect(() => {
-    fetchAgents();
     fetchTickets();
+    fetchAgents();
   }, [fetchTickets]);
+
+  useEffect(() => {
+    const fetchTicketFields = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/ticketfields');
+        const fields = response.data.reduce((acc, field) => {
+          acc[field.name] = field.choices || [];
+          return acc;
+        }, {});
+        console.log('Fetched ticketFields:', fields);
+        setTicketFields(fields);
+
+        const defaultAgent = fields.agent.find(
+          (agent) => agent.email === process.env.REACT_APP_CURRENT_AGENT_EMAIL
+        );
+        console.log('Default agent:', defaultAgent);
+        setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
+      } catch (error) {
+        console.error('Error fetching ticket fields:', error);
+        setError('Failed to load ticket fields: ' + (error.response?.data?.details || error.message));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTicketFields();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('filterType', filterType);
