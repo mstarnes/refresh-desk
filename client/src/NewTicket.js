@@ -178,7 +178,6 @@ const NewTicket = () => {
         },
       };
       await axios.post('/api/tickets', ticketData);
-      console.log('ticketData: ' + JSON.stringify(ticketData, null, 2));
       navigate('/');
     } catch (error) {
       console.error('Error creating ticket:', error);
