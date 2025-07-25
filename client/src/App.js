@@ -73,27 +73,108 @@ const App = () => {
   const [tickets, setTickets] = useState([]);
   const [filterType, setFilterType] = useState(localStorage.getItem('filterType') || 'newAndMyOpen');
   const [sortBy, setSortBy] = useState(localStorage.getItem('sortBy') || 'updated_at');
-  const [sortDirection, setSortDirection] = useState((localStorage.getItem('sortDirection') || 'desc').toLowerCase());
+  const [sortDirection, setSortDirection] = useState(localStorage.getItem('sortDirection') || 'desc');
   const [searchQuery, setSearchQuery] = useState(localStorage.getItem('searchQuery') || '');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [showNewTicket, setShowNewTicket] = useState(false);
+  const [showTicketDetails, setShowTicketDetails] = useState(false);
+  const [tags, setTags] = useState('');
+  const [formData, setFormData] = useState({
+    requester_id: null,
+    subject: '',
+    ticket_type: '',
+    status: '',
+    priority: '',
+    group: '',
+    responder_id: null,
+    source: '',
+    description_html: '',
+    contact: null,
+  });
+  const [ticketFields, setTicketFields] = useState({
+    ticket_type: [],
+    status: [],
+    priority: [],
+    group: [],
+    agent: [],
+    source: [],
+  });
 
+  const getFieldLabel = (fieldName, code) => {
+    const field = ticketFields[fieldName];
+    if (field) {
+      if (fieldName === 'status' || fieldName === 'priority' || fieldName === 'source') {
+        const item = field.find(item => item.code === code);
+        return item ? item.name : null;
+      } else if (fieldName === 'group') {
+        const item = field.find(item => item.id === code);
+        return item ? item.name : null;
+      } else if (fieldName === 'agent') {
+        const item = field.find(item => item._id === code);
+        return item ? item.name : 'Unassigned';
+      }
+    }
+    return null;
+  };
+
+  const getFieldCode = (fieldName, label) => {
+    const field = ticketFields[fieldName];
+    if (field) {
+      if (fieldName === 'status' || fieldName === 'priority' || fieldName === 'source') {
+        const item = field.find(item => item.name === label);
+        return item ? item.code : null;
+      } else if (fieldName === 'group') {
+        const item = field.find(item => item.name === label);
+        return item ? item.id : null;
+      } else if (fieldName === 'agent') {
+        const item = field.find(item => item.name === label);
+        return item ? item._id : null;
+      }
+    }
+    return null;
+  };
+
+  // Fetch ticket fields
   useEffect(() => {
-    fetchTickets();
-  }, [filterType, sortBy, sortDirection, searchQuery, page]);
+    const fetchTicketFields = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/ticketfields');
+        const fields = response.data.reduce((acc, field) => {
+          acc[field.name] = field.choices || [];
+          return acc;
+        }, {});
+        console.log('Fetched ticketFields:', fields);
+        console.log('Agent data:', fields.agent);
+        setTicketFields(fields);
 
-  useEffect(() => {
-    localStorage.setItem('filterType', filterType);
-    localStorage.setItem('sortBy', sortBy);
-    localStorage.setItem('sortDirection', sortDirection);
-    localStorage.setItem('searchQuery', searchQuery);
-  }, [filterType, sortBy, sortDirection, searchQuery]);
+        const defaultAgent = fields.agent.find(
+          (agent) => agent.email.toLowerCase() === process.env.REACT_APP_CURRENT_AGENT_EMAIL?.toLowerCase()
+        ) || fields.agent.find(agent => agent._id === '6868527ff5d2b14198b52653') || null;
+        console.log('Default agent:', defaultAgent);
+        setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
+      } catch (error) {
+        console.error('Error fetching ticket fields:', error);
+        setError('Failed to load ticket fields: ' + (error.response?.data?.details || error.message));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTicketFields();
+  }, []);
 
-  const fetchTickets = async () => {
+  // Fetch tickets
+  const fetchTickets = useCallback(async () => {
+    if (!ticketFields.agent.length) {
+      console.log('Waiting for ticketFields to load');
+      return;
+    }
     try {
-      const agentId = '6868527ff5d2b14198b52653'; // Default agent _id
+      const agent = ticketFields.agent.find(agent => agent.email.toLowerCase() === process.env.REACT_APP_CURRENT_AGENT_EMAIL?.toLowerCase()) || 
+        ticketFields.agent.find(agent => agent._id === '6868527ff5d2b14198b52653') || null;
+      const agentId = agent ? agent._id : null;
       const endpoint = searchQuery ? '/api/tickets/search' : '/api/tickets';
       const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}${endpoint}`, {
         params: {
@@ -103,11 +184,11 @@ const App = () => {
           q: searchQuery,
           page,
           limit: 10,
-          userId: agentId,
+          ...(agentId && filterType === 'newAndMyOpen' ? { userId: agentId } : {}),
         }
       });
       const ticketData = response.data.tickets || [];
-      // Enrich tickets with derived fields
+      console.log('Raw ticket data:', ticketData);
       const enrichedTickets = ticketData.map(ticket => ({
         ...ticket,
         priority_name: getFieldLabel('priority', ticket.priority) || 'Low',
@@ -121,9 +202,21 @@ const App = () => {
       console.log('Fetched from:', endpoint, 'Tickets:', enrichedTickets, 'Total:', totalCount);
     } catch (error) {
       console.error('Error fetching tickets:', error);
+      setError('Failed to fetch tickets: ' + (error.response?.data?.error || error.message));
       setTickets([]);
     }
-  };
+  }, [filterType, sortBy, sortDirection, searchQuery, page, ticketFields]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets, filterType, sortBy, sortDirection, searchQuery, page]);
+
+  useEffect(() => {
+    localStorage.setItem('filterType', filterType);
+    localStorage.setItem('sortBy', sortBy);
+    localStorage.setItem('sortDirection', sortDirection);
+    localStorage.setItem('searchQuery', searchQuery);
+  }, [filterType, sortBy, sortDirection, searchQuery]);
 
   const getPriorityColor = (priority) => {
     const priorityMap = { '1': '#4caf50', '2': '#ffca28', '3': '#f44336', '4': '#ff0000' };
@@ -132,7 +225,7 @@ const App = () => {
 
   const getSlaStatus = (createdAt) => {
     const created = new Date(createdAt);
-    const now = new Date('2025-07-20T12:26:00-05:00'); // Updated to 12:26 PM CDT, July 20, 2025
+    const now = new Date('2025-07-23T11:36:00-05:00');
     const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
     return diffHours > 3 ? `Overdue by ${diffHours} hours` : 'Within SLA';
   };
@@ -164,7 +257,6 @@ const App = () => {
   const handleNewTicket = () => setShowNewTicket(true);
   const handlePageChange = (event, value) => {
     setPage(value);
-    fetchTickets();
   };
   const handleTitleClick = (ticket) => {
     setSelectedTicket(ticket);
@@ -263,6 +355,7 @@ const App = () => {
         <Typography variant="h4" align="center" sx={{ my: 2 }}>
           Refresh Desk Dashboard
         </Typography>
+        {loading && <CircularProgress sx={{ display: 'block', margin: 'auto', mt: 2 }} />}
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2, p: 2 }}>
           {tickets.map((ticket) => (
             <Card key={ticket._id} sx={{ cursor: 'pointer', boxShadow: 3 }}>
