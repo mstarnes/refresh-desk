@@ -137,3 +137,15 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+client/src/App - pre-material-update.js
+client/src/App1.js
+client/src/NewTicket1.js
+client/src/index1.js
+client/src/styles/App - pre-material-update.css
+client/src/styles/NewTicket1.css
+grok-notes.txt
+models/Ticket1.js
+new-ticket.js
+new-ticket1.js
+response for grok.md
+server1.js
