@@ -20,13 +20,13 @@ import {
   Autocomplete,
   CircularProgress,
 } from '@mui/material';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill'; // Added for HTML toolbar
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './styles/App.css';
 
-// Mock ticketfields data
-let ticketFields = [
+// Mock ticketfields data (replace with API call if dynamic)
+const ticketFields = [
   { name: 'priority', choices: { Low: 1, Medium: 2, High: 3, Urgent: 4 } },
   { name: 'status', choices: { '2': ['Open'], '3': ['Pending'], '4': ['Resolved'], '5': ['Closed'] } },
   { name: 'ticket_type', choices: ['Question', 'Incident', 'Problem', 'Feature Request', 'Lead', 'Documentation'] },
@@ -35,7 +35,7 @@ let ticketFields = [
   { name: 'agent', choices: { 'Mitch Starnes': '6868527ff5d2b14198b52653' } },
 ];
 
-// Utility functions
+// Utility to map code to label
 const getFieldLabel = (fieldName, code) => {
   const field = ticketFields.find(f => f.name === fieldName);
   if (field) {
@@ -48,11 +48,12 @@ const getFieldLabel = (fieldName, code) => {
   return null;
 };
 
+// Utility to map label to code
 const getFieldCode = (fieldName, label) => {
   const field = ticketFields.find(f => f.name === fieldName);
   if (field) {
     const entry = Object.entries(field.choices).find(([key, value]) => value === label || (Array.isArray(value) && value[0] === label));
-    return entry ? (fieldName === 'status' || fieldName === 'group' ? parseInt(entry[0]) : entry[1]) : null;
+    return entry ? (fieldName === 'status' || fieldName === 'group' ? parseInt(entry[0]) : entry[1]) : null; // Ensure numeric for status/group
   }
   return null;
 };
@@ -89,7 +90,7 @@ const App = () => {
   const [subject, setSubject] = useState('');
   const [formData, setFormData] = useState({
     requester_id: '6868527ef5d2b14198b52400',
-    subject: '',
+    subject: 'Not set',
     ticket_type: 'Incident',
     status: 'Open',
     priority: 'Low',
@@ -97,7 +98,6 @@ const App = () => {
     agent: 'Mitch Starnes',
     source: 'Phone',
     description_html: 'Not set',
-    responder_id: null, // Use responder_id
   });
 
   const [ticketFields1, setTicketFields1] = useState({
@@ -155,13 +155,11 @@ const App = () => {
           acc[field.name] = field.choices || [];
           return acc;
         }, {});
-        console.log('Fetched ticketFields1:', fields);
         setTicketFields1(fields);
-        console.log('ticketFields1.agent:', fields.agent);
+
         const defaultAgent = fields.agent.find(
           (agent) => agent.email === process.env.CURRENT_AGENT_EMAIL
         );
-        console.log('Default agent:', defaultAgent);
         setFormData((prev) => ({ ...prev, responder_id: defaultAgent || null }));
       } catch (error) {
         console.error('Error fetching ticket fields:', error);
@@ -188,7 +186,7 @@ const App = () => {
 
   const getSlaStatus = (createdAt) => {
     const created = new Date(createdAt);
-    const now = new Date('2025-07-21T00:00:00-05:00');
+    const now = new Date('2025-07-21T00:00:00-05:00'); // Updated to 12:00 AM CDT, July 21, 2025
     const diffHours = Math.floor((now - created) / (1000 * 60 * 60));
     return diffHours > 3 ? `Overdue by ${diffHours} hours` : 'Within SLA';
   };
@@ -244,11 +242,7 @@ const App = () => {
   };
 
   const handleChange = (field) => (event, value) => {
-    if (field === 'subject' || field === 'description_html') {
-      setFormData(prev => ({ ...prev, [field]: event.target.value }));
-    } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
-    }
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handlePriorityChange = async (event, ticket) => {
@@ -260,7 +254,7 @@ const App = () => {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
           priority: ticketFields.find(f => f.name === 'priority').choices[priorityCode],
         });
-        setSelectedTicket(prev => prev ? { ...prev, priority_name: newPriority } : prev);
+        setSelectedTicket(prev => prev ? { ...prev, priority_name: newPriority } : prev); // Update dialog state
         await fetchTickets();
         console.log('Priority updated:', response.data);
       } catch (error) {
@@ -282,7 +276,7 @@ const App = () => {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
           responder_id: agentMongooseId,
         });
-        setSelectedTicket(prev => prev ? { ...prev, responder_id: agentMongooseId ? { name: newAgent } : null } : prev);
+        setSelectedTicket(prev => prev ? { ...prev, responder_id: agentMongooseId ? { name: newAgent } : null } : prev); // Update dialog state
         await fetchTickets();
         console.log('Agent updated:', response.data.responder_id);
       } catch (error) {
@@ -302,7 +296,7 @@ const App = () => {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
           status: parseInt(statusCode),
         });
-        setSelectedTicket(prev => prev ? { ...prev, status_name: newStatus } : prev);
+        setSelectedTicket(prev => prev ? { ...prev, status_name: newStatus } : prev); // Update dialog state
         await fetchTickets();
         console.log('Status updated:', response.data);
       } catch (error) {
@@ -321,7 +315,7 @@ const App = () => {
         const response = await axios.patch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets/${ticket._id}`, {
           group_id: groupCode,
         });
-        setSelectedTicket(prev => prev ? { ...prev, group_id: groupCode } : prev);
+        setSelectedTicket(prev => prev ? { ...prev, group_id: groupCode } : prev); // Update dialog state
         await fetchTickets();
         console.log('Group updated:', response.data);
       } catch (error) {
@@ -345,20 +339,35 @@ const App = () => {
       }
     }
   };
-
   const handleNewTicketSubmit = async (e) => {
     e.preventDefault();
-    console.log('handleNewTicketSubmit formData:', JSON.stringify(formData, null, 2));
-
+    console.log('handleNewTicketSubmit formData: ' + JSON.stringify(formData, null, 2));
+/*
+    if (!formData.requester_id) {
+      console.error('requester_id is required');
+      return;
+      setError('Please select a contact');
+    }
+    if (!formData.subject) {
+      console.error('Subject is required');
+      setError('Subject is required');
+      return;
+    }
+    if (!formData.description_html.trim() || formData.description.trim()) {
+      console.error('Description is required');
+      setError('Description is required');
+      return;
+    }
+*/
     try {
       const statusCode = ticketFields1.status.find((s) => s.name === formData.status)?.code || 2;
       const priorityCode = ticketFields1.priority.find((p) => p.name === formData.priority)?.code || 1;
       const sourceCode = ticketFields1.source.find((s) => s.name === formData.source)?.code || 3;
-      const groupId = ticketFields1.group.find((g) => g.name === formData.group)?.id || 9000171202;
+      const groupId = ticketFields1.group.find((g) => g.name === formData.group_id)?.id || 9000171202;
 
       const ticketData = {
-        subject: formData.subject || 'No Subject',
-        description_html: formData.description_html || '<p>No description</p>',
+        subject: formData.subject,
+        description: formData.description,
         requester_id: formData.requester_id,
         responder_id: formData.responder_id ? formData.responder_id._id : null,
         ticket_type: formData.ticket_type,
@@ -366,7 +375,6 @@ const App = () => {
         priority: priorityCode,
         source: sourceCode,
         group_id: groupId,
-        tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
         status_name: formData.status,
         priority_name: formData.priority,
         source_name: formData.source,
@@ -391,12 +399,36 @@ const App = () => {
           updated_at: new Date().toISOString(),
         },
       };
-      console.log('ticketData before POST:', JSON.stringify(ticketData, null, 2));
       await axios.post('/api/tickets', ticketData);
-      console.log('ticketData after POST:', JSON.stringify(ticketData, null, 2));
+      console.log('ticketData: ' + JSON.stringify(ticketData, null, 2));
+      // navigate('/');
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      setError('Failed to create ticket: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleNewTicketSubmitOld = async (event) => {
+    event.preventDefault();
+    const newTicket = {
+      subject: formData.subject || 'No Subject',
+      description_html: formData.description_html,
+      priority: getFieldCode('priority', formData.priority) || 1,
+      status: getFieldCode('status', formData.status) || 2,
+      requester_id: formData.requester_id || '6868527ef5d2b14198b52400',
+      responder_id: formData.agent === 'unassigned' ? null : getFieldCode('agent', formData.agent),
+      source: getFieldCode('source', formData.source) || 3, // Default to Phone (3)
+      ticket_type: formData.ticket_type || 'Incident',
+      group_id: getFieldCode('group', formData.group) || 9000171202,
+      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+    };
+    console.log('Submitting new ticket:', newTicket);
+    try {
+      console.log('newTicket form data: ' + JSON.stringify(newTicket, null, 2));
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tickets`, newTicket);
       await fetchTickets();
       setShowNewTicket(false);
-      setTags('');
+      setTags(''); // Clear tags
       setFormData({
         requester_id: '6868527ef5d2b14198b52400',
         subject: '',
@@ -404,14 +436,13 @@ const App = () => {
         status: 'Open',
         priority: 'Low',
         group: 'IT',
-        responder_id: null,
-        source: 'Phone',
+        agent: 'Mitch Starnes',
         description_html: '',
         source: 'Phone',
       });
+      console.log('New ticket created:', response.data);
     } catch (error) {
-      console.error('Error creating ticket:', error);
-      setError('Failed to create ticket: ' + (error.response?.data?.error || error.message));
+      console.error('Error creating ticket:', error.response?.data || error.message);
     }
   };
 
@@ -522,9 +553,12 @@ const App = () => {
                 label="Subject"
                 value={formData.subject}
                 onChange={handleChange('subject')}
+                //onChange={(e) => setSubject(e.target.value)}
                 margin="normal"
                 required
                 placeholder="Enter subject"
+                //sx={{ '& .MuiInputLabel-shrink': { transform: 'translate(14px, -9px) scale(0.75)' } }} // Custom styling to float label
+                //variant="outlined"
               />
               <Autocomplete
                 options={formData.contact ? [formData.contact, ...contacts.filter(c => c._id !== formData.contact._id)] : contacts.length === 0 ? [{ name: 'Type to search', disabled: true }] : contacts}
@@ -626,10 +660,9 @@ const App = () => {
                 sx={{ my: 2 }}
               />
               <Autocomplete
-                options={ticketFields1.agent.length ? ticketFields1.agent : [{ name: 'Mitch Starnes', _id: '6868527ff5d2b14198b52653' }]}
-                getOptionLabel={(option) => option.name || 'Unassigned'}
-                value={formData.responder_id}
-                onChange={handleChange('responder_id')}
+                options={['Mitch Starnes', 'unassigned']}
+                value={formData.agent}
+                onChange={handleChange('agent')}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -637,6 +670,7 @@ const App = () => {
                     variant="outlined"
                     fullWidth
                     margin="normal"
+                    required
                   />
                 )}
                 sx={{ my: 2 }}
