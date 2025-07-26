@@ -129,7 +129,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
       });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
-      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id || t.responder_id || '' })));
+      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id?.toString() || t.responder_id?.toString() || '' }))); // Ensure responder_id is a string
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
@@ -165,7 +165,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={10} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <Grid container spacing={12} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
