@@ -116,14 +116,11 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
-      if (ticketData.length > 0) {
-        setTickets(ticketData);
-        forceUpdate(); // Force re-render after successful fetch
-      }
+      setTickets(ticketData);
+      if (ticketData.length > 0) forceUpdate(); // Force re-render only if data exists
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
-      setTickets([]); // Reset only on error
     } finally {
       setLoading(false);
     }
@@ -154,14 +151,14 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     return () => document.removeEventListener('reset-tickets', handleReset);
   }, [fetchTickets]);
 
-  console.log('Rendering Dashboard with tickets:', tickets, 'length:', tickets.length);
+  console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
     <Grid container spacing={2} sx={{ padding: 2 }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
         <Typography sx={{ m: 'auto', color: 'error.main' }}>{error}</Typography>
-      ) : !tickets || tickets.length === 0 ? (
+      ) : tickets.length === 0 ? (
         <Typography sx={{ m: 'auto' }}>No tickets found</Typography>
       ) : (
         tickets.map((ticket) => (
