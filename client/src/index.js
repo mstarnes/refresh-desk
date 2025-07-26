@@ -11,7 +11,8 @@ root.render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<App />} />
-      <Route path="/ticket/:display_id" element={<TicketDetails />} />
+      <Route path="/dashboard" element={<App />} />
+      <Route path="/tickets/:id" element={<TicketDetails />} />
       <Route path="/new-ticket" element={<NewTicket />} />
     </Routes>
   </BrowserRouter>
