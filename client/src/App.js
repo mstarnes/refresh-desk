@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
 import { AppBar, Toolbar, Button, Typography, Grid, Card, CardContent, CardActions, CircularProgress, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import axios from 'axios';
-import { useState, useEffect, useRef, useCallback, useReducer } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import debounce from 'lodash/debounce';
 
 const theme = createTheme({
   palette: { primary: { main: '#1976d2' }, secondary: { main: '#dc004e' } },
@@ -94,10 +95,9 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [, forceUpdate] = useReducer(x => x + 1, 0);
   const ticketRefs = useRef({});
 
-  const fetchTickets = useCallback(async () => {
+  const fetchTickets = useCallback(debounce(async () => {
     setLoading(true);
     try {
       const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
@@ -116,21 +116,18 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
-      setTickets(prevTickets => {
-        const newTickets = ticketData.length > 0 ? ticketData : prevTickets;
-        if (newTickets !== prevTickets) forceUpdate(); // Force re-render only if data changes
-        return newTickets;
-      });
+      setTickets(ticketData);
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
     } finally {
       setLoading(false);
     }
-  }, [filter, sortField, sortOrder, search]);
+  }, 300), [filter, sortField, sortOrder, search]);
 
   useEffect(() => {
     fetchTickets();
+    return () => fetchTickets.cancel(); // Cleanup debounce
   }, [fetchTickets]);
 
   useEffect(() => {
