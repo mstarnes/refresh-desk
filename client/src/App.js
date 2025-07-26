@@ -98,7 +98,9 @@ function App() {
           <Button color="inherit" onClick={handleReset}>Reset</Button>
         </Toolbar>
       </NavBar>
-      <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} onAgentChange={handleAgentChange} />
+      <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}> {/* Wrapper to enforce layout */}
+        <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} onAgentChange={handleAgentChange} />
+      </div>
     </ThemeProvider>
   );
 }
@@ -128,15 +130,18 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
         },
       });
       const ticketData = response.data.tickets || [];
-      console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
-      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id?.toString() || '' }))); // Ensure responder_id is a string _id
+      console.log('Fetched tickets data:', ticketData); // Debug ticket data
+      setTickets(ticketData.map(t => {
+        const validResponderId = groups.flatMap(g => g.agents).find(a => a._id === t.responder_id?._id || a.id === t.responder_id)?._id || '';
+        return { ...t, responder_id: validResponderId };
+      }));
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
     } finally {
       setLoading(false);
     }
-  }, [filter, sortField, sortOrder, search]);
+  }, [filter, sortField, sortOrder, search, groups]);
 
   useEffect(() => {
     fetchTickets();
@@ -165,7 +170,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={15} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <Grid container spacing={20} sx={{ padding: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
