@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
 import { AppBar, Toolbar, Button, Typography, Grid, Card, CardContent, CardActions, CircularProgress, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import axios from 'axios';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useReducer } from 'react';
 
 const theme = createTheme({
   palette: { primary: { main: '#1976d2' }, secondary: { main: '#dc004e' } },
@@ -94,6 +94,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [, forceUpdate] = useReducer(x => x + 1, 0);
   const ticketRefs = useRef({});
 
   const fetchTickets = useCallback(async () => {
@@ -114,11 +115,15 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         },
       });
       const ticketData = response.data.tickets || [];
-      console.log('Fetched tickets:', ticketData);
-      setTickets(ticketData.length > 0 ? ticketData : tickets); // Preserve previous tickets on error
+      console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
+      if (ticketData.length > 0) {
+        setTickets(ticketData);
+        forceUpdate(); // Force re-render after successful fetch
+      }
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
+      setTickets([]); // Reset only on error
     } finally {
       setLoading(false);
     }
@@ -149,9 +154,9 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     return () => document.removeEventListener('reset-tickets', handleReset);
   }, [fetchTickets]);
 
-  console.log('Rendering Dashboard with tickets:', tickets);
+  console.log('Rendering Dashboard with tickets:', tickets, 'length:', tickets.length);
   return (
-    <Grid container spacing={2} sx={{ padding: 2 }} key={tickets.length}>
+    <Grid container spacing={2} sx={{ padding: 2 }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
