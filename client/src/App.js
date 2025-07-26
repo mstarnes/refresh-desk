@@ -12,7 +12,7 @@ const theme = createTheme({
 const NavBar = styled(AppBar)(({ theme }) => ({ marginBottom: theme.spacing(2) }));
 const TicketCard = styled(Card)(({ theme }) => ({
   minWidth: 300,
-  margin: theme.spacing(3),
+  margin: theme.spacing(4), // Increased margin for spacing
   '&:hover': { boxShadow: theme.shadows[6] },
   transition: 'box-shadow 0.3s',
 }));
@@ -22,6 +22,7 @@ function App() {
   const [sortField, setSortField] = useState(() => localStorage.getItem('sortField') || 'updated_at');
   const [sortOrder, setSortOrder] = useState(() => localStorage.getItem('sortOrder') || 'desc');
   const [search, setSearch] = useState(() => localStorage.getItem('search') || '');
+  const [agent, setAgent] = useState(null); // For PATCH on agent change
 
   useEffect(() => {
     const oldKeys = ['filterType', 'searchQuery', 'sortBy', 'sortDirection'];
@@ -38,6 +39,15 @@ function App() {
     setSortOrder('desc');
     setSearch('');
     document.dispatchEvent(new Event('reset-tickets'));
+  };
+
+  const handleAgentChange = async (ticketId, newAgentId) => {
+    try {
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { responder_id: newAgentId });
+      setAgent(newAgentId); // Update local state for UI
+    } catch (err) {
+      console.error('Error updating agent:', err);
+    }
   };
 
   return (
@@ -90,12 +100,12 @@ function App() {
           <Button color="inherit" onClick={handleReset}>Reset</Button>
         </Toolbar>
       </NavBar>
-      <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} />
+      <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} onAgentChange={handleAgentChange} />
     </ThemeProvider>
   );
 }
 
-function Dashboard({ filter, sortField, sortOrder, search }) {
+function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -147,7 +157,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={5} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-around' }}> {/* Increased spacing to 5, kept justifyContent */}
+    <Grid container spacing={5} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-around' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
@@ -156,7 +166,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         <Typography sx={{ m: 'auto' }}>No tickets found</Typography>
       ) : (
         tickets.map((ticket) => (
-          <Grid width={{ xs: 12, sm: 6, md: 6 }} key={ticket._id}> {/* Increased md to 6 for wider cards */}
+          <Grid width={{ xs: 12, sm: 12, md: 12 }} key={ticket._id}> {/* Changed to 12 for single column */}
             <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)} sx={{ minWidth: 300, padding: theme.spacing(1) }}>
               <CardContent sx={{ padding: theme.spacing(2) }}>
                 <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
@@ -165,6 +175,18 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
                 <Typography>Status: {ticket.status_name || 'Unknown'}</Typography>
                 <Typography>Priority: {ticket.priority_name || 'Unknown'}</Typography>
                 <Typography>Requester: {ticket.requester_name || 'Unknown'}</Typography>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Agent</InputLabel>
+                  <Select
+                    value={ticket.responder_id || ''}
+                    onChange={(e) => onAgentChange(ticket._id, e.target.value)}
+                    label="Agent"
+                    sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
+                  >
+                    <MenuItem value="">Unassigned</MenuItem>
+                    {/* Placeholder for dynamic agents; update with actual data if available */}
+                  </Select>
+                </FormControl>
               </CardContent>
               <CardActions>
                 <Button size="small" component={Link} to={`/tickets/${ticket._id}`}>

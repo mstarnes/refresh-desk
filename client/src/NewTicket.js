@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Grid, Select, MenuItem, FormControl, InputLabel, Typography } from '@mui/material';
 import axios from 'axios';
+import ReactQuill from 'react-quill'; // For rich text editor
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 
 function NewTicket() {
   const [subject, setSubject] = useState('');
@@ -13,6 +15,7 @@ function NewTicket() {
   const [type, setType] = useState('');
   const [tags, setTags] = useState('');
   const [ticketFields, setTicketFields] = useState([]);
+  const [agentsByGroup, setAgentsByGroup] = useState({});
   const [agent, setAgent] = useState(null);
   const navigate = useNavigate();
 
@@ -22,10 +25,18 @@ function NewTicket() {
         const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
         setAgent(agentResponse.data);
         const fieldsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`);
-        setTicketFields(fieldsResponse.data || []); // Ensure array if data is undefined
+        setTicketFields(fieldsResponse.data || []);
+        // Fetch groups and agents
+        const groupsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/groups`); // Assuming an endpoint
+        const groupsData = groupsResponse.data || [];
+        const agentsMap = {};
+        groupsData.forEach(group => {
+          agentsMap[group.group.id] = group.group.agents.map(a => ({ id: a.id, name: a.name }));
+        });
+        setAgentsByGroup(agentsMap);
       } catch (err) {
-        console.error('Error fetching agent or ticket fields:', err);
-        setTicketFields([]); // Default to empty array on error
+        console.error('Error fetching agent, fields, or groups:', err);
+        setTicketFields([]);
       }
     };
     fetchAgentAndFields();
@@ -39,14 +50,14 @@ function NewTicket() {
         subject,
         description,
         account_id: process.env.REACT_APP_ACCOUNT_ID,
-        group_id: groupId || '6868527ff5d2b14198b5269a', // Default to IT group if not selected
+        group_id: groupId || '6868527ff5d2b14198b5269a',
         requester_id: agent?._id,
-        responder_id: agentId || agent?._id,
-        status: parseInt(status) || 2, // Default to Open (2)
-        priority: parseInt(priority) || 1, // Default to Low (1)
-        type: type || 'default', // Default type if not selected
+        responder_id: agentId || null,
+        status: parseInt(status) || 2,
+        priority: parseInt(priority) || 1,
+        type: type || 'default',
         tags: tagArray.length > 0 ? tagArray : undefined,
-        source: 2, // Web
+        source: 2,
       });
       navigate(`/tickets/${response.data._id}`);
     } catch (err) {
@@ -54,10 +65,15 @@ function NewTicket() {
     }
   };
 
+  const handleBack = () => {
+    navigate('/');
+  };
+
   return (
     <Grid container sx={{ padding: 2 }}>
       <Grid>
         <Typography variant="h4">New Ticket</Typography>
+        <Button variant="outlined" onClick={handleBack} sx={{ mb: 2 }}>Back to Dashboard</Button>
         <form onSubmit={handleSubmit}>
           <TextField
             label="Subject"
@@ -66,19 +82,28 @@ function NewTicket() {
             fullWidth
             margin="normal"
           />
-          <TextField
-            label="Description"
+          <ReactQuill
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            fullWidth
-            margin="normal"
-            multiline
-            rows={4}
+            onChange={setDescription}
+            modules={{ toolbar: [['bold', 'italic', 'underline'], ['link']] }}
+            formats={['bold', 'italic', 'underline', 'link']}
+            style={{ marginBottom: '16px' }}
           />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Group</InputLabel>
+            <Select value={groupId} onChange={(e) => setGroupId(e.target.value)} label="Group">
+              {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'group').map(field => (
+                <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Agent</InputLabel>
             <Select value={agentId} onChange={(e) => setAgentId(e.target.value)} label="Agent">
-              {agent && <MenuItem value={agent._id}>{agent.name}</MenuItem>}
+              <MenuItem value="">Unassigned</MenuItem>
+              {groupId && agentsByGroup[groupId] && agentsByGroup[groupId].map(a => (
+                <MenuItem key={a.id} value={a.id}>{`${groupId === '9000171202' ? 'IT' : 'RE'} / ${a.name}`}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
@@ -93,14 +118,6 @@ function NewTicket() {
             <InputLabel>Status</InputLabel>
             <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
               {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'status').map(field => (
-                <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Group</InputLabel>
-            <Select value={groupId} onChange={(e) => setGroupId(e.target.value)} label="Group">
-              {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'group').map(field => (
                 <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
               ))}
             </Select>
