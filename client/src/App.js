@@ -12,7 +12,7 @@ const theme = createTheme({
 const NavBar = styled(AppBar)(({ theme }) => ({ marginBottom: theme.spacing(2) }));
 const TicketCard = styled(Card)(({ theme }) => ({
   minWidth: 300,
-  margin: theme.spacing(3), // Increased margin for better spacing
+  margin: theme.spacing(3),
   '&:hover': { boxShadow: theme.shadows[6] },
   transition: 'box-shadow 0.3s',
 }));
@@ -147,7 +147,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={4} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-around' }}> {/* Changed to space-around for even distribution */}
+    <Grid container spacing={5} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-around' }}> {/* Increased spacing to 5, kept justifyContent */}
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
@@ -156,7 +156,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         <Typography sx={{ m: 'auto' }}>No tickets found</Typography>
       ) : (
         tickets.map((ticket) => (
-          <Grid width={{ xs: 12, sm: 6, md: 4 }} key={ticket._id}> {/* Adjusted md to 4 for fewer columns */}
+          <Grid width={{ xs: 12, sm: 6, md: 6 }} key={ticket._id}> {/* Increased md to 6 for wider cards */}
             <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)} sx={{ minWidth: 300, padding: theme.spacing(1) }}>
               <CardContent sx={{ padding: theme.spacing(2) }}>
                 <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
