@@ -129,7 +129,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
       });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
-      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id?.toString() || t.responder_id?.toString() || '' }))); // Ensure responder_id is a string
+      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id?.toString() || '' }))); // Ensure responder_id is a string _id
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
@@ -165,7 +165,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={12} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <Grid container spacing={15} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
@@ -176,7 +176,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
         tickets.map((ticket) => (
           <Grid width={{ xs: 12, sm: 12, md: 12 }} key={ticket._id}>
             <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)} sx={{ minWidth: 300, padding: theme.spacing(1) }}>
-              <CardContent sx={{ padding: theme.spacing(2), display: 'flex', flexDirection: 'column', gap: theme.spacing(2) }}>
+              <CardContent sx={{ padding: theme.spacing(2), display: 'flex', flexDirection: 'column', gap: theme.spacing(3) }}>
                 <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
                   {ticket.subject}
                 </Typography>
