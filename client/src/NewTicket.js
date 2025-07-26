@@ -106,25 +106,31 @@ function NewTicket() {
           <FormControl fullWidth margin="normal">
             <InputLabel>Priority</InputLabel>
             <Select value={priority} onChange={(e) => setPriority(e.target.value)} label="Priority">
-              {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'priority').map(field => (
-                <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
-              ))}
+              {Array.isArray(ticketFields) && ticketFields
+                .filter(field => field.type === 'priority')
+                .map(field => (
+                  <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+                ))}
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Status</InputLabel>
             <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
-              {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'status').map(field => (
-                <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
-              ))}
+              {Array.isArray(ticketFields) && ticketFields
+                .filter(field => field.type === 'status')
+                .map(field => (
+                  <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+                ))}
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
             <InputLabel>Type</InputLabel>
             <Select value={type} onChange={(e) => setType(e.target.value)} label="Type">
-              {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'type').map(field => (
-                <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
-              ))}
+              {Array.isArray(ticketFields) && ticketFields
+                .filter(field => field.type === 'type')
+                .map(field => (
+                  <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+                ))}
             </Select>
           </FormControl>
           <TextField
