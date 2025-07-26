@@ -3,7 +3,6 @@ import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
 import { AppBar, Toolbar, Button, Typography, Grid, Card, CardContent, CardActions, CircularProgress, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import axios from 'axios';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import debounce from 'lodash/debounce';
 
 const theme = createTheme({
   palette: { primary: { main: '#1976d2' }, secondary: { main: '#dc004e' } },
@@ -97,7 +96,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
   const [error, setError] = useState(null);
   const ticketRefs = useRef({});
 
-  const fetchTickets = useCallback(debounce(async () => {
+  const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
       const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
@@ -115,19 +114,22 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         },
       });
       const ticketData = response.data.tickets || [];
-      console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
-      setTickets(ticketData);
+      console.log('Fetched tickets before set:', ticketData);
+      setTickets(prevTickets => {
+        const newTickets = ticketData.length > 0 ? ticketData : prevTickets;
+        console.log('Setting tickets to:', newTickets);
+        return newTickets;
+      });
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
     } finally {
       setLoading(false);
     }
-  }, 300), [filter, sortField, sortOrder, search]);
+  }, [filter, sortField, sortOrder, search]);
 
   useEffect(() => {
     fetchTickets();
-    return () => fetchTickets.cancel(); // Cleanup debounce
   }, [fetchTickets]);
 
   useEffect(() => {
