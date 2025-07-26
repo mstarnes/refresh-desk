@@ -25,7 +25,9 @@ function NewTicket() {
         const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
         setAgent(agentResponse.data);
         const fieldsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`);
-        setTicketFields(fieldsResponse.data || []);
+        const fieldsData = fieldsResponse.data || [];
+        console.log('Ticket fields data:', fieldsData); // Debug ticketFields
+        setTicketFields(fieldsData);
         const groupsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/groups`);
         setGroups(groupsResponse.data || []);
       } catch (err) {
@@ -107,9 +109,9 @@ function NewTicket() {
             <InputLabel>Priority</InputLabel>
             <Select value={priority} onChange={(e) => setPriority(e.target.value)} label="Priority">
               {Array.isArray(ticketFields) && ticketFields
-                .filter(field => field.type === 'priority')
+                .filter(field => field.type === 'priority' && field.value !== undefined)
                 .map(field => (
-                  <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+                  <MenuItem key={field._id} value={field.value}>{field.label || field.value}</MenuItem>
                 ))}
             </Select>
           </FormControl>
@@ -117,9 +119,9 @@ function NewTicket() {
             <InputLabel>Status</InputLabel>
             <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
               {Array.isArray(ticketFields) && ticketFields
-                .filter(field => field.type === 'status')
+                .filter(field => field.type === 'status' && field.value !== undefined)
                 .map(field => (
-                  <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+                  <MenuItem key={field._id} value={field.value}>{field.label || field.value}</MenuItem>
                 ))}
             </Select>
           </FormControl>
@@ -127,9 +129,9 @@ function NewTicket() {
             <InputLabel>Type</InputLabel>
             <Select value={type} onChange={(e) => setType(e.target.value)} label="Type">
               {Array.isArray(ticketFields) && ticketFields
-                .filter(field => field.type === 'type')
+                .filter(field => field.type === 'type' && field.value !== undefined)
                 .map(field => (
-                  <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+                  <MenuItem key={field._id} value={field.value}>{field.label || field.value}</MenuItem>
                 ))}
             </Select>
           </FormControl>

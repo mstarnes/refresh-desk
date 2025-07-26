@@ -22,7 +22,6 @@ function App() {
   const [sortField, setSortField] = useState(() => localStorage.getItem('sortField') || 'updated_at');
   const [sortOrder, setSortOrder] = useState(() => localStorage.getItem('sortOrder') || 'desc');
   const [search, setSearch] = useState(() => localStorage.getItem('search') || '');
-  const [agent, setAgent] = useState(null);
 
   useEffect(() => {
     const oldKeys = ['filterType', 'searchQuery', 'sortBy', 'sortDirection'];
@@ -44,7 +43,6 @@ function App() {
   const handleAgentChange = async (ticketId, newAgentId) => {
     try {
       await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { responder_id: newAgentId });
-      setAgent(newAgentId);
     } catch (err) {
       console.error('Error updating agent:', err);
     }
@@ -109,6 +107,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [groups, setGroups] = useState([]);
   const ticketRefs = useRef({});
 
   const fetchTickets = useCallback(async () => {
@@ -130,7 +129,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
       });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
-      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id || t.responder_id || '' }))); // Ensure responder_id is a string
+      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id || t.responder_id || '' })));
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
@@ -141,6 +140,15 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   useEffect(() => {
     fetchTickets();
+    const fetchGroups = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/groups`);
+        setGroups(response.data || []);
+      } catch (err) {
+        console.error('Error fetching groups:', err);
+      }
+    };
+    fetchGroups();
   }, [fetchTickets]);
 
   useEffect(() => {
@@ -157,7 +165,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={8} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <Grid container spacing={10} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
@@ -184,7 +192,11 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
                     sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
                   >
                     <MenuItem value="">Unassigned</MenuItem>
-                    {/* Placeholder; update with dynamic agents if API available */}
+                    {groups.map(group => (
+                      group.agents.map(agent => (
+                        <MenuItem key={agent._id} value={agent._id}>{`${group.name} / ${agent.name}`}</MenuItem>
+                      ))
+                    ))}
                   </Select>
                 </FormControl>
               </CardContent>
