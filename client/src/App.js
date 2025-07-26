@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
 import { AppBar, Toolbar, Button, Typography, Grid, Card, CardContent, CardActions, CircularProgress, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import axios from 'axios';
-import { useState, useEffect, useRef, useCallback } from 'react'; // Corrected import for useCallback
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const theme = createTheme({
   palette: { primary: { main: '#1976d2' }, secondary: { main: '#dc004e' } },
@@ -106,7 +106,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       const agentId = agentResponse.data._id;
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/search`, {
         params: {
-          account_id: process.env.REACT_APP_ACCOUNT_ID,
+          account_id: process.env.REACT_APP_API_URL,
           agent_id: agentId,
           q: search || undefined,
           filters: filter || undefined,
@@ -147,18 +147,18 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     let resetTimeout;
     const handleReset = () => {
       setTickets([]);
-      resetTimeout = setTimeout(fetchTickets, 0); // Delay to ensure state reset
+      resetTimeout = setTimeout(fetchTickets, 0);
     };
     document.addEventListener('reset-tickets', handleReset);
     return () => {
       document.removeEventListener('reset-tickets', handleReset);
-      clearTimeout(resetTimeout); // Cleanup timeout
+      clearTimeout(resetTimeout);
     };
   }, []);
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={2} sx={{ padding: 2, maxWidth: '100%' }}>
+    <Grid container spacing={3} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap' }}> {/* Increased spacing to 3, added flexWrap */}
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
