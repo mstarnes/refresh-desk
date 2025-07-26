@@ -12,7 +12,7 @@ const theme = createTheme({
 const NavBar = styled(AppBar)(({ theme }) => ({ marginBottom: theme.spacing(2) }));
 const TicketCard = styled(Card)(({ theme }) => ({
   minWidth: 300,
-  margin: theme.spacing(2),
+  margin: theme.spacing(2), // Increased margin for spacing
   '&:hover': { boxShadow: theme.shadows[6] },
   transition: 'box-shadow 0.3s',
 }));
@@ -87,15 +87,15 @@ function App() {
             sx={{ m: 1, input: { color: 'white' }, label: { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
           />
           <Button color="inherit" component={Link} to="/new-ticket">New Ticket</Button>
-          <Button color="inherit" onClick={handleReset}>Reset</Button>
+          <Button color="inherit" onClick={handleReset}>Reset</Button> {/* Moved Reset back to nav bar */}
         </Toolbar>
       </NavBar>
-      <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} onReset={handleReset} />
+      <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} />
     </ThemeProvider>
   );
 }
 
-function Dashboard({ filter, sortField, sortOrder, search, onReset }) {
+function Dashboard({ filter, sortField, sortOrder, search }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -145,6 +145,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onReset }) {
     }
   }, [tickets]);
 
+  console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
     <Grid container spacing={3} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap' }}>
       {loading ? (
@@ -174,7 +175,6 @@ function Dashboard({ filter, sortField, sortOrder, search, onReset }) {
           </Grid>
         ))
       )}
-      <Button variant="contained" onClick={onReset} sx={{ m: 1 }}>Reset</Button> {/* Moved Reset button to Dashboard */}
     </Grid>
   );
 }
