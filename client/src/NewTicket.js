@@ -19,9 +19,10 @@ function NewTicket() {
         const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
         setAgent(agentResponse.data);
         const fieldsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`);
-        setTicketFields(fieldsResponse.data);
+        setTicketFields(fieldsResponse.data || []); // Ensure array if data is undefined
       } catch (err) {
         console.error('Error fetching agent or ticket fields:', err);
+        setTicketFields([]); // Default to empty array on error
       }
     };
     fetchAgentAndFields();
@@ -37,8 +38,8 @@ function NewTicket() {
         group_id: '6868527ff5d2b14198b5269a',
         requester_id: agent?._id,
         responder_id: agentId || agent?._id,
-        status: parseInt(status) || 2, // Default to Open (2) if not selected
-        priority: parseInt(priority) || 1, // Default to Low (1) if not selected
+        status: parseInt(status) || 2, // Default to Open (2)
+        priority: parseInt(priority) || 1, // Default to Low (1)
         source: 2, // Web
       });
       navigate(`/tickets/${response.data._id}`);
@@ -77,7 +78,7 @@ function NewTicket() {
           <FormControl fullWidth margin="normal">
             <InputLabel>Priority</InputLabel>
             <Select value={priority} onChange={(e) => setPriority(e.target.value)} label="Priority">
-              {ticketFields.filter(field => field.type === 'priority').map(field => (
+              {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'priority').map(field => (
                 <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
               ))}
             </Select>
@@ -85,7 +86,7 @@ function NewTicket() {
           <FormControl fullWidth margin="normal">
             <InputLabel>Status</InputLabel>
             <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
-              {ticketFields.filter(field => field.type === 'status').map(field => (
+              {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'status').map(field => (
                 <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
               ))}
             </Select>
