@@ -12,7 +12,7 @@ const theme = createTheme({
 const NavBar = styled(AppBar)(({ theme }) => ({ marginBottom: theme.spacing(2) }));
 const TicketCard = styled(Card)(({ theme }) => ({
   minWidth: 300,
-  margin: theme.spacing(2), // Increased margin for spacing
+  margin: theme.spacing(3), // Increased margin to 3 for better spacing
   '&:hover': { boxShadow: theme.shadows[6] },
   transition: 'box-shadow 0.3s',
 }));
@@ -87,7 +87,7 @@ function App() {
             sx={{ m: 1, input: { color: 'white' }, label: { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
           />
           <Button color="inherit" component={Link} to="/new-ticket">New Ticket</Button>
-          <Button color="inherit" onClick={handleReset}>Reset</Button> {/* Moved Reset back to nav bar */}
+          <Button color="inherit" onClick={handleReset}>Reset</Button>
         </Toolbar>
       </NavBar>
       <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} />
@@ -147,7 +147,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={3} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap' }}>
+    <Grid container spacing={4} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}> {/* Increased spacing to 4, added justifyContent */}
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (

@@ -7,6 +7,8 @@ function NewTicket() {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [agentId, setAgentId] = useState('');
+  const [priority, setPriority] = useState('');
+  const [status, setStatus] = useState('');
   const [ticketFields, setTicketFields] = useState([]);
   const [agent, setAgent] = useState(null);
   const navigate = useNavigate();
@@ -32,10 +34,11 @@ function NewTicket() {
         subject,
         description,
         account_id: process.env.REACT_APP_ACCOUNT_ID,
-        group_id: '6868527ff5d2b14198b5269a', // IT group ID
+        group_id: '6868527ff5d2b14198b5269a',
         requester_id: agent?._id,
         responder_id: agentId || agent?._id,
-        status: 2, // Open
+        status: parseInt(status) || 2, // Default to Open (2) if not selected
+        priority: parseInt(priority) || 1, // Default to Low (1) if not selected
         source: 2, // Web
       });
       navigate(`/tickets/${response.data._id}`);
@@ -69,6 +72,22 @@ function NewTicket() {
             <InputLabel>Agent</InputLabel>
             <Select value={agentId} onChange={(e) => setAgentId(e.target.value)} label="Agent">
               {agent && <MenuItem value={agent._id}>{agent.name}</MenuItem>}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Priority</InputLabel>
+            <Select value={priority} onChange={(e) => setPriority(e.target.value)} label="Priority">
+              {ticketFields.filter(field => field.type === 'priority').map(field => (
+                <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Status</InputLabel>
+            <Select value={status} onChange={(e) => setStatus(e.target.value)} label="Status">
+              {ticketFields.filter(field => field.type === 'status').map(field => (
+                <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
