@@ -116,8 +116,11 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
-      setTickets(ticketData);
-      if (ticketData.length > 0) forceUpdate(); // Force re-render only if data exists
+      setTickets(prevTickets => {
+        const newTickets = ticketData.length > 0 ? ticketData : prevTickets;
+        if (newTickets !== prevTickets) forceUpdate(); // Force re-render only if data changes
+        return newTickets;
+      });
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
