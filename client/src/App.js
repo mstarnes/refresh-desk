@@ -98,7 +98,7 @@ function App() {
           <Button color="inherit" onClick={handleReset}>Reset</Button>
         </Toolbar>
       </NavBar>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}> {/* Wrapper to enforce layout */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%', overflowX: 'auto' }}> {/* Added overflowX for horizontal scroll if needed */}
         <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} onAgentChange={handleAgentChange} />
       </div>
     </ThemeProvider>
@@ -130,30 +130,29 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
         },
       });
       const ticketData = response.data.tickets || [];
-      console.log('Fetched tickets data:', ticketData); // Debug ticket data
-      setTickets(ticketData.map(t => {
-        const validResponderId = groups.flatMap(g => g.agents).find(a => a._id === t.responder_id?._id || a.id === t.responder_id)?._id || '';
-        return { ...t, responder_id: validResponderId };
-      }));
+      console.log('Fetched tickets data:', ticketData);
+      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id?.toString() || '' })));
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
     } finally {
       setLoading(false);
     }
-  }, [filter, sortField, sortOrder, search, groups]);
+  }, [filter, sortField, sortOrder, search]);
 
   useEffect(() => {
+    let mounted = true;
     fetchTickets();
     const fetchGroups = async () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/groups`);
-        setGroups(response.data || []);
+        if (mounted) setGroups(response.data || []);
       } catch (err) {
         console.error('Error fetching groups:', err);
       }
     };
     fetchGroups();
+    return () => { mounted = false; }; // Cleanup to prevent re-render loop
   }, [fetchTickets]);
 
   useEffect(() => {
