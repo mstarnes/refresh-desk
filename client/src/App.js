@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
 import { AppBar, Toolbar, Button, Typography, Grid, Card, CardContent, CardActions, CircularProgress, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
 import axios from 'axios';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react'; // Corrected import for useCallback
 
 const theme = createTheme({
   palette: { primary: { main: '#1976d2' }, secondary: { main: '#dc004e' } },
@@ -11,7 +11,10 @@ const theme = createTheme({
 
 const NavBar = styled(AppBar)(({ theme }) => ({ marginBottom: theme.spacing(2) }));
 const TicketCard = styled(Card)(({ theme }) => ({
-  cursor: 'pointer', '&:hover': { boxShadow: theme.shadows[6] }, transition: 'box-shadow 0.3s',
+  minWidth: 300,
+  margin: theme.spacing(1),
+  '&:hover': { boxShadow: theme.shadows[6] },
+  transition: 'box-shadow 0.3s',
 }));
 
 function App() {
@@ -114,12 +117,8 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         },
       });
       const ticketData = response.data.tickets || [];
-      console.log('Fetched tickets before set:', ticketData);
-      setTickets(prevTickets => {
-        const newTickets = ticketData.length > 0 ? ticketData : prevTickets;
-        console.log('Setting tickets to:', newTickets);
-        return newTickets;
-      });
+      console.log('Fetched tickets length:', ticketData.length, 'data:', ticketData);
+      setTickets(ticketData);
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
@@ -145,17 +144,21 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
   }, [tickets]);
 
   useEffect(() => {
+    let resetTimeout;
     const handleReset = () => {
       setTickets([]);
-      fetchTickets();
+      resetTimeout = setTimeout(fetchTickets, 0); // Delay to ensure state reset
     };
     document.addEventListener('reset-tickets', handleReset);
-    return () => document.removeEventListener('reset-tickets', handleReset);
-  }, [fetchTickets]);
+    return () => {
+      document.removeEventListener('reset-tickets', handleReset);
+      clearTimeout(resetTimeout); // Cleanup timeout
+    };
+  }, []);
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={2} sx={{ padding: 2 }}>
+    <Grid container spacing={2} sx={{ padding: 2, maxWidth: '100%' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
@@ -164,10 +167,10 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         <Typography sx={{ m: 'auto' }}>No tickets found</Typography>
       ) : (
         tickets.map((ticket) => (
-          <Grid width={{ xs: 12, sm: 6, md: 4 }} key={ticket._id}>
-            <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)}>
-              <CardContent>
-                <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`}>
+          <Grid width={{ xs: 12, sm: 6, md: 3 }} key={ticket._id}>
+            <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)} sx={{ minWidth: 300, padding: theme.spacing(1) }}>
+              <CardContent sx={{ padding: theme.spacing(2) }}>
+                <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
                   {ticket.subject}
                 </Typography>
                 <Typography>Status: {ticket.status_name || 'Unknown'}</Typography>
