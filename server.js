@@ -430,9 +430,53 @@ app.get('/api/ticketfields', async (req, res) => {
   }
 });
 
+app.get('/api/tickets/search', async (req, res) => {
+  try {
+    const { q, limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
+    let query = {};
+    if (q) {
+      query.$or = [
+        { display_id: parseInt(q) || -1 },
+        { subject: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { description_html: { $regex: q, $options: 'i' } },
+        { 'conversations.body_text': { $regex: q, $options: 'i' } },
+        { 'conversations.body': { $regex: q, $options: 'i' } },
+        { 'requester.name': { $regex: q, $options: 'i' } },
+        { responder_name: { $regex: q, $options: 'i' } },
+      ];
+    }
+    if (filters === 'newAndMyOpen') {
+      const agent = await Agent.findOne({ email: userId });
+      const filterQuery = {
+        $or: [
+          { responder_id: null },
+          { responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') },
+        ],
+        status: { $in: [2, 3] },
+      };
+      query = q ? { $and: [query, filterQuery] } : filterQuery;
+    } else if (filters === 'closed') {
+      query = q ? { $and: [query, { status: { $in: [4, 5] } }] } : { status: { $in: [4, 5] } };
+    } else if (filters === 'openTickets') {
+      query = q ? { $and: [query, { status: { $in: [2, 3] } }] } : { status: { $in: [2, 3] } };
+    }
+    const tickets = await Ticket.find(query)
+      .sort({ [sort]: direction === 'desc' ? -1 : 1 })
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit))
+      .populate('responder_id', 'name')
+      .populate('company_id', 'name');
+    const total = await Ticket.countDocuments(query);
+    res.json({ tickets, total });
+  } catch (err) {
+    console.error('Error searching tickets:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Search endpoint
-app.get('/api/tickets/search', async (req, res) => {
+app.get('/api/tickets/search-old', async (req, res) => {
   try {
     const { q, limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
     let query = {

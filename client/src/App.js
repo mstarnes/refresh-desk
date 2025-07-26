@@ -98,28 +98,27 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
 
   const fetchTickets = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
       const agentId = agentResponse.data._id;
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/search`, {
         params: {
           account_id: process.env.REACT_APP_ACCOUNT_ID,
           agent_id: agentId,
-          sort_by: sortField,
-          sort_order: sortOrder,
-          limit: process.env.REACT_APP_DEFAULT_LIMIT || 10,
+          q: search || undefined,
           filters: filter || undefined,
-          q: search || undefined, // Add search param
+          sort: sortField,
+          direction: sortOrder,
+          limit: process.env.REACT_APP_DEFAULT_LIMIT || 10,
+          page: 1,
         },
       });
-      const ticketData = Array.isArray(response.data.tickets) ? response.data.tickets : Array.isArray(response.data) ? response.data : [];
+      const ticketData = response.data.tickets || [];
       console.log('Fetched tickets:', ticketData);
-      setTickets([...ticketData]);
+      setTickets(ticketData.length > 0 ? ticketData : tickets); // Preserve previous tickets on error
     } catch (err) {
       console.error('Error fetching tickets:', err);
-      setError('Failed to load tickets');
-      setTickets([]);
+      setError(err.message || 'Failed to load tickets');
     } finally {
       setLoading(false);
     }
@@ -157,7 +156,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
         <Typography sx={{ m: 'auto', color: 'error.main' }}>{error}</Typography>
-      ) : tickets.length === 0 ? (
+      ) : !tickets || tickets.length === 0 ? (
         <Typography sx={{ m: 'auto' }}>No tickets found</Typography>
       ) : (
         tickets.map((ticket) => (
