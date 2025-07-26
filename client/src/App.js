@@ -12,7 +12,7 @@ const theme = createTheme({
 const NavBar = styled(AppBar)(({ theme }) => ({ marginBottom: theme.spacing(2) }));
 const TicketCard = styled(Card)(({ theme }) => ({
   minWidth: 300,
-  margin: theme.spacing(4), // Increased margin for spacing
+  margin: theme.spacing(4),
   '&:hover': { boxShadow: theme.shadows[6] },
   transition: 'box-shadow 0.3s',
 }));
@@ -22,7 +22,7 @@ function App() {
   const [sortField, setSortField] = useState(() => localStorage.getItem('sortField') || 'updated_at');
   const [sortOrder, setSortOrder] = useState(() => localStorage.getItem('sortOrder') || 'desc');
   const [search, setSearch] = useState(() => localStorage.getItem('search') || '');
-  const [agent, setAgent] = useState(null); // For PATCH on agent change
+  const [agent, setAgent] = useState(null);
 
   useEffect(() => {
     const oldKeys = ['filterType', 'searchQuery', 'sortBy', 'sortDirection'];
@@ -44,7 +44,7 @@ function App() {
   const handleAgentChange = async (ticketId, newAgentId) => {
     try {
       await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { responder_id: newAgentId });
-      setAgent(newAgentId); // Update local state for UI
+      setAgent(newAgentId);
     } catch (err) {
       console.error('Error updating agent:', err);
     }
@@ -157,7 +157,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={5} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-around' }}>
+    <Grid container spacing={6} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'space-between' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
@@ -166,16 +166,16 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
         <Typography sx={{ m: 'auto' }}>No tickets found</Typography>
       ) : (
         tickets.map((ticket) => (
-          <Grid width={{ xs: 12, sm: 12, md: 12 }} key={ticket._id}> {/* Changed to 12 for single column */}
+          <Grid width={{ xs: 12, sm: 12, md: 6 }} key={ticket._id}>
             <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)} sx={{ minWidth: 300, padding: theme.spacing(1) }}>
-              <CardContent sx={{ padding: theme.spacing(2) }}>
+              <CardContent sx={{ padding: theme.spacing(2), display: 'flex', flexDirection: 'column', gap: theme.spacing(2) }}>
                 <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
                   {ticket.subject}
                 </Typography>
                 <Typography>Status: {ticket.status_name || 'Unknown'}</Typography>
                 <Typography>Priority: {ticket.priority_name || 'Unknown'}</Typography>
                 <Typography>Requester: {ticket.requester_name || 'Unknown'}</Typography>
-                <FormControl fullWidth margin="normal">
+                <FormControl fullWidth>
                   <InputLabel>Agent</InputLabel>
                   <Select
                     value={ticket.responder_id || ''}
@@ -184,7 +184,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
                     sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
                   >
                     <MenuItem value="">Unassigned</MenuItem>
-                    {/* Placeholder for dynamic agents; update with actual data if available */}
+                    {/* Placeholder; update with dynamic agents if API available */}
                   </Select>
                 </FormControl>
               </CardContent>

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Grid, Select, MenuItem, FormControl, InputLabel, Typography } from '@mui/material';
 import axios from 'axios';
-import ReactQuill from 'react-quill'; // For rich text editor
-import 'react-quill/dist/quill.snow.css'; // Import Quill styles
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 function NewTicket() {
   const [subject, setSubject] = useState('');
@@ -15,7 +15,7 @@ function NewTicket() {
   const [type, setType] = useState('');
   const [tags, setTags] = useState('');
   const [ticketFields, setTicketFields] = useState([]);
-  const [agentsByGroup, setAgentsByGroup] = useState({});
+  const [groups, setGroups] = useState([]);
   const [agent, setAgent] = useState(null);
   const navigate = useNavigate();
 
@@ -26,17 +26,12 @@ function NewTicket() {
         setAgent(agentResponse.data);
         const fieldsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`);
         setTicketFields(fieldsResponse.data || []);
-        // Fetch groups and agents
-        const groupsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/groups`); // Assuming an endpoint
-        const groupsData = groupsResponse.data || [];
-        const agentsMap = {};
-        groupsData.forEach(group => {
-          agentsMap[group.group.id] = group.group.agents.map(a => ({ id: a.id, name: a.name }));
-        });
-        setAgentsByGroup(agentsMap);
+        const groupsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/groups`);
+        setGroups(groupsResponse.data || []);
       } catch (err) {
         console.error('Error fetching agent, fields, or groups:', err);
         setTicketFields([]);
+        setGroups([]);
       }
     };
     fetchAgentAndFields();
@@ -69,6 +64,8 @@ function NewTicket() {
     navigate('/');
   };
 
+  const agentsForGroup = groupId ? groups.find(g => g._id === groupId)?.agents || [] : [];
+
   return (
     <Grid container sx={{ padding: 2 }}>
       <Grid>
@@ -91,9 +88,9 @@ function NewTicket() {
           />
           <FormControl fullWidth margin="normal">
             <InputLabel>Group</InputLabel>
-            <Select value={groupId} onChange={(e) => setGroupId(e.target.value)} label="Group">
-              {Array.isArray(ticketFields) && ticketFields.filter(field => field.type === 'group').map(field => (
-                <MenuItem key={field._id} value={field.value}>{field.label}</MenuItem>
+            <Select value={groupId} onChange={(e) => { setGroupId(e.target.value); setAgentId(''); }} label="Group">
+              {Array.isArray(groups) && groups.map(group => (
+                <MenuItem key={group._id} value={group._id}>{group.name}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -101,8 +98,8 @@ function NewTicket() {
             <InputLabel>Agent</InputLabel>
             <Select value={agentId} onChange={(e) => setAgentId(e.target.value)} label="Agent">
               <MenuItem value="">Unassigned</MenuItem>
-              {groupId && agentsByGroup[groupId] && agentsByGroup[groupId].map(a => (
-                <MenuItem key={a.id} value={a.id}>{`${groupId === '9000171202' ? 'IT' : 'RE'} / ${a.name}`}</MenuItem>
+              {Array.isArray(agentsForGroup) && agentsForGroup.map(a => (
+                <MenuItem key={a._id} value={a._id}>{`${groups.find(g => g._id === groupId)?.name || ''} / ${a.name}`}</MenuItem>
               ))}
             </Select>
           </FormControl>
