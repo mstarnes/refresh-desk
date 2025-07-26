@@ -12,7 +12,7 @@ const theme = createTheme({
 const NavBar = styled(AppBar)(({ theme }) => ({ marginBottom: theme.spacing(2) }));
 const TicketCard = styled(Card)(({ theme }) => ({
   minWidth: 300,
-  margin: theme.spacing(1),
+  margin: theme.spacing(2),
   '&:hover': { boxShadow: theme.shadows[6] },
   transition: 'box-shadow 0.3s',
 }));
@@ -24,6 +24,8 @@ function App() {
   const [search, setSearch] = useState(() => localStorage.getItem('search') || '');
 
   useEffect(() => {
+    const oldKeys = ['filterType', 'searchQuery', 'sortBy', 'sortDirection'];
+    oldKeys.forEach(key => localStorage.removeItem(key));
     localStorage.setItem('filter', filter);
     localStorage.setItem('sortField', sortField);
     localStorage.setItem('sortOrder', sortOrder);
@@ -88,12 +90,12 @@ function App() {
           <Button color="inherit" onClick={handleReset}>Reset</Button>
         </Toolbar>
       </NavBar>
-      <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} />
+      <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} onReset={handleReset} />
     </ThemeProvider>
   );
 }
 
-function Dashboard({ filter, sortField, sortOrder, search }) {
+function Dashboard({ filter, sortField, sortOrder, search, onReset }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -106,7 +108,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       const agentId = agentResponse.data._id;
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/search`, {
         params: {
-          account_id: process.env.REACT_APP_API_URL,
+          account_id: process.env.REACT_APP_ACCOUNT_ID,
           agent_id: agentId,
           q: search || undefined,
           filters: filter || undefined,
@@ -143,22 +145,8 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     }
   }, [tickets]);
 
-  useEffect(() => {
-    let resetTimeout;
-    const handleReset = () => {
-      setTickets([]);
-      resetTimeout = setTimeout(fetchTickets, 0);
-    };
-    document.addEventListener('reset-tickets', handleReset);
-    return () => {
-      document.removeEventListener('reset-tickets', handleReset);
-      clearTimeout(resetTimeout);
-    };
-  }, []);
-
-  console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={3} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap' }}> {/* Increased spacing to 3, added flexWrap */}
+    <Grid container spacing={3} sx={{ padding: 2, maxWidth: '100%', flexWrap: 'wrap' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
@@ -186,6 +174,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
           </Grid>
         ))
       )}
+      <Button variant="contained" onClick={onReset} sx={{ m: 1 }}>Reset</Button> {/* Moved Reset button to Dashboard */}
     </Grid>
   );
 }
