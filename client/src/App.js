@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { ThemeProvider, createTheme, styled } from '@mui/material/styles';
-import { AppBar, Toolbar, Button, Typography, Grid, Card, CardContent, CardActions, CircularProgress, Select, MenuItem, FormControl, InputLabel, TextField } from '@mui/material';
+import { AppBar, Toolbar, Button, Typography, Grid, Card, CardContent, CardActions, CircularProgress, Select, MenuItem, FormControl, InputLabel, TextField, Box } from '@mui/material';
 import axios from 'axios';
 import { useState, useEffect, useRef, useCallback } from 'react';
+
 
 const theme = createTheme({
   palette: { primary: { main: '#1976d2' }, secondary: { main: '#dc004e' } },
@@ -111,6 +112,27 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
   const [groups, setGroups] = useState([]);
   const ticketRefs = useRef({});
 
+  const [priorities, setPriorities] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+
+  const fetchPriorities = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/priorities`);
+      setPriorities(response.data || []);
+    } catch (err) {
+      console.error('Error fetching priorities:', err);
+    }
+  };
+
+  const fetchStatuses = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/statuses`);
+      setStatuses(response.data || []);
+    } catch (err) {
+      console.error('Error fetching statuses:', err);
+    }
+  };
+
   const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
@@ -130,7 +152,22 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
       });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets data:', ticketData);
-      setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id?.toString() || '' })));
+      // setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id?.toString() || '' })));
+      /*
+      setTickets(ticketData.map(t => ({
+        ...t,
+        responder_id: t.responder_id?._id?.toString() || '',
+        priority_id: t.priority?._id?.toString() || '',
+        status_id: t.status?._id?.toString() || ''
+      })));
+      */
+      setTickets(ticketData.map(t => ({
+        ...t,
+        responder_id: t.responder_id || '',
+        priority_id: t.priority || '',
+        status_id: t.status || ''
+      })));
+
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
@@ -138,6 +175,26 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
       setLoading(false);
     }
   }, [filter, sortField, sortOrder, search]);
+
+  const onPriorityChange = async (ticketId, newPriorityId) => {
+    try {
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { priority: newPriorityId });
+      setTickets(tickets.map(t => t._id === ticketId ? { ...t, priority_id: newPriorityId } : t));
+    } catch (err) {
+      console.error('Error updating priority:', err);
+    }
+  };
+
+  const onStatusChange = async (ticketId, newStatusId) => {
+    try {
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { status: newStatusId });
+      setTickets(tickets.map(t => t._id === ticketId ? { ...t, status_id: newStatusId } : t));
+    } catch (err) {
+      console.error('Error updating status:', err);
+    }
+  };
+
+
 
   useEffect(() => {
     let mounted = true;
@@ -167,6 +224,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
   }, [tickets]);
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
+
   return (
     <Grid container spacing={3} sx={{ padding: 2, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
       {loading ? (
@@ -180,19 +238,52 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
           <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 3 }} key={ticket._id}>
             <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)} sx={{ padding: theme.spacing(1) }}>
               <CardContent sx={{ padding: theme.spacing(2), display: 'flex', flexDirection: 'column', gap: theme.spacing(3) }}>
-                <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
-                  {ticket.subject}
-                </Typography>
-                <Typography>Status: {ticket.status_name || 'Unknown'}</Typography>
-                <Typography>Priority: {ticket.priority_name || 'Unknown'}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'baseline' }}>
+                  <Typography variant="subtitle1" sx={{ mr: 1, color: 'text.secondary' }}>
+                    {`#${ticket.display_id}`}
+                  </Typography>
+                  <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
+                    {ticket.subject}
+                  </Typography>
+                </Box>
                 <Typography>Requester: {ticket.requester_name || 'Unknown'}</Typography>
+                <FormControl fullWidth>
+                  <InputLabel>Priority</InputLabel>
+                  <Select
+                    value={ticket.priority_id || ''}
+                    onChange={(e) => onPriorityChange(ticket._id, e.target.value)}
+                    label="Priority"
+                    sx={{
+                      '& .MuiInputBase-input': { color: 'black !important' },
+                      '.MuiSelect-icon': { color: 'black' },
+                      '.MuiOutlinedInput-notchedOutline': { borderColor: 'grey' }
+                    }}
+                    renderValue={(value) => priorities.find(p => p._id === value)?.name || ticket.priority_name || 'Unknown'}
+                  >
+                    {priorities.map(priority => (
+                      <MenuItem key={priority._id} value={priority._id}>{priority.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
                 <FormControl fullWidth>
                   <InputLabel>Agent</InputLabel>
                   <Select
                     value={ticket.responder_id || ''}
                     onChange={(e) => onAgentChange(ticket._id, e.target.value)}
                     label="Agent"
-                    sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
+                    sx={{
+                      '& .MuiInputBase-input': { color: 'black !important' },
+                      '.MuiSelect-icon': { color: 'black' },
+                      '.MuiOutlinedInput-notchedOutline': { borderColor: 'grey' }
+                    }}
+                    renderValue={(value) => {
+                      if (!value) return 'Unassigned';
+                      for (const group of groups) {
+                        const agent = group.agents.find(a => a._id === value);
+                        if (agent) return `${group.name} / ${agent.name}`;
+                      }
+                      return 'Unknown';
+                    }}
                   >
                     <MenuItem value="">Unassigned</MenuItem>
                     {groups.map(group => (
@@ -202,12 +293,25 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
                     ))}
                   </Select>
                 </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={ticket.status_id || ''}
+                    onChange={(e) => onStatusChange(ticket._id, e.target.value)}
+                    label="Status"
+                    sx={{
+                      '& .MuiInputBase-input': { color: 'black !important' },
+                      '.MuiSelect-icon': { color: 'black' },
+                      '.MuiOutlinedInput-notchedOutline': { borderColor: 'grey' }
+                    }}
+                    renderValue={(value) => statuses.find(s => s._id === value)?.name || ticket.status_name || 'Unknown'}
+                  >
+                    {statuses.map(status => (
+                      <MenuItem key={status._id} value={status._id}>{status.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </CardContent>
-              <CardActions>
-                <Button size="small" component={Link} to={`/tickets/${ticket._id}`}>
-                  View Details
-                </Button>
-              </CardActions>
             </TicketCard>
           </Grid>
         ))
