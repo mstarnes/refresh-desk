@@ -242,7 +242,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
                   <Typography variant="subtitle1" sx={{ mr: 1, color: 'text.secondary' }}>
                     {`#${ticket.display_id}`}
                   </Typography>
-                  <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
+                  <Typography variant="subtitle1" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word', textDecoration: 'none', color: 'inherit' }}>
                     {ticket.subject}
                   </Typography>
                 </Box>
