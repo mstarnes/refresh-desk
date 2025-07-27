@@ -11,8 +11,7 @@ const theme = createTheme({
 
 const NavBar = styled(AppBar)(({ theme }) => ({ marginBottom: theme.spacing(2) }));
 const TicketCard = styled(Card)(({ theme }) => ({
-  minWidth: 300,
-  margin: theme.spacing(4),
+  width: '100%',
   '&:hover': { boxShadow: theme.shadows[6] },
   transition: 'box-shadow 0.3s',
 }));
@@ -98,7 +97,7 @@ function App() {
           <Button color="inherit" onClick={handleReset}>Reset</Button>
         </Toolbar>
       </NavBar>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%', overflowX: 'auto' }}> {/* Added overflowX for horizontal scroll if needed */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%', overflowX: 'visible' }}>
         <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} onAgentChange={handleAgentChange} />
       </div>
     </ThemeProvider>
@@ -169,7 +168,7 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
   return (
-    <Grid container spacing={20} sx={{ padding: 2, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+    <Grid container spacing={3} sx={{ padding: 2, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
       {loading ? (
         <CircularProgress sx={{ m: 'auto' }} />
       ) : error ? (
@@ -178,8 +177,8 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
         <Typography sx={{ m: 'auto' }}>No tickets found</Typography>
       ) : (
         tickets.map((ticket) => (
-          <Grid width={{ xs: 12, sm: 12, md: 12 }} key={ticket._id}>
-            <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)} sx={{ minWidth: 300, padding: theme.spacing(1) }}>
+          <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 3 }} key={ticket._id}>
+            <TicketCard ref={(el) => (ticketRefs.current[ticket._id] = el)} sx={{ padding: theme.spacing(1) }}>
               <CardContent sx={{ padding: theme.spacing(2), display: 'flex', flexDirection: 'column', gap: theme.spacing(3) }}>
                 <Typography variant="h6" component={Link} to={`/tickets/${ticket._id}`} sx={{ wordBreak: 'break-word' }}>
                   {ticket.subject}
