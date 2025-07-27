@@ -194,7 +194,12 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
     }
   };
 
-
+  const getSlaStatus = (created_at) => {
+    const hoursSinceCreation = (Date.now() - new Date(created_at)) / (1000 * 60 * 60);
+    if (hoursSinceCreation > 48) return 'Overdue';
+    if (hoursSinceCreation > 24) return 'Warning';
+    return 'On Time';
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -246,7 +251,9 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
                     {ticket.subject}
                   </Typography>
                 </Box>
-                <Typography>Requester: {ticket.requester_name || 'Unknown'}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {ticket.requester_name || 'Unknown'} ({ticket.company_id ? 'Company' : 'Unknown Company'}) | Created {new Date(ticket.created_at).toLocaleDateString()} | {getSlaStatus(ticket.created_at)}
+                </Typography>
                 <FormControl fullWidth>
                   <InputLabel>Priority</InputLabel>
                   <Select
