@@ -160,22 +160,28 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   const onPriorityChange = async (ticketId, newPriorityId) => {
     try {
-      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { priority: newPriorityId });
-      setTickets(tickets.map(t => t._id === ticketId ? { ...t, priority_id: newPriorityId } : t));
+      const newPriorityName = priorities.find(p => p._id === newPriorityId).name;
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { priority: newPriorityId, priority_name: newPriorityName });
+      setTickets(tickets.map(t => t._id === ticketId ? { ...t, priority_id: newPriorityId, priority_name: newPriorityName } : t));
+      fetchTickets(); // Force refresh from DB
     } catch (err) {
       console.error('Error updating priority:', err);
+      // Optional: Add UI toast/error message here
     }
   };
 
   const onStatusChange = async (ticketId, newStatusId) => {
     try {
-      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { status: newStatusId });
-      setTickets(tickets.map(t => t._id === ticketId ? { ...t, status_id: newStatusId } : t));
+      const newStatusName = statuses.find(s => s._id === newStatusId).name;
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { status: newStatusId, status_name: newStatusName });
+      setTickets(tickets.map(t => t._id === ticketId ? { ...t, status_id: newStatusId, status_name: newStatusName } : t));
+      fetchTickets(); // Force refresh from DB
     } catch (err) {
       console.error('Error updating status:', err);
+      // Optional: Add UI toast/error message here
     }
   };
-
+  
   const getSlaStatus = (created_at) => {
     const hoursSinceCreation = (Date.now() - new Date(created_at)) / (1000 * 60 * 60);
     if (hoursSinceCreation > 48) return 'Overdue';
@@ -210,8 +216,6 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
     fetchTicketFields();
     return () => { mounted = false; };
   }, [fetchTickets]);
-
-
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
