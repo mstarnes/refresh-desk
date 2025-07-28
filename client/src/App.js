@@ -115,24 +115,6 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
   const [priorities, setPriorities] = useState([]);
   const [statuses, setStatuses] = useState([]);
 
-  const fetchPriorities = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/priorities`);
-      setPriorities(response.data || []);
-    } catch (err) {
-      console.error('Error fetching priorities:', err);
-    }
-  };
-
-  const fetchStatuses = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/statuses`);
-      setStatuses(response.data || []);
-    } catch (err) {
-      console.error('Error fetching statuses:', err);
-    }
-  };
-
   const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
@@ -212,9 +194,24 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
         console.error('Error fetching groups:', err);
       }
     };
+    const fetchTicketFields = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`);
+        if (mounted) {
+          const fields = response.data;
+          setPriorities((fields.priority || []).map(p => ({ _id: p.value, name: p.label })));
+          setStatuses((fields.status || []).map(s => ({ _id: s.value, name: s.label })));
+        }
+      } catch (err) {
+        console.error('Error fetching ticket fields:', err);
+      }
+    };
     fetchGroups();
-    return () => { mounted = false; }; // Cleanup to prevent re-render loop
+    fetchTicketFields();
+    return () => { mounted = false; };
   }, [fetchTickets]);
+
+
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
