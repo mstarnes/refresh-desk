@@ -1,0 +1,94 @@
+[
+  {
+    "group": {
+      "id": 9000171202,
+      "name": "IT",
+      "description": "Information Technology",
+      "account_id": 320932,
+      "escalate_to": 9006333765,
+      "assign_time": 86400,
+      "created_at": "2018-08-12T13:53:20-05:00",
+      "updated_at": "2024-08-08T21:18:08-05:00",
+      "ticket_assign_type": 0,
+      "business_calendar_id": null,
+      "toggle_availability": false,
+      "capping_limit": 0,
+      "group_type": 1,
+      "uid": null,
+      "additional_settings": {},
+      "agent_status_toggle": false,
+      "department_id": 1,
+      "agents": [
+        {
+          "id": 9006333765,
+          "name": "Mitch Starnes",
+          "email": "mitch.starnes@exotech.pro",
+          "created_at": "2016-01-12T21:50:50-06:00",
+          "updated_at": "2022-08-27T11:25:10-05:00",
+          "account_id": 320932,
+          "active": true,
+          "job_title": "President",
+          "phone": "682-777-4400",
+          "mobile": null,
+          "twitter_id": null,
+          "description": null,
+          "time_zone": "Central Time (US & Canada)",
+          "deleted": false,
+          "fb_profile_id": null,
+          "language": "en",
+          "address": null,
+          "external_id": null,
+          "helpdesk_agent": true,
+          "unique_external_id": null,
+          "company_id": null
+        }
+      ]
+    }
+  },
+  {
+    "group": {
+      "id": 9000171690,
+      "name": "RE",
+      "description": "Real Estate",
+      "account_id": 320932,
+      "escalate_to": null,
+      "assign_time": 1800,
+      "created_at": "2018-10-14T10:51:42-05:00",
+      "updated_at": "2024-08-08T21:18:08-05:00",
+      "ticket_assign_type": 0,
+      "business_calendar_id": null,
+      "toggle_availability": false,
+      "capping_limit": 0,
+      "group_type": 1,
+      "uid": null,
+      "additional_settings": {},
+      "agent_status_toggle": false,
+      "department_id": 1,
+      "agents": [
+        {
+          "id": 9006333765,
+          "name": "Mitch Starnes",
+          "email": "mitch.starnes@exotech.pro",
+          "created_at": "2016-01-12T21:50:50-06:00",
+          "updated_at": "2022-08-27T11:25:10-05:00",
+          "account_id": 320932,
+          "active": true,
+          "job_title": "President",
+          "phone": "682-777-4400",
+          "mobile": null,
+          "twitter_id": null,
+          "description": null,
+          "time_zone": "Central Time (US & Canada)",
+          "deleted": false,
+          "fb_profile_id": null,
+          "language": "en",
+          "address": null,
+          "external_id": null,
+          "helpdesk_agent": true,
+          "unique_external_id": null,
+          "company_id": null
+        }
+      ]
+    }
+  }
+]

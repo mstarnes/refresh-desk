@@ -55,13 +55,29 @@ function App() {
           <Typography variant="h6" sx={{ flexGrow: 1 }} component={Link} to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
             Refresh Desk
           </Typography>
+
           <FormControl sx={{ m: 1, minWidth: 120 }} variant="outlined">
-            <InputLabel sx={{ color: 'white' }}>Filter</InputLabel>
+            <InputLabel sx={{ color: 'white', '&.Mui-focused': { color: 'white' }, '&.MuiInputLabel-shrink': { color: 'white' } }}>Filter</InputLabel>
             <Select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               label="Filter"
-              sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
+              sx={{
+                color: 'white',
+                '.MuiSelect-icon': { color: 'white' },
+                '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
+                '& .MuiSelect-select': { color: 'white' },
+                '& .MuiSelect-select:focus': { backgroundColor: 'transparent' },
+                '& [aria-expanded="true"] ~ .MuiOutlinedInput-notchedOutline': { borderColor: 'white' }
+              }}
+              renderValue={(value) => {
+                if (value === '') return 'All';
+                if (value === 'newAndMyOpen') return 'New & My Open';
+                if (value === 'openTickets') return 'Open Tickets';
+                if (value === 'closed') return 'Closed';
+                return value;
+              }}
             >
               <MenuItem value="newAndMyOpen">New & My Open</MenuItem>
               <MenuItem value="openTickets">Open Tickets</MenuItem>
@@ -70,7 +86,7 @@ function App() {
             </Select>
           </FormControl>
           <FormControl sx={{ m: 1, minWidth: 120 }} variant="outlined">
-            <InputLabel sx={{ color: 'white' }}>Sort</InputLabel>
+            <InputLabel sx={{ color: 'white', '&.Mui-focused': { color: 'white' }, '&.MuiInputLabel-shrink': { color: 'white' } }}>Sort</InputLabel>
             <Select
               value={`${sortField}-${sortOrder}`}
               onChange={(e) => {
@@ -79,7 +95,15 @@ function App() {
                 setSortOrder(order);
               }}
               label="Sort"
-              sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
+              sx={{
+                color: 'white',
+                '.MuiSelect-icon': { color: 'white' },
+                '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
+                '& .MuiSelect-select': { color: 'white' },
+                '& .MuiSelect-select:focus': { backgroundColor: 'transparent' },
+                '& [aria-expanded="true"] ~ .MuiOutlinedInput-notchedOutline': { borderColor: 'white' }
+              }}
             >
               <MenuItem value="updated_at-desc">Updated (Newest)</MenuItem>
               <MenuItem value="updated_at-asc">Updated (Oldest)</MenuItem>
@@ -92,20 +116,29 @@ function App() {
             variant="outlined"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            sx={{ m: 1, input: { color: 'white' }, label: { color: 'white' }, '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' } }}
-          />
+            sx={{
+              m: 1,
+              '& .MuiInputBase-input': { color: 'white' },
+              '& .MuiInputLabel-root': { color: 'white' },
+              '& .MuiInputLabel-root.Mui-focused': { color: 'white' },
+              '& .MuiInputLabel-shrink': { color: 'white' },
+              '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'white' }
+            }}
+          />  
           <Button color="inherit" component={Link} to="/new-ticket">New Ticket</Button>
           <Button color="inherit" onClick={handleReset}>Reset</Button>
         </Toolbar>
       </NavBar>
       <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%', overflowX: 'visible' }}>
-        <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} onAgentChange={handleAgentChange} />
+        <Dashboard filter={filter} sortField={sortField} sortOrder={sortOrder} search={search} />
       </div>
     </ThemeProvider>
   );
 }
 
-function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
+function Dashboard({ filter, sortField, sortOrder, search }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -120,36 +153,27 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
     try {
       const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
       const agentId = agentResponse.data._id;
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/search`, {
-        params: {
-          account_id: process.env.REACT_APP_ACCOUNT_ID,
-          agent_id: agentId,
-          q: search || undefined,
-          filters: filter || undefined,
-          sort: sortField,
-          direction: sortOrder,
-          limit: process.env.REACT_APP_DEFAULT_LIMIT || 10,
-          page: 1,
-        },
-      });
+      const params = {
+        account_id: process.env.REACT_APP_ACCOUNT_ID,
+        q: search || undefined,
+        filters: filter || undefined,
+        sort: sortField,
+        direction: sortOrder,
+        limit: process.env.REACT_APP_DEFAULT_LIMIT || 10,
+        page: 1,
+      };
+      if (filter !== '') {
+        params.agent_id = agentId;
+      }
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets`, { params });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets data:', ticketData);
-      // setTickets(ticketData.map(t => ({ ...t, responder_id: t.responder_id?._id?.toString() || '' })));
-      /*
       setTickets(ticketData.map(t => ({
         ...t,
-        responder_id: t.responder_id?._id?.toString() || '',
-        priority_id: t.priority?._id?.toString() || '',
-        status_id: t.status?._id?.toString() || ''
+        responder_id: t.responder_id?.$oid || t.responder_id || '',
+        priority_id: t.priority || 1,
+        status_id: t.status || 2
       })));
-      */
-      setTickets(ticketData.map(t => ({
-        ...t,
-        responder_id: t.responder_id || '',
-        priority_id: t.priority || '',
-        status_id: t.status || ''
-      })));
-
     } catch (err) {
       console.error('Error fetching tickets:', err);
       setError(err.message || 'Failed to load tickets');
@@ -167,6 +191,16 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
     } catch (err) {
       console.error('Error updating priority:', err);
       // Optional: Add UI toast/error message here
+    }
+  };
+
+  const onAgentChange = async (ticketId, newAgentId, newGroupId) => {
+    try {
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { responder_id: newAgentId || null, group_id: newGroupId || null });
+      setTickets(tickets.map(t => t._id === ticketId ? { ...t, responder_id: newAgentId, group_id: newGroupId, agentValue: newAgentId ? `${newGroupId}|${newAgentId}` : '' } : t));
+      fetchTickets();
+    } catch (err) {
+      console.error('Error updating agent:', err);
     }
   };
 
@@ -191,31 +225,78 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
 
   useEffect(() => {
     let mounted = true;
-    fetchTickets();
-    const fetchGroups = async () => {
+
+    const loadData = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/groups`);
-        if (mounted) setGroups(response.data || []);
-      } catch (err) {
-        console.error('Error fetching groups:', err);
-      }
-    };
-    const fetchTicketFields = async () => {
-      try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`);
+        const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
+        const agentId = agentResponse.data._id;
+        const agentEmail = agentResponse.data.email;
+
+        const [groupsRes, fieldsRes, ticketsRes] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/api/groups`),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/search`, {
+            params: {
+              account_id: process.env.REACT_APP_ACCOUNT_ID,
+              agent_id: agentId,
+              userId: agentEmail,
+              q: search || undefined,
+              filters: filter || undefined,
+              sort: sortField,
+              direction: sortOrder,
+              limit: process.env.REACT_APP_DEFAULT_LIMIT || 10,
+              page: 1,
+            },
+          })
+        ]);
+
         if (mounted) {
-          const fields = response.data;
-          setPriorities((fields.priority || []).map(p => ({ _id: p.value, name: p.label })));
-          setStatuses((fields.status || []).map(s => ({ _id: s.value, name: s.label })));
+          const groupsData = groupsRes.data || [];
+          setGroups(groupsData);
+          const fields = fieldsRes.data;
+          setPriorities((fields.priority || []).map(p => ({ _id: p.value.toString(), name: p.label })));
+          setStatuses((fields.status || []).map(s => ({ _id: s.value.toString(), name: s.label })));
+
+          const ticketData = ticketsRes.data.tickets || [];
+          const processedTickets = ticketData.map(t => {
+            const responderId = t.responder_id?.$oid || t.responder_id || '';
+            const groupId = t.group_id || '';
+            let agentValue = '';
+            if (responderId) {
+              const group = groupsData.find(g => g._id === groupId && g.agents.find(a => a._id === responderId));
+              if (group) {
+                agentValue = `${groupId}|${responderId}`;
+              } else {
+                const fallbackGroup = groupsData.find(g => g.agents.find(a => a._id === responderId));
+                if (fallbackGroup) {
+                  agentValue = `${fallbackGroup._id}|${responderId}`;
+                }
+              }
+            }
+            return {
+              ...t,
+              responder_id: responderId,
+              group_id: groupId,
+              priority_id: t.priority || '',
+              status_id: t.status || '',
+              agentValue
+            };
+          });
+          setTickets(processedTickets);
         }
       } catch (err) {
-        console.error('Error fetching ticket fields:', err);
+        console.error('Error loading data:', err);
+        setError(err.message || 'Failed to load data');
+      } finally {
+        setLoading(false);
       }
     };
-    fetchGroups();
-    fetchTicketFields();
+
+    loadData();
+
     return () => { mounted = false; };
-  }, [fetchTickets]);
+  }, [filter, sortField, sortOrder, search]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -276,8 +357,16 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
                 <FormControl fullWidth>
                   <InputLabel>Agent</InputLabel>
                   <Select
-                    value={ticket.responder_id || ''}
-                    onChange={(e) => onAgentChange(ticket._id, e.target.value)}
+                    value={ticket.agentValue || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (!value) {
+                        onAgentChange(ticket._id, '', '');
+                      } else {
+                        const [groupId, agentId] = value.split('|');
+                        onAgentChange(ticket._id, agentId, groupId);
+                      }
+                    }}
                     label="Agent"
                     sx={{
                       '& .MuiInputBase-input': { color: 'black !important' },
@@ -286,17 +375,19 @@ function Dashboard({ filter, sortField, sortOrder, search, onAgentChange }) {
                     }}
                     renderValue={(value) => {
                       if (!value) return 'Unassigned';
-                      for (const group of groups) {
-                        const agent = group.agents.find(a => a._id === value);
+                      const [groupId, agentId] = value.split('|');
+                      const group = groups.find(g => g._id === groupId);
+                      if (group) {
+                        const agent = group.agents.find(a => a._id === agentId);
                         if (agent) return `${group.name} / ${agent.name}`;
                       }
-                      return 'Unknown';
+                      return ticket.responder_name || 'Unknown';
                     }}
                   >
                     <MenuItem value="">Unassigned</MenuItem>
                     {groups.map(group => (
                       group.agents.map(agent => (
-                        <MenuItem key={agent._id} value={agent._id}>{`${group.name} / ${agent.name}`}</MenuItem>
+                        <MenuItem key={agent._id} value={`${group._id}|${agent._id}`}>{`${group.name} / ${agent.name}`}</MenuItem>
                       ))
                     ))}
                   </Select>

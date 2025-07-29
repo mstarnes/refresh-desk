@@ -1,0 +1,14 @@
+[
+  {
+    "id": 9000033278,
+    "name": "EXOTECH.PRO Active IT Services",
+    "product_id": null,
+    "to_email": "helpdesk@exotech.pro",
+    "reply_email": "helpdesk@exotech.pro",
+    "group_id": null,
+    "primary_role": true,
+    "active": true,
+    "created_at": "2016-01-13T03:50:48Z",
+    "updated_at": "2016-01-13T04:49:43Z"
+  }
+]

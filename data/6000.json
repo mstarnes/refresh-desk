@@ -1,0 +1,219 @@
+[{
+  "_id": {
+    "$oid": "68685289f5d2b14198b5d5f5"
+  },
+  "id": 9239375595,
+  "description": "================== Rackspace Monitoring Notification ===================\r\n\r\nEntity: Server-04\r\nCheck: Memory (agent.memory)\r\nAlarm: Memory\r\nState: WARNING\r\n\r\nDate: Tue, 14 May 2024 01:39:22 UTC\r\nDashboard Link: https://intelligence.rackspace.com/cloud/entities/enqwqfXIqu/checks/ch0TqdrXJY/alarm/alWfY4l2PO\r\n\r\n------------------------ Agent Observation -----------------------------------\r\n\r\n\r\nWARNING - Memory usage is above your warning threshold of 67%\r\nRackspace Monitoring Agent, 0 seconds ago\r\n\r\n\r\n------------------------------------------------------------------------------\r\nYou received this message because <helpdesk@exotech.pro>is a recipient of a Rackspace \r\nRackspace Monitoring notification plan on account 1027217. Login to the Cloud\r\nControl Panel http://mycloud.rackspace.com to change your notification addresses.\r\n",
+  "requester_id": {
+    "$oid": "6868527ff5d2b14198b52434"
+  },
+  "responder_id": {
+    "$oid": "6868527ff5d2b14198b52653"
+  },
+  "status": 5,
+  "urgent": false,
+  "source": 1,
+  "spam": false,
+  "deleted": false,
+  "created_at": "2024-05-13T20:39:38-05:00",
+  "updated_at": "2024-07-02T14:00:15-05:00",
+  "trained": false,
+  "account_id": 320932,
+  "subject": "** WARNING: Memory on Server-04 **",
+  "display_id": 6000,
+  "owner_id": 9000200285,
+  "group_id": 9000171202,
+  "due_by": "2024-05-16T20:39:38-05:00",
+  "frDueBy": "2024-05-14T20:39:38-05:00",
+  "isescalated": true,
+  "priority": 1,
+  "fr_escalated": true,
+  "to_email": "helpdesk@exotech.freshdesk.com",
+  "email_config_id": 9000033278,
+  "cc_email": {
+    "cc_emails": [
+      "helpdesk@exotech.pro"
+    ],
+    "fwd_emails": [],
+    "reply_cc": [
+      "helpdesk@exotech.pro"
+    ],
+    "tkt_cc": [],
+    "_id": {
+      "$oid": "68685289f5d2b14198b5d5f6"
+    }
+  },
+  "delta": true,
+  "ticket_type": "Incident",
+  "description_html": "<table class=\"body-wrap\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%\">\n\t<tbody>\n<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\"></td>\n\t\t<td class=\"container\" align=\"\" bgcolor=\"#FFFFFF\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; display: block; max-width: 600px; clear: both\">\n\t\t\t\n\t\t\t\n\t\t\t<div class=\"content\" id=\"name\" style=\"font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0 auto; padding: 15px; max-width: 600px; display: block; padding-bottom: 0px\">\n\t\t\t\t<div id=\"overall_status\" class=\"WARNING\" style=\"margin: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; color: #fff; font-size: 13px; padding: 3px 5px; border-radius: 3px; margin-right: 10px; vertical-align: text-bottom; display: inline-block; background-color: #FF9D00\">WARNING</div>\n\t\t\t\t<div id=\"check_name\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; display: inline-block; font-size: 24px\">Memory</div>\n\t\t\t</div>\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t<div class=\"content\" style=\"font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0 auto; padding: 15px; max-width: 600px; display: block\">\n\t\t\t\t<table id=\"details\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; font-size: 14px\">\n\t\t\t\t\t<tbody>\n<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; color: #999; vertical-align: top; padding-right: 5px\">Entity:</td>\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold\">Server-04</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; color: #999; vertical-align: top; padding-right: 5px\">Check:</td>\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold\">Memory</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; color: #999; vertical-align: top; padding-right: 5px\"> </td>\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold\">agent.memory</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; color: #999; vertical-align: top; padding-right: 5px\">Alarm:</td>\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold\">Memory</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t\n\t\t\t\t\t<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; color: #999; vertical-align: top; padding-right: 5px\">Date:</td>\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold\">Tue, 14 May 2024 01:39:22 UTC</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n        \t                            \t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; color: #999; vertical-align: top; padding-right: 5px\">Dashboard Link:</td>\n                \t                    \t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold\"><a href=\"https://intelligence.rackspace.com/cloud/entities/enqwqfXIqu/checks/ch0TqdrXJY/alarm/alWfY4l2PO\" rel=\"noreferrer\">https://intelligence.rackspace.com/cloud/entities/enqwqfXIqu/checks/ch0TqdrXJY/alarm/alWfY4l2PO</a></td>\n                        \t       </tr>\n\t\t\t\t</tbody>\n</table>\n\t\t\t</div>\n\n\t\t\t\n\n\t\t\t\n\t\t\t<div class=\"content\" id=\"alarm_states\" style=\"font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0 auto; padding: 15px; max-width: 600px; display: block\">\n\t\t\t  \n\t\t\t\t<h3 style=\"margin: 0; padding: 0; font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif; line-height: 1.1; margin-bottom: 15px; color: #000; font-weight: 500; font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 3px\">Agent Observations</h3>\n\t\t\t  \n\t\t\t\t<table style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%\">\n          \n\t\t\t\t\t<tbody>\n<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t\t<table cellspacing=\"0\" cellpadding=\"0\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; margin-bottom: 10px\">\n\t\t\t\t\t\t\t\t<tbody>\n<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t\t\t\t<td class=\"alarm_text WARNING\" style=\"font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; height: auto; margin: 0px; padding: 0px; color: #FF9D00; font-size: 13px; line-height: 100%; display: inline; font-weight: bold\">Memory usage is above your warning threshold of 67%</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t\t\t  \n\t\t\t\t\t\t\t\t\t<td colspan=\"2\" class=\"alarm_region\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; height: auto; color: #999; font-size: 11px; line-height: 1.8em\">Rackspace Monitoring Agent, 0 seconds ago.</td>\n\t\t\t\t\t\t\t\t  \n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t</tbody>\n</table>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t\n\t\t\t\t</tbody>\n</table>\n\n\t\t\t</div>\n\n      \n\t\t</td>\n\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\"></td>\n\t</tr>\n</tbody>\n</table>\n\n\n\n<table class=\"footer-wrap\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%; clear: both\">\n\t<tbody>\n<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\"></td>\n\t\t<td class=\"container\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; display: block; max-width: 600px; clear: both\">\n\t\t\t\n\t\t\t\t\n\t\t\t\t<div class=\"content\" style=\"font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin: 0 auto; padding: 15px; max-width: 600px; display: block\">\n\t\t\t\t\t<table style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; width: 100%\">\n\t\t\t\t\t\t\n\n\t\t\t\t\t\t<tbody>\n<tr style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t\t<td align=\"center\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\">\n\t\t\t\t\t\t\t\t<div style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; margin-bottom: 10px; font-weight: normal; line-height: 1.6; color: #999; font-size: 11px; text-align: left\">You received this message because helpdesk@exotech.pro is a recipient of a Rackspace Monitoring notification plan on account 1027217 for entity enqwqfXIqu, check ch0TqdrXJY, and alarm alWfY4l2PO. Login to the <a href=\"http://email.cloudmonitoring.rackspace.com/c/eJxczEFuxCAMAMDXwDEyxkD3wKGX_UbEGrdBm0BEvFL7-6o99gEzNfMDxEp2yYUYIMVgtyy-AjBijJG8PDxUuCERx0g1Ju9tywhIEByB8zcMC8BbYal4Iw9BPoIh4H286jF60zFb_1xm4ed1FpaFx2Hbtarw1huXfeXRtbBmnS-xe95UT-PfDd4N3o_vv-gfn3mT_axyPQ2BfI3faznnsCq9dF1bzQ4woUs_AQAA__9ny0dw\" style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\" rel=\"noreferrer\">Cloud Control Panel</a> to change your notification addresses.</div>\n\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t</tr>\n\n\t\t\t\t\t\t\n\t\t\t\t\t</tbody>\n</table>\n\t\t\t\t</div>\n\n\t\t\t\t\n\t\t</td>\n\t\t<td style=\"margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif\"></td>\n\t</tr>\n</tbody>\n</table>\n\n\n\n\n",
+  "parent_ticket_id": null,
+  "dirty": 0,
+  "sl_product_id": null,
+  "sl_sla_policy_id": null,
+  "sl_merge_parent_ticket": null,
+  "sl_skill_id": null,
+  "st_survey_rating": null,
+  "sl_escalation_level": null,
+  "sl_manual_dueby": null,
+  "internal_group_id": null,
+  "internal_agent_id": null,
+  "association_type": null,
+  "associates_rdb": null,
+  "sla_state": 0,
+  "nr_due_by": null,
+  "nr_reminded": "false",
+  "nr_escalated": "false",
+  "int_tc01": null,
+  "int_tc02": null,
+  "int_tc03": null,
+  "int_tc04": null,
+  "int_tc05": null,
+  "long_tc01": null,
+  "long_tc02": null,
+  "long_tc03": null,
+  "long_tc04": null,
+  "long_tc05": null,
+  "datetime_tc01": null,
+  "datetime_tc02": null,
+  "datetime_tc03": null,
+  "json_tc01": null,
+  "status_name": "Closed",
+  "requester_status_name": "This ticket has been Closed",
+  "priority_name": "Low",
+  "source_name": "Email",
+  "requester_name": "Rackspace Cloud Monitoring",
+  "responder_name": "Mitch Starnes",
+  "product_id": null,
+  "to_emails": [
+    "helpdesk@exotech.pro"
+  ],
+  "reports_data": {
+    "first_assign_by_bhrs": 0,
+    "first_response_id": null,
+    "first_response_group_id": null,
+    "first_response_agent_id": null,
+    "first_assign_agent_id": 9006333765,
+    "first_assign_group_id": 9000171202,
+    "agent_reassigned_count": null,
+    "group_reassigned_count": null,
+    "reopened_count": null,
+    "private_note_count": 2,
+    "public_note_count": null,
+    "agent_reply_count": null,
+    "customer_reply_count": 1,
+    "agent_assigned_flag": true,
+    "agent_reassigned_flag": null,
+    "group_assigned_flag": true,
+    "group_reassigned_flag": null,
+    "internal_agent_assigned_flag": null,
+    "internal_agent_reassigned_flag": null,
+    "internal_group_assigned_flag": null,
+    "internal_group_reassigned_flag": null,
+    "internal_agent_first_assign_in_bhrs": null,
+    "last_resolved_at": null,
+    "initial_sentiment": null,
+    "archive": false,
+    "resolution_escalation_level": 4,
+    "response_reminded": false,
+    "resolution_reminded": false,
+    "time_to_resolution_in_chrs": 4295928,
+    "outbound_email": false,
+    "watchers": [],
+    "group_users": [
+      "9006333765"
+    ],
+    "on_state_time": "8591857",
+    "source_additional_info": {
+      "email": {
+        "received_at": "2024-05-14T01:39:38.049+0000"
+      }
+    },
+    "status_stop_sla_timer": true,
+    "status_deleted": false,
+    "_id": {
+      "$oid": "68685289f5d2b14198b5d5f7"
+    }
+  },
+  "tags": [],
+  "attachments": [],
+  "ticket_states": {
+    "ticket_id": 9239375595,
+    "opened_at": null,
+    "pending_since": null,
+    "resolved_at": "2024-07-02T13:58:26-05:00",
+    "closed_at": "2024-07-02T13:58:26-05:00",
+    "first_assigned_at": "2024-05-13T20:39:39-05:00",
+    "assigned_at": "2024-05-13T20:39:39-05:00",
+    "first_response_time": null,
+    "requester_responded_at": null,
+    "agent_responded_at": null,
+    "created_at": "2024-05-13T20:39:38-05:00",
+    "updated_at": "2024-07-02T13:58:26-05:00",
+    "group_escalated": false,
+    "inbound_count": 2,
+    "status_updated_at": "2024-07-02T13:58:26-05:00",
+    "sla_timer_stopped_at": "2024-07-02T13:58:26-05:00",
+    "outbound_count": 0,
+    "avg_response_time": null,
+    "first_resp_time_by_bhrs": null,
+    "resolution_time_by_bhrs": 1123106,
+    "avg_response_time_by_bhrs": null,
+    "resolution_time_updated_at": "2024-07-02T13:58:26-05:00",
+    "_id": {
+      "$oid": "68685289f5d2b14198b5d5f8"
+    }
+  },
+  "requester": {
+    "id": 9006638253,
+    "name": "Rackspace Cloud Monitoring",
+    "email": "alerts@cloudmonitoring.rackspace.com",
+    "created_at": "2016-01-27T20:10:44-06:00",
+    "updated_at": "2018-03-19T09:01:37-05:00",
+    "account_id": 320932,
+    "active": false,
+    "customer_id": 9000200285,
+    "job_title": "",
+    "phone": "",
+    "mobile": "",
+    "twitter_id": "",
+    "description": "",
+    "time_zone": "Central Time (US & Canada)",
+    "deleted": false,
+    "fb_profile_id": null,
+    "language": "en",
+    "address": "",
+    "external_id": null,
+    "helpdesk_agent": false,
+    "unique_external_id": null,
+    "company_id": 9000200285,
+    "_id": {
+      "$oid": "68685289f5d2b14198b5d5f9"
+    }
+  },
+  "conversations": [
+    {
+      "id": 9308108759,
+      "body_text": "This ticket is closed and merged into ticket 5989",
+      "user_id": 9006333765,
+      "source": 2,
+      "incoming": false,
+      "private": true,
+      "created_at": "2024-07-02T14:00:15-05:00",
+      "updated_at": "2024-07-02T14:00:15-05:00",
+      "deleted": false,
+      "notable_id": 9239375595,
+      "notable_type": "Helpdesk::Ticket",
+      "account_id": 320932,
+      "body": "<div>This ticket is closed and merged into ticket <a href=\"https://exotech.freshdesk.com/helpdesk/tickets/5989\" target=\"_blank\" rel=\"noreferrer\">5989</a>\n</div>",
+      "support_email": "helpdesk@exotech.freshdesk.com",
+      "attachments": [],
+      "_id": {
+        "$oid": "68685289f5d2b14198b5d5fa"
+      }
+    }
+  ],
+  "__v": 0,
+  "company_id": {
+    "$oid": "6868527ff5d2b14198b52660"
+  }
+}]

@@ -1,0 +1,148 @@
+[
+  {
+    "category": {
+      "id": 9000064339,
+      "position": 1,
+      "is_default": true,
+      "created_at": "2016-01-12T21:50:50-06:00",
+      "updated_at": "2024-03-11T03:50:22-05:00",
+      "account_id": 320932,
+      "name": "Default Category",
+      "description": "All emails sent to kbase@exotech.freshdesk.com will be stored here as drafts",
+      "all_folders": [
+        {
+          "id": 9000097490,
+          "visibility": 3,
+          "position": 1,
+          "is_default": true,
+          "created_at": "2016-01-12T21:50:50-06:00",
+          "updated_at": "2024-03-11T03:50:22-05:00",
+          "article_order": 1,
+          "parent_folder_meta_id": null,
+          "visibility_record_id": null,
+          "height": 1,
+          "depth": 1,
+          "category_id": 9000064339,
+          "name": "Drafts",
+          "description": "All emails sent to kbase@exotech.freshdesk.com will be stored here as drafts",
+          "articles": []
+        }
+      ]
+    }
+  },
+  {
+    "category": {
+      "id": 9000064340,
+      "position": 2,
+      "is_default": false,
+      "created_at": "2016-01-12T21:50:50-06:00",
+      "updated_at": "2024-03-11T03:50:22-05:00",
+      "account_id": 320932,
+      "name": "General",
+      "description": "Default solution category, feel free to edit or delete it.",
+      "all_folders": [
+        {
+          "id": 9000097488,
+          "visibility": 1,
+          "position": 1,
+          "is_default": false,
+          "created_at": "2016-01-12T21:50:50-06:00",
+          "updated_at": "2024-03-11T03:50:22-05:00",
+          "article_order": 1,
+          "parent_folder_meta_id": null,
+          "visibility_record_id": null,
+          "height": 1,
+          "depth": 1,
+          "category_id": 9000064340,
+          "name": "FAQ",
+          "description": "Default solution folder, feel free to edit or delete it.",
+          "articles": [
+            {
+              "id": 9000089086,
+              "position": 1,
+              "art_type": 1,
+              "thumbs_up": 1,
+              "thumbs_down": 1,
+              "hits": 27,
+              "created_at": "2016-08-25T11:31:57-05:00",
+              "updated_at": "2024-03-11T03:50:22-05:00",
+              "folder_id": 9000097488,
+              "tags": [{ "name": "tickets" }],
+              "title": "How do I create a ticket?",
+              "description": "<div dir=\"ltr\">\n<p>Creating a ticket is easy. Just send an email to <a href=\"mailto:helpdesk@exotech.pro\" target=\"\">helpdesk@exotech.pro</a> or, if you are logged into the portal, just click the <a href=\"http://support.exotech.pro/support/tickets/new\" target=\"\">+ New Ticket</a> link.</p>\n<p><br></p>\n<p>The subject should be brief but descriptive. The body should provide enough detail that we can understand and reproduce the problem.</p>\n<p><br></p>\n<p>If your issue is urgent, be sure to put URGENT: in the subject.</p>\n<p><br></p>\n<p>Thanks.</p>\n<p>EXOTECH.PRO Active IT Services, your on-demand IT Team.</p>\n<p><a target=\"\">tel:+1-682-777-4400</a><br></p>\r\n</div>",
+              "user_id": 9006333765,
+              "status": 2,
+              "desc_un_html": " \n Creating a ticket is easy. Just send an email to helpdesk@exotech.pro or, if you are logged into the portal, just click the + New Ticket link. \n   \n The subject should be brief but descriptive. The body should provide enough detail that we can understand and reproduce the problem. \n   \n If your issue is urgent, be sure to put URGENT: in the subject. \n   \n Thanks. \n EXOTECH.PRO Active IT Services, your on-demand IT Team. \n tel:+1-682-777-4400  \r\n ",
+              "seo_data": {
+                "meta_title": "",
+                "meta_description": "",
+                "meta_keywords": ""
+              },
+              "modified_at": "2016-08-25T11:31:57-05:00",
+              "modified_by": 9006333765
+            }
+          ]
+        },
+        {
+          "id": 9000097489,
+          "visibility": 1,
+          "position": 2,
+          "is_default": false,
+          "created_at": "2016-01-12T21:50:50-06:00",
+          "updated_at": "2024-03-11T03:50:22-05:00",
+          "article_order": 1,
+          "parent_folder_meta_id": null,
+          "visibility_record_id": null,
+          "height": 1,
+          "depth": 1,
+          "category_id": 9000064340,
+          "name": "Getting Started",
+          "description": "Default solution folder, feel free to edit or delete it.",
+          "articles": []
+        },
+        {
+          "id": 9000188302,
+          "visibility": 4,
+          "position": 3,
+          "is_default": false,
+          "created_at": "2019-03-05T21:11:48-06:00",
+          "updated_at": "2024-03-11T03:50:22-05:00",
+          "article_order": 1,
+          "parent_folder_meta_id": null,
+          "visibility_record_id": null,
+          "height": 1,
+          "depth": 1,
+          "category_id": 9000064340,
+          "name": "Rothstein.com",
+          "description": "How-to documents for rothstein.com (visible only to rothstein.com contacts).",
+          "articles": [
+            {
+              "id": 9000164359,
+              "position": 1,
+              "art_type": 1,
+              "thumbs_up": 0,
+              "thumbs_down": 0,
+              "hits": 10,
+              "created_at": "2019-03-05T21:12:35-06:00",
+              "updated_at": "2024-03-11T03:50:22-05:00",
+              "folder_id": 9000188302,
+              "tags": [{ "name": "mailpoet" }],
+              "title": "How To Create a Newsletter from a Template",
+              "description": "<div dir=\"ltr\">Here are the steps to create a new newsletter based on \"Newsletter Template #2\":</div><p><br></p><ol dir=\"ltr\"><li dir=\"ltr\">Go to MailPoet &gt; Emails, <a dir=\"ltr\" href=\"https://www.rothstein.com/wp-admin/admin.php?page=mailpoet-newsletters\" rel=\"noreferrer\" target=\"_blank\">https://www.rothstein.com/wp-admin/admin.php?page=mailpoet-newsletters</a></li><li dir=\"ltr\">At the top of the page, click Add New</li><li dir=\"ltr\">In the Newsletter card, click Create</li><li dir=\"ltr\">In the Newsletter Template #2, click Select</li><li dir=\"ltr\">Change Subject to whatever you want the subject of the email to be.</li><li dir=\"ltr\">Change Preview Text to the text you want Outlook users to see as the subtext in their email client inbox list</li><li dir=\"ltr\">Drag the Posts tile just above the text that reads 'Drag \"Posts\" just above this text then delete this text.'</li><li dir=\"ltr\">Select a post to insert into the newsletter. You will see a preview of how it will looks.</li><li dir=\"ltr\">Click Display Options in the right nav then, at the top, click the \"Full post\" radio button.</li><li dir=\"ltr\">Click Insert selected</li><li dir=\"ltr\">WARNING: Be careful about deleting 'Drag \"Posts\" just above this text then delete this text.' If the trash can icon is on the right, you are just about to delete the whole footer. If the trash can is directly above the text, then it is safe to delete. You might just blank out the text to be on the safe side. After you do a few, we can remove this text altogether.</li><li dir=\"ltr\">Mouseover the CTA button then click the gear icon (note this is only appropriate if you choose to insert one post)<ol dir=\"ltr\"><li dir=\"ltr\">Change the CTA text to \"Get your free chapter\" or whatever</li><li dir=\"ltr\">Change the add-to-cart value appropriately</li><li dir=\"ltr\">Click Done</li></ol></li></ol><p><br></p>",
+              "user_id": 9006333765,
+              "status": 2,
+              "desc_un_html": " Here are the steps to create a new newsletter based on \"Newsletter Template #2\":      Go to MailPoet > Emails, https://www.rothstein.com/wp-admin/admin.php?page=mailpoet-newsletters  At the top of the page, click Add New  In the Newsletter card, click Create  In the Newsletter Template #2, click Select  Change Subject to whatever you want the subject of the email to be.  Change Preview Text to the text you want Outlook users to see as the subtext in their email client inbox list  Drag the Posts tile just above the text that reads 'Drag \"Posts\" just above this text then delete this text.'  Select a post to insert into the newsletter. You will see a preview of how it will looks.  Click Display Options in the right nav then, at the top, click the \"Full post\" radio button.  Click Insert selected  WARNING: Be careful about deleting 'Drag \"Posts\" just above this text then delete this text.' If the trash can icon is on the right, you are just about to delete the whole footer. If the trash can is directly above the text, then it is safe to delete. You might just blank out the text to be on the safe side. After you do a few, we can remove this text altogether.  Mouseover the CTA button then click the gear icon (note this is only appropriate if you choose to insert one post)  Change the CTA text to \"Get your free chapter\" or whatever  Change the add-to-cart value appropriately  Click Done       ",
+              "seo_data": {
+                "meta_title": "",
+                "meta_description": "",
+                "meta_keywords": ""
+              },
+              "modified_at": "2019-03-13T19:42:06-05:00",
+              "modified_by": 9006333765
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

@@ -224,84 +224,11 @@ app.post('/api/tickets', async (req, res) => {
 
 });
 
-// Create a new ticket old version
-app.post('/api/tickets-old', async (req, res) => {
-  try {
-    const { subject, description, priority, requester, display_id, status, responder_id, company_id } = req.body;
-
-    console.log(JSON.stringify(req.body, null, 2));
-    if (!requester || !requester.name) {
-      return res.status(400).json({ error: 'Requester name is required' });
-    }
-    if (!company_id) {
-      return res.status(400).json({ error: 'Company ID is required' });
-    }
-
-    const company = await Company.findById(company_id);
-    if (!company) {
-      return res.status(400).json({ error: 'Company not found' });
-    }
-
-    const SlaPolicy = await SlaPolicy.findOne({ id: company.sla_policy_id });
-    if (!SlaPolicy) {
-      return res.status(400).json({ error: 'SLA policy not found' });
-    }
-
-    const priorityKey = `priority_${priority}`;
-    const resolveWithin = SlaPolicy.sla_target[priorityKey]?.resolve_within;
-    if (!resolveWithin) {
-      return res.status(400).json({ error: 'Invalid priority for SLA policy' });
-    }
-
-    const createdAt = new Date().toISOString();
-    const dueBy = new Date(Date.now() + resolveWithin * 1000).toISOString();
-    const agent = await Agent.findOne({ email: process.env.CURRENT_AGENT_EMAIL || 'mitch.starnes@exotech.pro' });
-
-    const ticket = new Ticket({
-      subject,
-      description,
-      priority: priority || 1,
-      requester,
-      display_id,
-      status: status || 2,
-      responder_id: responder_id || (agent?._id || new mongoose.Types.ObjectId('6868527ff5d2b14198b52653')),
-      company_id,
-      created_at: createdAt,
-      due_by: dueBy,
-      conversations: [],
-      requester_name: requester.name,
-      priority_name: { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Urgent' }[priority] || 'Low',
-      status_name: { 2: 'Open', 3: 'Pending', 4: 'Resolved', 5: 'Closed' }[status || 2] || 'Open',
-      //responder_name: responder_id ? (await Agent.findById(responder_id))?.name : agent?.name || 'Mitch Starnes',
-      responder_name: responder_id ? (await Agent.findOne({ id: responder_id }))?.name : agent?.name || 'Mitch Starnes',
-      ticket_states: {
-        ticket_id: display_id, // Assigned once at creation
-        opened_at: createdAt,
-        created_at: createdAt,
-        updated_at: createdAt,
-        inbound_count: 1, // Initial creation counts as inbound +1
-        outbound_count: 0,
-        reopened_count: 0,
-        status_updated_at: createdAt,
-        // Other fields default to null/false as per schema
-      },
-    });
-
-    await ticket.save();
-    const populatedTicket = await Ticket.findById(ticket._id)
-      .populate('responder_id', 'name')
-      .populate('company_id', 'name');
-    res.status(201).json(populatedTicket);
-  } catch (err) {
-    console.error('Error creating ticket:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Get all tickets
 app.get('/api/tickets', async (req, res) => {
   try {
     const { limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
+    console.log(JSON.stringify(req.query, null, 2));
     let query = {};
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
@@ -432,6 +359,7 @@ app.get('/api/ticketfields', async (req, res) => {
 
 app.get('/api/tickets/search', async (req, res) => {
   try {
+    console.log('/api/tickets/search ' + JSON.stringify(req.query, null, 2));
     const { q, limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
     let query = {};
     if (q) {
@@ -557,12 +485,14 @@ app.get('/api/agents/email/:email', async (req, res) => {
 
 app.patch('/api/tickets/:id', async (req, res) => {
   try {
+    console.log(JSON.stringify(req.body, null, 2));
     const currentTicket = await Ticket.findById(req.params.id);
     if (!currentTicket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
 
-    const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at, conversations, description_html, description, group_id, ...other } = req.body;
+    //const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at, conversations, description_html, description, group_id, ...other } = req.body;
+    const { priority, status, responder_id, priority_name, status_name, responder_name, conversations, description_html, description, group_id, ...other } = req.body;
     const updates = {};
     const ticketStatesUpdates = {};
     const currentTime = new Date().toISOString();
@@ -592,16 +522,22 @@ app.patch('/api/tickets/:id', async (req, res) => {
       if (!currentTicket.responder_id) {
         ticketStatesUpdates.first_assigned_at = currentTime;
       }
+      const agent = await Agent.findById(responder_id);
+      console.log('agent: ' + JSON.stringify(agent, null, 2));
+      if (agent) {
+        updates.responder_name = agent.name;
+      }
+
       ticketStatesUpdates.assigned_at = responder_id ? currentTime : null;
     }
     if (priority_name) updates.priority_name = priority_name;
     if (status_name) updates.status_name = status_name;
     if (responder_name) updates.responder_name = responder_name;
-    if (closed_at) updates['ticket_states.closed_at'] = closed_at;
+    // if (closed_at) updates['ticket_states.closed_at'] = closed_at;
     if (conversations) updates.conversations = conversations;
     if (description_html || description) {
       updates.description_html = description_html || description || '';
-      updates.description = description || description_html || '';
+      updates.description = description || '';
     }
     if (group_id !== undefined) updates.group_id = group_id || null; // Supports ObjectId
     updates.updated_at = currentTime;

@@ -1,0 +1,45 @@
+[{
+  "_id": {
+    "$oid": "687818e718da2ee6d764d2bc"
+  },
+  "id": 9000030757,
+  "name": "Default SLA Policy",
+  "description": "default policy",
+  "active": true,
+  "sla_target": {
+    "priority_1": {
+      "respond_within": 86400,
+      "resolve_within": 259200,
+      "business_hours": false,
+      "escalation_enabled": true
+    },
+    "priority_2": {
+      "respond_within": 28800,
+      "resolve_within": 86400,
+      "business_hours": false,
+      "escalation_enabled": true
+    },
+    "priority_3": {
+      "respond_within": 14400,
+      "resolve_within": 43200,
+      "business_hours": false,
+      "escalation_enabled": true
+    },
+    "priority_4": {
+      "respond_within": 3600,
+      "resolve_within": 14400,
+      "business_hours": false,
+      "escalation_enabled": true
+    }
+  },
+  "group_ids": [],
+  "is_default": true,
+  "position": 1,
+  "created_at": {
+    "$date": "2016-01-13T03:50:50.000Z"
+  },
+  "updated_at": {
+    "$date": "2016-01-13T03:50:50.000Z"
+  },
+  "__v": 0
+}]

@@ -1,0 +1,28 @@
+[
+  {
+    "folder": {
+      "id": 9000061576,
+      "name": "General",
+      "is_default": true,
+      "account_id": 320932,
+      "created_at": "2016-01-12T21:50:51-06:00",
+      "updated_at": "2016-01-12T21:50:51-06:00",
+      "folder_type": 200,
+      "deleted": false,
+      "all_canned_responses": []
+    }
+  },
+  {
+    "folder": {
+      "id": 9000061577,
+      "name": "Personal_320932",
+      "is_default": true,
+      "account_id": 320932,
+      "created_at": "2016-01-12T21:50:51-06:00",
+      "updated_at": "2016-01-12T21:50:51-06:00",
+      "folder_type": 100,
+      "deleted": false,
+      "all_canned_responses": []
+    }
+  }
+]

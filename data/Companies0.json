@@ -1,0 +1,695 @@
+[
+  {
+    "company": {
+      "id": 9000200282,
+      "name": "Capital Insurance Brokers",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:28:45-06:00",
+      "updated_at": "2018-10-20T12:02:07-05:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "aol.com,capinsurance.pro",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Managed Services",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000008618,
+          "account_id": 320932,
+          "company_id": 9000200282,
+          "domain": "aol.com",
+          "created_at": "2016-02-11T11:03:41-06:00",
+          "updated_at": "2016-02-11T11:03:41-06:00"
+        },
+        {
+          "id": 9000008617,
+          "account_id": 320932,
+          "company_id": 9000200282,
+          "domain": "capinsurance.pro",
+          "created_at": "2016-02-11T11:03:41-06:00",
+          "updated_at": "2016-02-11T11:03:41-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000200283,
+      "name": "Fort Worth Hope Center",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:29:07-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "fwhope.org",
+      "options": {},
+      "health_score": null,
+      "account_tier": "School/Non-Profit",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000008619,
+          "account_id": 320932,
+          "company_id": 9000200283,
+          "domain": "fwhope.org",
+          "created_at": "2016-02-11T11:03:42-06:00",
+          "updated_at": "2016-02-11T11:03:42-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000200284,
+      "name": "Open House Network",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:29:39-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "ohntexas.com,openhouse-network.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Premium",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000008620,
+          "account_id": 320932,
+          "company_id": 9000200284,
+          "domain": "ohntexas.com",
+          "created_at": "2016-02-11T11:03:42-06:00",
+          "updated_at": "2016-02-11T11:03:42-06:00"
+        },
+        {
+          "id": 9000008621,
+          "account_id": 320932,
+          "company_id": 9000200284,
+          "domain": "openhouse-network.com",
+          "created_at": "2016-02-11T11:03:42-06:00",
+          "updated_at": "2016-02-11T11:03:42-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000200285,
+      "name": "Mobile Med Management",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:30:49-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "mobilemed.pro",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Managed Services",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000008622,
+          "account_id": 320932,
+          "company_id": 9000200285,
+          "domain": "mobilemed.pro",
+          "created_at": "2016-02-11T11:03:42-06:00",
+          "updated_at": "2016-02-11T11:03:42-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000200286,
+      "name": "Rothstein Associates, Inc.",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:31:06-06:00",
+      "updated_at": "2019-11-03T11:57:45-06:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "metadataprime.net,rothstein.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Premium Loyal",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000023813,
+          "account_id": 320932,
+          "company_id": 9000200286,
+          "domain": "metadataprime.net",
+          "created_at": "2016-02-15T08:58:00-06:00",
+          "updated_at": "2016-02-15T08:58:00-06:00"
+        },
+        {
+          "id": 9000023812,
+          "account_id": 320932,
+          "company_id": 9000200286,
+          "domain": "rothstein.com",
+          "created_at": "2016-02-15T08:58:00-06:00",
+          "updated_at": "2016-02-15T08:58:00-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000200287,
+      "name": "Oliver Dental Implants",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:32:12-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "oliverdentalimplants.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Managed Services",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000008623,
+          "account_id": 320932,
+          "company_id": 9000200287,
+          "domain": "oliverdentalimplants.com",
+          "created_at": "2016-02-11T11:03:42-06:00",
+          "updated_at": "2016-02-11T11:03:42-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000200288,
+      "name": "Watauga Family Dentistry",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:33:04-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "wataugafamilydentistry.pro",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Managed Services",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000008624,
+          "account_id": 320932,
+          "company_id": 9000200288,
+          "domain": "wataugafamilydentistry.pro",
+          "created_at": "2016-02-11T11:03:42-06:00",
+          "updated_at": "2016-02-11T11:03:42-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000200289,
+      "name": "Science, Etc.",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:33:25-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "scienceetc.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "School/Non-Profit",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000008625,
+          "account_id": 320932,
+          "company_id": 9000200289,
+          "domain": "scienceetc.com",
+          "created_at": "2016-02-11T11:03:42-06:00",
+          "updated_at": "2016-02-11T11:03:42-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000200290,
+      "name": "SafeHaven of Tarrant County",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "",
+      "created_at": "2016-01-13T19:33:57-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": "",
+      "domains": "safehaventc.org",
+      "options": {},
+      "health_score": null,
+      "account_tier": "School/Non-Profit",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000008626,
+          "account_id": 320932,
+          "company_id": 9000200290,
+          "domain": "safehaventc.org",
+          "created_at": "2016-02-11T11:03:42-06:00",
+          "updated_at": "2016-02-11T11:03:42-06:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000321183,
+      "name": "Atlas Dental Group",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2016-04-02T15:23:31-05:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Enterprise",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": []
+    }
+  },
+  {
+    "company": {
+      "id": 9000321184,
+      "name": "XLR8MY.NET, LLC",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2016-04-02T15:25:50-05:00",
+      "updated_at": "2016-04-02T15:25:50-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "xlr8my.net",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Premium",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000078420,
+          "account_id": 320932,
+          "company_id": 9000321184,
+          "domain": "xlr8my.net",
+          "created_at": "2018-10-20T12:02:08-05:00",
+          "updated_at": "2018-10-20T12:02:08-05:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000321185,
+      "name": "Saizek Partnership",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2016-04-02T15:28:07-05:00",
+      "updated_at": "2016-04-02T15:28:07-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "roosterbakery.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Premium",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000078421,
+          "account_id": 320932,
+          "company_id": 9000321185,
+          "domain": "roosterbakery.com",
+          "created_at": "2018-10-20T12:02:08-05:00",
+          "updated_at": "2018-10-20T12:02:08-05:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000429334,
+      "name": "Hart Systems",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2016-08-24T15:40:20-05:00",
+      "updated_at": "2019-11-03T11:50:14-06:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Managed Services",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": []
+    }
+  },
+  {
+    "company": {
+      "id": 9000435966,
+      "name": "UmbieHealth",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2016-09-29T19:44:13-05:00",
+      "updated_at": "2016-09-29T19:44:13-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Enterprise",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": []
+    }
+  },
+  {
+    "company": {
+      "id": 9000550528,
+      "name": "CharlottePosa.com",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2017-11-17T18:51:08-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "charlotteposa.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "School/Non-Profit",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000078422,
+          "account_id": 320932,
+          "company_id": 9000550528,
+          "domain": "charlotteposa.com",
+          "created_at": "2018-10-20T12:02:08-05:00",
+          "updated_at": "2018-10-20T12:02:08-05:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000559121,
+      "name": "Without Walls Church",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2018-02-17T15:59:18-06:00",
+      "updated_at": "2018-10-20T12:02:08-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": "School/Non-Profit",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": []
+    }
+  },
+  {
+    "company": {
+      "id": 9000570328,
+      "name": "Mid-Cities Dental Management",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2018-05-22T18:03:16-05:00",
+      "updated_at": "2018-05-22T18:03:16-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "dentalcareanywhere.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Enterprise",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000078423,
+          "account_id": 320932,
+          "company_id": 9000570328,
+          "domain": "dentalcareanywhere.com",
+          "created_at": "2018-10-20T12:02:08-05:00",
+          "updated_at": "2018-10-20T12:02:08-05:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000572123,
+      "name": "Mobile Dental Care",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2018-06-16T12:12:04-05:00",
+      "updated_at": "2018-06-16T12:12:04-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "mobiledentalcare.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Enterprise",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000078424,
+          "account_id": 320932,
+          "company_id": 9000572123,
+          "domain": "mobiledentalcare.com",
+          "created_at": "2018-10-20T12:02:08-05:00",
+          "updated_at": "2018-10-20T12:02:08-05:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000599975,
+      "name": "Score a Goal in the Classroom",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2018-10-20T12:28:14-05:00",
+      "updated_at": "2018-10-20T12:28:14-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "scoreagoal.org",
+      "options": {},
+      "health_score": null,
+      "account_tier": "School/Non-Profit",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000078425,
+          "account_id": 320932,
+          "company_id": 9000599975,
+          "domain": "scoreagoal.org",
+          "created_at": "2018-10-20T12:28:14-05:00",
+          "updated_at": "2018-10-20T12:28:14-05:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000600399,
+      "name": "Fish City Grill",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2018-10-24T22:41:43-05:00",
+      "updated_at": "2018-10-24T22:41:43-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "fishcitygrill.com",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Managed Services",
+      "renewal_date": null,
+      "industry": "Hotels, Restaurants and Leisure",
+      "custom_field": {},
+      "company_domains": [
+        {
+          "id": 9000078475,
+          "account_id": 320932,
+          "company_id": 9000600399,
+          "domain": "fishcitygrill.com",
+          "created_at": "2018-10-24T22:41:43-05:00",
+          "updated_at": "2018-10-24T22:41:43-05:00"
+        }
+      ]
+    }
+  },
+  {
+    "company": {
+      "id": 9000631299,
+      "name": "IDOINSURANCE.COM",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2019-01-23T22:04:46-06:00",
+      "updated_at": "2019-01-23T22:04:46-06:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Managed Services",
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": []
+    }
+  },
+  {
+    "company": {
+      "id": 9000687705,
+      "name": "Advanced Aqua Plumbing",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": "P.O. Box 2227\nMansfield, TX 76063",
+      "created_at": "2020-01-06T16:21:26-06:00",
+      "updated_at": "2020-02-06T19:00:46-06:00",
+      "sla_policy_id": 9000030757,
+      "note": "https://www.facebook.com/AdvancedAquaPlumbing/",
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": "Managed Services",
+      "renewal_date": null,
+      "industry": "Specialized Consumer Services",
+      "custom_field": {},
+      "company_domains": []
+    }
+  },
+  {
+    "company": {
+      "id": 9000732307,
+      "name": "Tri L Lodging",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2020-12-13T12:48:49-06:00",
+      "updated_at": "2020-12-13T12:48:49-06:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": null,
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": []
+    }
+  },
+  {
+    "company": {
+      "id": 9000791421,
+      "name": "Moonfu",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2023-03-23T19:26:01-05:00",
+      "updated_at": "2023-03-23T19:26:01-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": null,
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": []
+    }
+  },
+  {
+    "company": {
+      "id": 9000876178,
+      "name": "Living Water Filtration",
+      "cust_identifier": null,
+      "account_id": 320932,
+      "description": null,
+      "created_at": "2025-06-17T18:08:10-05:00",
+      "updated_at": "2025-06-17T18:08:10-05:00",
+      "sla_policy_id": 9000030757,
+      "note": null,
+      "domains": "",
+      "options": {},
+      "health_score": null,
+      "account_tier": null,
+      "renewal_date": null,
+      "industry": null,
+      "custom_field": {},
+      "company_domains": []
+    }
+  }
+]

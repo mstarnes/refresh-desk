@@ -1,0 +1,318 @@
+[{
+  "_id": {
+    "$oid": "68685280f5d2b14198b52747"
+  },
+  "id": 9001709394,
+  "description": "Good Morning Mitch,\n\nOur current layout for event pages has 2 columns, and we would prefer that it is just one full width page for easier editing and layout.\n\nWhen I tried to modify the format of pages in \"Event Settings\" to full width page, it did not change the layout of our posts.\n\nCan you fix this?\n\nExample- https://www.safehaventc.org/events/legacyofwomen2016/\n                  https://www.safehaventc.org/events/adapperdinner2016/\n\nAny help would be appreciated.\n\nThanks,\n\nKeeli McNair\n\nSafeHaven\nFREEDOM FROM DOMESTIC VIOLENCE\n817-502-7128\n\nKeeli McNair\nDirector of Marketing and Communications\n1100 Hemphill, Suite 303, Fort Worth, Texas 76104\nwww.safehaventc.org<http://www.safehaventc.org>.\n\n",
+  "requester_id": {
+    "$oid": "6868527ff5d2b14198b52418"
+  },
+  "responder_id": {
+    "$oid": "6868527ff5d2b14198b52653"
+  },
+  "status": 5,
+  "urgent": false,
+  "source": 1,
+  "spam": false,
+  "deleted": false,
+  "created_at": "2016-01-20T09:31:56-06:00",
+  "updated_at": "2016-01-22T13:26:29-06:00",
+  "trained": false,
+  "account_id": 320932,
+  "subject": "SafeHaven Event Page Layout",
+  "display_id": 2007,
+  "owner_id": 9000200290,
+  "group_id": null,
+  "due_by": "2016-01-23T09:35:42-06:00",
+  "frDueBy": "2016-01-21T09:35:42-06:00",
+  "isescalated": false,
+  "priority": 1,
+  "fr_escalated": false,
+  "to_email": "helpdesk@exotech.freshdesk.com",
+  "email_config_id": 9000033278,
+  "cc_email": {
+    "cc_emails": [
+      "helpdesk@exotech.pro",
+      "mbent@safehaventc.org"
+    ],
+    "fwd_emails": [],
+    "reply_cc": [],
+    "tkt_cc": [
+      "mbent@safehaventc.org"
+    ],
+    "_id": {
+      "$oid": "68685280f5d2b14198b52748"
+    }
+  },
+  "delta": true,
+  "ticket_type": null,
+  "description_html": "<div class=\"WordSection1\">\n<div class=\"MsoNormal\">Good Morning Mitch,</div>\n<div></div>\n<div class=\"MsoNormal\"></div>\n<div> </div>\n<div class=\"MsoNormal\">Our current layout for event pages has 2 columns, and we would prefer that it is just one full width page for easier editing and layout. \n</div>\n<div></div>\n<div class=\"MsoNormal\"></div>\n<div> </div>\n<div class=\"MsoNormal\">When I tried to modify the format of pages in “Event Settings” to full width page, it did not change the layout of our posts. \n</div>\n<div></div>\n<div class=\"MsoNormal\"></div>\n<div> </div>\n<div class=\"MsoNormal\">Can you fix this?</div>\n<div></div>\n<div class=\"MsoNormal\"></div>\n<div> </div>\n<div class=\"MsoNormal\">Example- <a href=\"https://www.safehaventc.org/events/legacyofwomen2016/\">\nhttps://www.safehaventc.org/events/legacyofwomen2016/</a> </div>\n<div></div>\n<div class=\"MsoNormal\">                  <a href=\"https://www.safehaventc.org/events/adapperdinner2016/\">https://www.safehaventc.org/events/adapperdinner2016/</a>\n</div>\n<div></div>\n<div class=\"MsoNormal\"></div>\n<div> </div>\n<div class=\"MsoNormal\">Any help would be appreciated.  </div>\n<div></div>\n<div class=\"MsoNormal\"></div>\n<div> </div>\n<div class=\"MsoNormal\">Thanks, </div>\n<div></div>\n<div class=\"MsoNormal\"></div>\n<div> </div>\n<div class=\"MsoNormal\"><span style='font-size:14.0pt;font-family:\"Eras Medium ITC\",\"sans-serif\"'>Keeli McNair<div></div></span></div>\n<div class=\"MsoNormal\"><span style='font-size:5.0pt;font-family:\"Coronet\",\"serif\";color:#663399'><div> </div></span></div>\n<div class=\"MsoNormal\">\n<span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#663399'>Safe</span><span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#E43E45'>Haven</span><span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#1F497D'><div></div></span>\n</div>\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>FREEDOM FROM DOMESTIC VIOLENCE<div></div></span></div>\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>817-502-7128\n<div></div></span></div>\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'><div> </div></span></div>\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>Keeli McNair<div></div></span></div>\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>Director of Marketing and Communications<div></div></span></div>\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>1100 Hemphill, Suite 303, Fort Worth, Texas 76104<div></div></span></div>\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'><a href=\"http://www.safehaventc.org\"><span style=\"color:blue\">www.safehaventc.org</span></a>.\n<div></div></span></div>\n<div class=\"MsoNormal\"></div>\n<div> </div>\n</div>\n\n\n",
+  "parent_ticket_id": null,
+  "dirty": 0,
+  "sl_product_id": null,
+  "sl_sla_policy_id": null,
+  "sl_merge_parent_ticket": null,
+  "sl_skill_id": null,
+  "st_survey_rating": "1",
+  "sl_escalation_level": null,
+  "sl_manual_dueby": null,
+  "internal_group_id": null,
+  "internal_agent_id": null,
+  "association_type": null,
+  "associates_rdb": null,
+  "sla_state": 0,
+  "nr_due_by": null,
+  "nr_reminded": null,
+  "nr_escalated": null,
+  "int_tc01": null,
+  "int_tc02": null,
+  "int_tc03": null,
+  "int_tc04": null,
+  "int_tc05": null,
+  "long_tc01": null,
+  "long_tc02": null,
+  "long_tc03": null,
+  "long_tc04": null,
+  "long_tc05": null,
+  "datetime_tc01": null,
+  "datetime_tc02": null,
+  "datetime_tc03": null,
+  "json_tc01": null,
+  "status_name": "Closed",
+  "requester_status_name": "This ticket has been Closed",
+  "priority_name": "Low",
+  "source_name": "Email",
+  "requester_name": "Keeli McNair",
+  "responder_name": "Mitch Starnes",
+  "product_id": null,
+  "to_emails": [
+    "\"helpdesk@exotech pro\" <helpdesk@exotech.pro>"
+  ],
+  "reports_data": {
+    "first_assign_by_bhrs": null,
+    "first_response_id": null,
+    "first_response_group_id": null,
+    "first_response_agent_id": null,
+    "first_assign_agent_id": null,
+    "first_assign_group_id": null,
+    "agent_reassigned_count": null,
+    "group_reassigned_count": null,
+    "reopened_count": 1,
+    "private_note_count": null,
+    "public_note_count": null,
+    "agent_reply_count": 3,
+    "customer_reply_count": 2,
+    "agent_assigned_flag": null,
+    "agent_reassigned_flag": null,
+    "group_assigned_flag": null,
+    "group_reassigned_flag": null,
+    "internal_agent_assigned_flag": null,
+    "internal_agent_reassigned_flag": null,
+    "internal_group_assigned_flag": null,
+    "internal_group_reassigned_flag": null,
+    "internal_agent_first_assign_in_bhrs": null,
+    "last_resolved_at": null,
+    "initial_sentiment": null,
+    "archive": false,
+    "resolution_escalation_level": null,
+    "response_reminded": false,
+    "resolution_reminded": false,
+    "time_to_resolution_in_chrs": 10975,
+    "outbound_email": false,
+    "watchers": [],
+    "group_users": [],
+    "on_state_time": null,
+    "source_additional_info": {
+      "email": {
+        "received_at": null
+      }
+    },
+    "status_stop_sla_timer": true,
+    "status_deleted": false,
+    "_id": {
+      "$oid": "68685280f5d2b14198b52749"
+    }
+  },
+  "tags": [],
+  "attachments": [],
+  "ticket_states": {
+    "ticket_id": 9001709394,
+    "opened_at": "2016-01-20T11:34:30-06:00",
+    "pending_since": null,
+    "resolved_at": "2016-01-20T12:34:51-06:00",
+    "closed_at": "2016-01-22T13:26:30-06:00",
+    "first_assigned_at": "2016-01-20T10:48:51-06:00",
+    "assigned_at": "2016-01-20T10:48:51-06:00",
+    "first_response_time": "2016-01-20T10:48:39-06:00",
+    "requester_responded_at": "2016-01-20T11:34:29-06:00",
+    "agent_responded_at": "2016-01-20T12:34:51-06:00",
+    "created_at": "2016-01-20T09:31:56-06:00",
+    "updated_at": "2016-01-22T13:26:30-06:00",
+    "group_escalated": false,
+    "inbound_count": 4,
+    "status_updated_at": "2016-01-22T13:26:30-06:00",
+    "sla_timer_stopped_at": "2016-01-20T12:34:51-06:00",
+    "outbound_count": 3,
+    "avg_response_time": 2998.67,
+    "first_resp_time_by_bhrs": 4603,
+    "resolution_time_by_bhrs": 10975,
+    "avg_response_time_by_bhrs": 2998.67,
+    "resolution_time_updated_at": null,
+    "_id": {
+      "$oid": "68685280f5d2b14198b5274a"
+    }
+  },
+  "requester": {
+    "id": 9006354025,
+    "name": "Keeli McNair",
+    "email": "kmcnair@safehaventc.org",
+    "created_at": "2016-01-13T19:55:28-06:00",
+    "updated_at": "2018-11-07T21:50:00-06:00",
+    "account_id": 320932,
+    "active": true,
+    "customer_id": 9000200290,
+    "job_title": "",
+    "phone": "",
+    "mobile": "",
+    "twitter_id": "",
+    "description": "",
+    "time_zone": "Central Time (US & Canada)",
+    "deleted": false,
+    "fb_profile_id": null,
+    "language": "en",
+    "address": "",
+    "external_id": null,
+    "helpdesk_agent": false,
+    "unique_external_id": null,
+    "company_id": 9000200290,
+    "_id": {
+      "$oid": "68685280f5d2b14198b5274b"
+    }
+  },
+  "conversations": [
+    {
+      "id": 9001835425,
+      "body_text": "Hi Keeli McNair,  Ticket: https://exotech.freshdesk.com/helpdesk/tickets/2007  \n  Sure. I will take a look. How soon would you like to have this fixed? \n   \n Thanks. \n Mitch",
+      "user_id": 9006333765,
+      "source": 0,
+      "incoming": false,
+      "private": false,
+      "created_at": "2016-01-20T10:48:39-06:00",
+      "updated_at": "2016-01-20T10:48:39-06:00",
+      "deleted": false,
+      "notable_id": 9001709394,
+      "notable_type": "Helpdesk::Ticket",
+      "account_id": 320932,
+      "body": "<div style=\"font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">\n<div></div>\n<div>\n<div>Hi Keeli McNair,<br><br>Ticket: <a href=\"https://exotech.freshdesk.com/helpdesk/tickets/2007\">https://exotech.freshdesk.com/helpdesk/tickets/2007</a><br>\n</div>\n<br><div>Sure. I will take a look. How soon would you like to have this fixed?</div>\n<div><br></div>\n<div>Thanks.</div>\n<div>Mitch</div>\n<div><br></div>\r\n</div>\r\n</div>",
+      "support_email": "helpdesk@exotech.freshdesk.com",
+      "attachments": [],
+      "_id": {
+        "$oid": "68685280f5d2b14198b5274c"
+      }
+    },
+    {
+      "id": 9001836654,
+      "body_text": "We would love to have this resolved as soon as possible since we are advertising the website right now.\r\n\r\nIs end of the week unreasonable?\r\n\r\n",
+      "user_id": 9006354025,
+      "source": 0,
+      "incoming": true,
+      "private": false,
+      "created_at": "2016-01-20T11:17:52-06:00",
+      "updated_at": "2016-01-20T11:17:52-06:00",
+      "deleted": false,
+      "notable_id": 9001709394,
+      "notable_type": "Helpdesk::Ticket",
+      "account_id": 320932,
+      "body": "<div class=\"WordSection1\">\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'>We would love to have this resolved as soon as possible since we are advertising the website right now.\r\n<div></div></span></div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'><div> </div></span></div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'>Is end of the week unreasonable?<div></div></span></div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'><div> </div></span></div>\r\n<div class=\"MsoNormal\"><b><span style='font-size:10.0pt;font-family:\"Tahoma\",\"sans-serif\"'></span></b></div>\n</div>\n<div class=\"freshdesk_quote\"><blockquote class=\"freshdesk_quote\">\n<div>From:<span style='font-size:10.0pt;font-family:\"Tahoma\",\"sans-serif\"'> Mitchell Starnes [mailto:helpdesk@exotech.freshdesk.com]\r\n<br>\r\n<b>Sent:</b> Wednesday, January 20, 2016 10:49 AM<br>\r\n<b>To:</b> Keeli McNair<br>\r\n<b>Cc:</b> helpdesk@exotech.pro; Megan Bent<br>\r\n<b>Subject:</b> Re: SafeHaven Event Page Layout<div></div></span>\n</div>\r\n<div class=\"MsoNormal\"></div>\n<div> </div>\r\n<div>\r\n<div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Hi Keeli McNair,<br>\r\n<br>\r\nTicket: <a href=\"https://exotech.freshdesk.com/helpdesk/tickets/2007\">https://exotech.freshdesk.com/helpdesk/tickets/2007</a><div></div></span></div>\r\n</div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'><div> </div></span></div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Sure. I will take a look. How soon would you like to have this fixed?<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'><div> </div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Thanks.<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Mitch<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'><div> </div></span></div>\r\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<blockquote style=\"margin-top:5.0pt;margin-bottom:5.0pt\">\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>On Wed, Jan 20 at 9:31 AM , Keeli McNair &lt;<a href=\"mailto:kmcnair@safehaventc.org\">kmcnair@safehaventc.org</a>&gt; wrote:\r\n<div></div></span></div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Good Morning Mitch,<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Our current layout for event pages has 2 columns, and we would prefer that it is just one full width page for easier editing and layout. \r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>When I tried to modify the format of pages in “Event Settings” to full width page, it did not change the layout of our posts. \r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Can you fix this?<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Example-\r\n<a href=\"https://www.safehaventc.org/events/legacyofwomen2016/\">https://www.safehaventc.org/events/legacyofwomen2016/</a>\r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>                  <a href=\"https://www.safehaventc.org/events/adapperdinner2016/\">https://www.safehaventc.org/events/adapperdinner2016/</a>\r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Any help would be appreciated. \r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Thanks,\r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:14.0pt;font-family:\"Eras Medium ITC\",\"sans-serif\"'>Keeli McNair<div></div></span></div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:5.0pt;font-family:\"Coronet\",\"serif\";color:#663399'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\">\n<span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#663399'>Safe</span><span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#E43E45'>Haven</span><span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#1F497D'><div></div></span>\n</div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>FREEDOM FROM DOMESTIC VIOLENCE<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>817-502-7128\r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>Keeli McNair<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>Director of Marketing and Communications<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>1100 Hemphill, Suite 303, Fort Worth, Texas 76104<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'><a href=\"http://www.safehaventc.org\">www.safehaventc.org</a>.\r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n</blockquote>\r\n</div>\r\n<div class=\"MsoNormal\">\n<span style='font-size:1.0pt;font-family:\"fdtktid\",\"serif\";color:white'>2007</span><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>\r\n<div></div></span>\n</div>\r\n</div>\r\n\r\n\r\n\r\n</blockquote></div>",
+      "support_email": "kmcnair@safehaventc.org",
+      "attachments": [],
+      "_id": {
+        "$oid": "68685280f5d2b14198b5274d"
+      }
+    },
+    {
+      "id": 9001837134,
+      "body_text": "Hi Keeli McNair,  Ticket: https://exotech.freshdesk.com/helpdesk/tickets/2007  \n  Not unreasonable at all. In fact, I made some changes already. Could you take a look and see if the changes meet your approval? \n   \n Personally, I think I would fix the image on A Dapper Dinner to make the text flow around the image. \n   \n Thanks. \n Mitch",
+      "user_id": 9006333765,
+      "source": 0,
+      "incoming": false,
+      "private": false,
+      "created_at": "2016-01-20T11:30:43-06:00",
+      "updated_at": "2016-01-20T11:30:43-06:00",
+      "deleted": false,
+      "notable_id": 9001709394,
+      "notable_type": "Helpdesk::Ticket",
+      "account_id": 320932,
+      "body": "<div style=\"font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">\n<div></div>\n<div>\n<div>Hi Keeli McNair,<br><br>Ticket: <a href=\"https://exotech.freshdesk.com/helpdesk/tickets/2007\">https://exotech.freshdesk.com/helpdesk/tickets/2007</a><br>\n</div>\n<br><div>Not unreasonable at all. In fact, I made some changes already. Could you take a look and see if the changes meet your approval?</div>\n<div><br></div>\n<div>Personally, I think I would fix the image on A Dapper Dinner to make the text flow around the image.</div>\n<div><br></div>\n<div>Thanks.</div>\n<div>Mitch</div>\n<div><br></div>\r\n</div>\r\n</div>",
+      "support_email": "helpdesk@exotech.freshdesk.com",
+      "attachments": [],
+      "_id": {
+        "$oid": "68685280f5d2b14198b5274e"
+      }
+    },
+    {
+      "id": 9001837251,
+      "body_text": "It looks much better!  It looks like we’re fixed!\r\n\r\nWill that be the default layout for any new events as well?\r\n\r\n",
+      "user_id": 9006354025,
+      "source": 0,
+      "incoming": true,
+      "private": false,
+      "created_at": "2016-01-20T11:34:29-06:00",
+      "updated_at": "2016-01-20T11:34:29-06:00",
+      "deleted": false,
+      "notable_id": 9001709394,
+      "notable_type": "Helpdesk::Ticket",
+      "account_id": 320932,
+      "body": "<div class=\"WordSection1\">\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'>It looks much better!  It looks like we’re fixed!\r\n<div></div></span></div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'><div> </div></span></div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'>Will that be the default layout for any new events as well?<div></div></span></div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'><div> </div></span></div>\r\n<div class=\"MsoNormal\"><b><span style='font-size:10.0pt;font-family:\"Tahoma\",\"sans-serif\"'></span></b></div>\n</div>\n<div class=\"freshdesk_quote\"><blockquote class=\"freshdesk_quote\">\n<div>From:<span style='font-size:10.0pt;font-family:\"Tahoma\",\"sans-serif\"'> Mitchell Starnes [mailto:helpdesk@exotech.freshdesk.com]\r\n<br>\r\n<b>Sent:</b> Wednesday, January 20, 2016 11:31 AM<br>\r\n<b>To:</b> Keeli McNair<br>\r\n<b>Subject:</b> Re: SafeHaven Event Page Layout<div></div></span>\n</div>\r\n<div class=\"MsoNormal\"></div>\n<div> </div>\r\n<div>\r\n<div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Hi Keeli McNair,<br>\r\n<br>\r\nTicket: <a href=\"https://exotech.freshdesk.com/helpdesk/tickets/2007\">https://exotech.freshdesk.com/helpdesk/tickets/2007</a><div></div></span></div>\r\n</div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'><div> </div></span></div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Not unreasonable at all. In fact, I made some changes already. Could you take a look and see if the changes meet your approval?<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'><div> </div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Personally, I think I would fix the image on A Dapper Dinner to make the text flow around the image.<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'><div> </div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Thanks.<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Mitch<div></div></span></div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'><div> </div></span></div>\r\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<blockquote style=\"margin-top:5.0pt;margin-bottom:5.0pt\">\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>On Wed, Jan 20 at 11:17 AM , Keeli McNair &lt;<a href=\"mailto:kmcnair@safehaventc.org\">kmcnair@safehaventc.org</a>&gt; wrote:\r\n<div></div></span></div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'>We would love to have this resolved as soon as possible since we are advertising the website right now.\r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'>Is end of the week unreasonable?<div></div></span></div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:11.0pt;font-family:\"Calibri\",\"sans-serif\";color:#1F497D'> <div></div></span></div>\r\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<blockquote style=\"margin-top:5.0pt;margin-bottom:5.0pt\">\r\n<div>\r\n<div class=\"MsoNormal\">\n<span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>From:</span><span style='font-size:10.0pt;font-family:\"Tahoma\",\"sans-serif\"'> Mitchell Starnes [<a href=\"mailto:helpdesk@exotech.freshdesk.com\">mailto:helpdesk@exotech.freshdesk.com</a>]\r\n<br>\r\n<b>Sent:</b> Wednesday, January 20, 2016 10:49 AM<br>\r\n<b>To:</b> Keeli McNair<br>\r\n<b>Cc:</b> <a href=\"mailto:helpdesk@exotech.pro\">helpdesk@exotech.pro</a>; Megan Bent<br>\r\n<b>Subject:</b> Re: SafeHaven Event Page Layout<div></div></span>\n</div>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n<div>\r\n<div>\r\n<div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Hi Keeli McNair,<br>\r\n<br>\r\nTicket: <a href=\"https://exotech.freshdesk.com/helpdesk/tickets/2007\">https://exotech.freshdesk.com/helpdesk/tickets/2007</a><div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Sure. I will take a look. How soon would you like to have this fixed?<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Thanks.<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Mitch<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<blockquote style=\"margin-top:5.0pt;margin-bottom:5.0pt\">\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>On Wed, Jan 20 at 9:31 AM , Keeli McNair &lt;<a href=\"mailto:kmcnair@safehaventc.org\">kmcnair@safehaventc.org</a>&gt; wrote:\r\n<div></div></span></div>\r\n</div>\r\n<div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Good Morning Mitch,<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Our current layout for event pages has 2 columns, and we would prefer that it is just one full width page for easier editing and layout. \r\n<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>When I tried to modify the format of pages in “Event Settings” to full width page, it did not change the layout of our posts. \r\n<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Can you fix this?<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Example-\r\n<a href=\"https://www.safehaventc.org/events/legacyofwomen2016/\">https://www.safehaventc.org/events/legacyofwomen2016/</a>\r\n<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>                  <a href=\"https://www.safehaventc.org/events/adapperdinner2016/\">https://www.safehaventc.org/events/adapperdinner2016/</a>\r\n<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Any help would be appreciated. \r\n<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>Thanks,\r\n<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:14.0pt;font-family:\"Eras Medium ITC\",\"sans-serif\"'>Keeli McNair<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:5.0pt;font-family:\"Coronet\",\"serif\";color:#663399'> <div></div></span></div>\r\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\">\n<span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#663399'>Safe</span><span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#E43E45'>Haven</span><span style='font-size:14.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:#1F497D'><div></div></span>\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>FREEDOM FROM DOMESTIC VIOLENCE<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>817-502-7128\r\n<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'> <div></div></span></div>\r\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>Keeli McNair<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>Director of Marketing and Communications<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'>1100 Hemphill, Suite 303, Fort Worth, Texas 76104<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:8.0pt;font-family:\"Trebuchet MS\",\"sans-serif\";color:black'><a href=\"http://www.safehaventc.org\">www.safehaventc.org</a>.\r\n<div></div></span></div>\r\n</div>\r\n</div>\r\n<div>\r\n<div>\r\n<div class=\"MsoNormal\"><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'> <div></div></span></div>\r\n</div>\r\n</div>\r\n</div>\r\n</blockquote>\r\n</div>\r\n<div>\r\n<div class=\"MsoNormal\">\n<span style='font-size:1.0pt;font-family:\"fdtktid\",\"serif\";color:white'>2007</span><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>\r\n<div></div></span>\n</div>\r\n</div>\r\n</div>\r\n</blockquote>\r\n</div>\r\n</blockquote>\r\n</div>\r\n<div class=\"MsoNormal\">\n<span style='font-size:1.0pt;font-family:\"fdtktid\",\"serif\";color:white'>2007</span><span style='font-size:10.0pt;font-family:\"Helvetica\",\"sans-serif\"'>\r\n<div></div></span>\n</div>\r\n</div>\r\n\r\n\r\n\r\n</blockquote></div>",
+      "support_email": "kmcnair@safehaventc.org",
+      "attachments": [],
+      "_id": {
+        "$oid": "68685280f5d2b14198b5274f"
+      }
+    },
+    {
+      "id": 9001837382,
+      "body_text": "Mitch is the best! Thank you for resolving our issue so quickly!",
+      "user_id": 9006354025,
+      "source": 6,
+      "incoming": true,
+      "private": false,
+      "created_at": "2016-01-20T11:37:21-06:00",
+      "updated_at": "2016-01-20T11:37:21-06:00",
+      "deleted": false,
+      "notable_id": 9001709394,
+      "notable_type": "Helpdesk::Ticket",
+      "account_id": 320932,
+      "body": "<div>Mitch is the best! Thank you for resolving our issue so quickly!</div>",
+      "support_email": null,
+      "attachments": [],
+      "_id": {
+        "$oid": "68685280f5d2b14198b52750"
+      }
+    },
+    {
+      "id": 9001839964,
+      "body_text": "Hi Keeli McNair,  Ticket: https://exotech.freshdesk.com/helpdesk/tickets/2007  \n  If you look in the body of the event, you will see where I commented out some <div> tags: \n   \n <!-- \n <div class=\"two-thirds first\"> \n   \n -->  \n   \n <!--</div> \n \n --> \n   \n <!-- \n <div class=\"one-third alignmiddle sponsors\"></div> \n \n --> \n   \n These tags allow you to create columns within content. I think you must have copied or reused a previous event for these to be present. Anyway, I just commented them out so they wouldn't affect your layout. \n   \n You shouldn't see this happen again unless you clone another event that has these tags. \n   \n Thanks. \n Mitch",
+      "user_id": 9006333765,
+      "source": 0,
+      "incoming": false,
+      "private": false,
+      "created_at": "2016-01-20T12:34:51-06:00",
+      "updated_at": "2016-01-20T12:34:51-06:00",
+      "deleted": false,
+      "notable_id": 9001709394,
+      "notable_type": "Helpdesk::Ticket",
+      "account_id": 320932,
+      "body": "<div style=\"font-size: 13px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">\n<div></div>\n<div>\n<div>Hi Keeli McNair,<br><br>Ticket: <a href=\"https://exotech.freshdesk.com/helpdesk/tickets/2007\">https://exotech.freshdesk.com/helpdesk/tickets/2007</a><br>\n</div>\n<br><div>If you look in the body of the event, you will see where I commented out some &lt;div&gt; tags:</div>\n<div><br></div>\n<div>&lt;!--</div>\n<div>&lt;div class=\"two-thirds first\"&gt;</div>\n<div><br></div>\n<div>\n<span style=\"\">--&gt;</span> </div>\n<div><br></div>\n<div>&lt;!--&lt;/div&gt;</div>\n<div></div>\n<div>--&gt;</div>\n<div><br></div>\n<div>&lt;!--</div>\n<div>&lt;div class=\"one-third alignmiddle sponsors\"&gt;&lt;/div&gt;</div>\n<div></div>\n<div>--&gt;</div>\n<div><br></div>\n<div>These tags allow you to create columns within content. I think you must have copied or reused a previous event for these to be present. Anyway, I just commented them out so they wouldn't affect your layout.</div>\n<div><br></div>\n<div>You shouldn't see this happen again unless you clone another event that has these tags.</div>\n<div><br></div>\n<div>Thanks.</div>\n<div>Mitch</div>\n<div><br></div>\r\n</div>\r\n</div>",
+      "support_email": "helpdesk@exotech.freshdesk.com",
+      "attachments": [],
+      "_id": {
+        "$oid": "68685280f5d2b14198b52751"
+      }
+    }
+  ],
+  "__v": 0,
+  "company_id": {
+    "$oid": "6868527ff5d2b14198b52670"
+  }
+}]

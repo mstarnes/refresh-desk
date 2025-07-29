@@ -1,0 +1,342 @@
+[{
+  "_id": {
+    "$oid": "68685289f5d2b14198b5db10"
+  },
+  "id": 9260819135,
+  "description": "This is a test.\r\n\r\n",
+  "requester_id": {
+    "$oid": "6868527ff5d2b14198b525d5"
+  },
+  "responder_id": {
+    "$oid": "6868527ff5d2b14198b52653"
+  },
+  "status": 3,
+  "urgent": false,
+  "source": 1,
+  "spam": false,
+  "deleted": false,
+  "created_at": "2025-06-20T01:06:33-05:00",
+  "updated_at": "2025-06-23T01:12:28-05:00",
+  "trained": false,
+  "account_id": 320932,
+  "subject": "Test Ticket",
+  "display_id": 6169,
+  "owner_id": 9000732307,
+  "group_id": 9000171202,
+  "due_by": "2025-06-23T01:06:34-05:00",
+  "frDueBy": "2025-06-21T01:06:34-05:00",
+  "isescalated": true,
+  "priority": 1,
+  "fr_escalated": true,
+  "to_email": "helpdesk@exotech.freshdesk.com",
+  "email_config_id": 9000033278,
+  "cc_email": {
+    "cc_emails": [
+      "helpdesk@exotech.pro"
+    ],
+    "fwd_emails": [],
+    "reply_cc": [
+      "helpdesk@exotech.pro"
+    ],
+    "tkt_cc": [],
+    "_id": {
+      "$oid": "68685289f5d2b14198b5db11"
+    }
+  },
+  "delta": true,
+  "ticket_type": "Incident",
+  "description_html": "<div>This is a test.<br><br>\n</div>\n",
+  "parent_ticket_id": null,
+  "dirty": 0,
+  "sl_product_id": null,
+  "sl_sla_policy_id": null,
+  "sl_merge_parent_ticket": null,
+  "sl_skill_id": null,
+  "st_survey_rating": null,
+  "sl_escalation_level": null,
+  "sl_manual_dueby": null,
+  "internal_group_id": null,
+  "internal_agent_id": null,
+  "association_type": null,
+  "associates_rdb": null,
+  "sla_state": 0,
+  "nr_due_by": null,
+  "nr_reminded": "false",
+  "nr_escalated": "false",
+  "int_tc01": null,
+  "int_tc02": null,
+  "int_tc03": null,
+  "int_tc04": null,
+  "int_tc05": null,
+  "long_tc01": null,
+  "long_tc02": null,
+  "long_tc03": null,
+  "long_tc04": null,
+  "long_tc05": null,
+  "datetime_tc01": null,
+  "datetime_tc02": null,
+  "datetime_tc03": null,
+  "json_tc01": null,
+  "status_name": "Pending",
+  "requester_status_name": "Being Processed",
+  "priority_name": "Low",
+  "source_name": "Email",
+  "requester_name": "Mitch Starnes",
+  "responder_name": "Mitch Starnes",
+  "product_id": null,
+  "to_emails": [
+    "\"EXOTECH.PRO Active IT Help Desk\" <helpdesk@exotech.pro>"
+  ],
+  "reports_data": {
+    "first_assign_by_bhrs": 0,
+    "first_response_id": null,
+    "first_response_group_id": null,
+    "first_response_agent_id": null,
+    "first_assign_agent_id": 9006333765,
+    "first_assign_group_id": 9000171202,
+    "agent_reassigned_count": null,
+    "group_reassigned_count": null,
+    "reopened_count": null,
+    "private_note_count": null,
+    "public_note_count": null,
+    "agent_reply_count": null,
+    "customer_reply_count": null,
+    "agent_assigned_flag": true,
+    "agent_reassigned_flag": null,
+    "group_assigned_flag": true,
+    "group_reassigned_flag": null,
+    "internal_agent_assigned_flag": null,
+    "internal_agent_reassigned_flag": null,
+    "internal_group_assigned_flag": null,
+    "internal_group_reassigned_flag": null,
+    "internal_agent_first_assign_in_bhrs": null,
+    "last_resolved_at": null,
+    "initial_sentiment": null,
+    "archive": false,
+    "resolution_escalation_level": 4,
+    "response_reminded": false,
+    "resolution_reminded": false,
+    "time_to_resolution_in_chrs": null,
+    "outbound_email": false,
+    "watchers": [],
+    "group_users": [
+      "9006333765"
+    ],
+    "on_state_time": "0",
+    "source_additional_info": {
+      "email": {
+        "received_at": "2025-06-20T06:06:32.841+0000"
+      }
+    },
+    "status_stop_sla_timer": false,
+    "status_deleted": false,
+    "_id": {
+      "$oid": "68685289f5d2b14198b5db12"
+    }
+  },
+  "tags": [],
+  "attachments": [],
+  "ticket_states": {
+    "ticket_id": 9260819135,
+    "opened_at": null,
+    "pending_since": null,
+    "resolved_at": null,
+    "closed_at": null,
+    "first_assigned_at": "2025-06-20T01:06:34-05:00",
+    "assigned_at": "2025-06-20T01:06:34-05:00",
+    "first_response_time": null,
+    "requester_responded_at": null,
+    "agent_responded_at": null,
+    "created_at": "2025-06-20T01:06:33-05:00",
+    "updated_at": "2025-06-20T01:06:34-05:00",
+    "group_escalated": false,
+    "inbound_count": 1,
+    "status_updated_at": "2025-06-20T01:06:33-05:00",
+    "sla_timer_stopped_at": null,
+    "outbound_count": 0,
+    "avg_response_time": null,
+    "first_resp_time_by_bhrs": null,
+    "resolution_time_by_bhrs": null,
+    "avg_response_time_by_bhrs": null,
+    "resolution_time_updated_at": "2025-06-20T01:06:34-05:00",
+    "_id": {
+      "$oid": "68685289f5d2b14198b5db13"
+    }
+  },
+  "requester": {
+    "id": 9055301121,
+    "name": "Mitch Starnes",
+    "email": "trillodging@gmail.com",
+    "created_at": "2020-12-13T12:48:49-06:00",
+    "updated_at": "2020-12-13T12:50:49-06:00",
+    "account_id": 320932,
+    "active": false,
+    "customer_id": 9000732307,
+    "job_title": null,
+    "phone": "682-777-4400",
+    "mobile": null,
+    "twitter_id": null,
+    "description": null,
+    "time_zone": "Central Time (US & Canada)",
+    "deleted": false,
+    "fb_profile_id": null,
+    "language": "en",
+    "address": null,
+    "external_id": null,
+    "helpdesk_agent": false,
+    "unique_external_id": null,
+    "company_id": 9000732307,
+    "_id": {
+      "$oid": "68685289f5d2b14198b5db14"
+    }
+  },
+  "conversations": [
+    {
+      "id": 62748,
+      "body_text": "Agent Mitch Starnes changed priority to Medium on 7/6/2025, 9:04:12 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T02:04:12.928Z",
+      "updated_at": "2025-07-07T02:04:12.930Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686b2b1c247b9f941345bb8c"
+      }
+    },
+    {
+      "id": 85939,
+      "body_text": "Agent Mitch Starnes changed status to Pending on 7/6/2025, 9:05:59 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T02:05:59.448Z",
+      "updated_at": "2025-07-07T02:05:59.448Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686b2b87247b9f941345bbc3"
+      }
+    },
+    {
+      "id": 597018,
+      "body_text": "Agent Mitch Starnes changed status to Open on 7/6/2025, 10:12:09 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T03:12:09.486Z",
+      "updated_at": "2025-07-07T03:12:09.488Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686b3b097f22718e48b39278"
+      }
+    },
+    {
+      "id": 711535,
+      "body_text": "Agent Mitch Starnes changed priority to Urgent on 7/6/2025, 10:19:19 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T03:19:19.062Z",
+      "updated_at": "2025-07-07T03:19:19.062Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686b3cb77f22718e48b39955"
+      }
+    },
+    {
+      "id": 396542,
+      "body_text": "Agent Mitch Starnes unassigned ticket on 7/6/2025, 10:26:14 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T03:26:14.178Z",
+      "updated_at": "2025-07-07T03:26:14.178Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686b3e567f22718e48b39a37"
+      }
+    },
+    {
+      "id": 252168,
+      "body_text": "Agent Mitch Starnes changed priority to High on 7/6/2025, 10:26:51 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T03:26:51.071Z",
+      "updated_at": "2025-07-07T03:26:51.071Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686b3e7b7f22718e48b39a5a"
+      }
+    },
+    {
+      "id": 157548,
+      "body_text": "Agent Mitch Starnes changed status to Pending on 7/6/2025, 10:26:56 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T03:26:56.388Z",
+      "updated_at": "2025-07-07T03:26:56.388Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686b3e807f22718e48b39a69"
+      }
+    },
+    {
+      "id": 24938,
+      "body_text": "Agent Mitch Starnes changed status to Open on 7/7/2025, 3:15:42 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T20:15:42.295Z",
+      "updated_at": "2025-07-07T20:15:42.295Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686c2aee7a1d8d29669f2a08"
+      }
+    },
+    {
+      "id": 53144,
+      "body_text": "Agent Mitch Starnes changed priority to Low on 7/7/2025, 3:15:58 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T20:15:58.182Z",
+      "updated_at": "2025-07-07T20:15:58.182Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686c2afe7a1d8d29669f2aba"
+      }
+    },
+    {
+      "id": 398150,
+      "body_text": "Agent Mitch Starnes assigned ticket on 7/7/2025, 3:16:10 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": false,
+      "created_at": "2025-07-07T20:16:10.064Z",
+      "updated_at": "2025-07-07T20:16:10.064Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686c2b0a7a1d8d29669f2b63"
+      }
+    },
+    {
+      "id": 332811,
+      "body_text": "Agent Mitch Starnes changed status to Pending on 7/7/2025, 3:25:18 PM",
+      "user_id": 9006333765,
+      "incoming": false,
+      "private": true,
+      "created_at": "2025-07-07T20:25:18.178Z",
+      "updated_at": "2025-07-07T20:25:18.178Z",
+      "attachments": [],
+      "_id": {
+        "$oid": "686c2d2eaf320c8c9b3820c6"
+      }
+    }
+  ],
+  "__v": 0,
+  "company_id": {
+    "$oid": "6868527ff5d2b14198b52694"
+  }
+}]
