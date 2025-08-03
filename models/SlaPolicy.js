@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const SlaPolicySchema = new mongoose.Schema({
+const SlaPolicySchema = new Schema({
   id: { type: Number, required: true },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   name: { type: String, required: true },
   description: String,
   active: { type: Boolean, default: true },
@@ -14,8 +16,8 @@ const SlaPolicySchema = new mongoose.Schema({
   group_ids: [Number], // Optional, per your note to ignore for now
   is_default: { type: Boolean, default: false },
   position: Number,
-  created_at: Date,
-  updated_at: Date,
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
 });
 
 SlaPolicySchema.index({ id: 1 }, { unique: true });

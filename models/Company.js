@@ -1,22 +1,23 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const CompanyDomainSchema = new mongoose.Schema({
+const CompanyDomainSchema = new Schema({
   id: { type: Number, required: true },
-  account_id: { type: Number },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   company_id: { type: Number },
   domain: { type: String },
-  created_at: { type: String },
-  updated_at: { type: String },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
 });
 
-const CompanySchema = new mongoose.Schema({
+const CompanySchema = new Schema({
   id: { type: Number, required: true, unique: true },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   name: { type: String, required: true },
   cust_identifier: { type: String, default: null },
-  account_id: { type: Number },
   description: { type: String },
-  created_at: { type: String },
-  updated_at: { type: String },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
   sla_policy_id: { type: Number },
   note: { type: String },
   domains: { type: String },

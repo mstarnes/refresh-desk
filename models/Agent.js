@@ -1,12 +1,16 @@
+// models/Agent.js
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 const AgentSchema = new mongoose.Schema({
   id: { type: Number, required: true, unique: true },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   name: { type: String, required: true },
-  email: { type: String },
-  created_at: { type: String },
-  updated_at: { type: String },
-  account_id: { type: Number },
+  email: { type: String, required: true, unique: true },
+  role_id: { type: Schema.Types.ObjectId, ref: 'Role' },
+  group_ids: [{ type: Schema.Types.ObjectId, ref: 'Group' }], // Bi-directional
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
   active: { type: Boolean },
   customer_id: { type: Number, default: null },
   job_title: { type: String },

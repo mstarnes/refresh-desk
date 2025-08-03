@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const TicketDisplayIdMapSchema = new mongoose.Schema({
-  account_id: { type: Number, required: true },
+const TicketDisplayIdMapSchema = new Schema({
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   next_display_id: { type: Number, required: true },
 });
 

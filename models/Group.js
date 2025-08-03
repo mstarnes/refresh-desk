@@ -1,38 +1,16 @@
 const mongoose = require('mongoose');
-
-const AgentSchema = new mongoose.Schema({
-  id: { type: Number, required: true },
-  name: { type: String },
-  email: { type: String },
-  created_at: { type: String },
-  updated_at: { type: String },
-  account_id: { type: Number },
-  active: { type: Boolean },
-  job_title: { type: String },
-  phone: { type: String },
-  mobile: { type: String, default: null },
-  twitter_id: { type: String, default: null },
-  description: { type: String, default: null },
-  time_zone: { type: String },
-  deleted: { type: Boolean },
-  fb_profile_id: { type: String, default: null },
-  language: { type: String },
-  address: { type: String, default: null },
-  external_id: { type: String, default: null },
-  helpdesk_agent: { type: Boolean },
-  unique_external_id: { type: String, default: null },
-  company_id: { type: Number, default: null },
-});
+const Schema = mongoose.Schema;
 
 const GroupSchema = new mongoose.Schema({
   id: { type: Number, required: true, unique: true },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true }, // Multi-tenancy
   name: { type: String, required: true },
   description: { type: String },
   account_id: { type: Number },
   escalate_to: { type: Number },
   assign_time: { type: Number },
-  created_at: { type: String },
-  updated_at: { type: String },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
   ticket_assign_type: { type: Number },
   business_calendar_id: { type: Number, default: null },
   toggle_availability: { type: Boolean },
@@ -42,7 +20,7 @@ const GroupSchema = new mongoose.Schema({
   additional_settings: { type: Object, default: {} },
   agent_status_toggle: { type: Boolean },
   department_id: { type: Number },
-  agents: [AgentSchema],
+  agent_ids: [{ type: Schema.Types.ObjectId, ref: 'Agent' }], // Reference Agents
 });
 
 module.exports = mongoose.model('Group', GroupSchema);

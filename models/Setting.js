@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const settingSchema = new Schema({
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   primary_language: { type: String },
   supported_languages: [{ type: String }],
   portal_languages: [{ type: String }],

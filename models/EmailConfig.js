@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const emailConfigSchema = new Schema({
   name: { type: String, required: true },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   product_id: { type: String }, // Custom field, nullable
   to_email: { type: String, required: true },
   reply_email: { type: String, required: true },

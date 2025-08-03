@@ -14,6 +14,7 @@ const ticketCreationMutex = new Mutex();
 
 // Schemas
 const TicketField = require('./models/TicketField');
+const Account = require('./models/Account');
 const User = require('./models/User');
 const Company = require('./models/Company');
 const Agent = require('./models/Agent');
@@ -36,21 +37,28 @@ const app = express();
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json({ limit: '1mb' })); // Increase payload limit to 1mb
 
+// Account middleware (assumes JWT with account_id)
+app.use((req, res, next) => {
+  req.account_id = 320932; // Replace with req.user.account_id from auth
+  next();
+});
+const account_id = process.env.ACCOUNT_ID || 320932;
+
 // Set strictPopulate to false as a fallback
 mongoose.set('strictPopulate', false);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected'))
+  .then(() => console.log('MongoDB connected to ' + process.env.MONGODB_URI))
   .catch(err => console.log(err));
 
-const account_id = process.env.ACCOUNT_ID || 320932;
 
 // Stub for SLA and email processing
 setInterval(() => {
-  // const account_id = process.env.ACCOUNT_ID || 320932;
-  console.log(`SLA escalation check for account_id: ${account_id}`);
+  console.log('setInterval fired. Need to fix SLA updates and email for multi-tenant arch');
+  // console.log(`SLA escalation check for account_id: ${req.account_id}`);
   // console.log(`Email processing check for account_id: ${account_id}`);
+  // for a multi-tenant, will need to check for each tenant
 }, process.env.CHECK_INTERVAL ? parseInt(process.env.CHECK_INTERVAL) : 60000);
 
   // Email Setup
@@ -99,7 +107,7 @@ app.post('/api/tickets', async (req, res) => {
   const release = await ticketCreationMutex.acquire();
   try {
     console.log('post /api/tickets req.body:', req.body);
-    // const account_id = parseInt(process.env.ACCOUNT_ID) || 320932;
+    // const account_id = parseInt(process.env.ACCOUNT_ID) || "688aa123f6d51061386b4aa5";
 
     // Generate id
     const maxId = await ObjectIdMap.findOne().sort({ id: -1 }).select('id');
@@ -193,8 +201,6 @@ app.post('/api/tickets', async (req, res) => {
     //const EmailConfig = require('./models/EmailConfig');
     const emailConfig = await EmailConfig.findOne();
 
-    console.log('ticketData 2: ' + JSON.stringify(ticketData, null, 2));
-
     if (!process.env.DISABLE_EMAILS) {
       await transporter.sendMail({
         from: `"${emailConfig.name}" <${emailConfig.reply_email}>`,
@@ -203,7 +209,7 @@ app.post('/api/tickets', async (req, res) => {
         text: `Dear ${ticketData.requester.name},\n\nWe would like to acknowledge that we have received your request and a ticket has been created.\nA support representative will be reviewing your request and will send you a personal response (usually within 24 hours).\n\nTo view the status of the ticket or add comments, please visit\nhttp://localhost:3000/ticket/${ticketData.display_id}\n\nThank you for your patience.\n\nSincerely,\n${emailConfig.name}`,
       });
     } else {
-      console.log("Would have sent email 3");
+      console.log("Would have sent email in post");
     }
 
     // Save to ObjectIdMap
@@ -228,7 +234,7 @@ app.post('/api/tickets', async (req, res) => {
 app.get('/api/tickets', async (req, res) => {
   try {
     const { limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
-    console.log(JSON.stringify(req.query, null, 2));
+    console.log('GET /api/tickets query: ' + JSON.stringify(req.query, null, 2));
     let query = {};
     if (filters === 'newAndMyOpen') {
       const agent = await Agent.findOne({ email: userId });
@@ -359,8 +365,9 @@ app.get('/api/ticketfields', async (req, res) => {
 
 app.get('/api/tickets/search', async (req, res) => {
   try {
-    console.log('/api/tickets/search ' + JSON.stringify(req.query, null, 2));
-    const { q, limit = 10, page = 1, filters, userId, sort = 'updated_at', direction = 'desc' } = req.query;
+    console.log('GET /api/tickets/search query: ' + JSON.stringify(req.query, null, 2));
+    const { q, limit = 10, page = 1, filters, sort = 'updated_at', direction = 'desc' } = req.query;
+    let email = process.env.CURRENT_AGENT_EMAIL;
     let query = {};
     if (q) {
       query.$or = [
@@ -375,11 +382,12 @@ app.get('/api/tickets/search', async (req, res) => {
       ];
     }
     if (filters === 'newAndMyOpen') {
-      const agent = await Agent.findOne({ email: userId });
+      const agent = await Agent.findOne({ email: email });
       const filterQuery = {
         $or: [
           { responder_id: null },
-          { responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') },
+          // { responder_id: agent ? agent._id : new mongoose.Types.ObjectId('6868527ff5d2b14198b52653') },
+          { responder_id: agent._id },
         ],
         status: { $in: [2, 3] },
       };
@@ -485,17 +493,18 @@ app.get('/api/agents/email/:email', async (req, res) => {
 
 app.patch('/api/tickets/:id', async (req, res) => {
   try {
-    console.log(JSON.stringify(req.body, null, 2));
+    console.log("PATCH /api/tickets/:id: " + req.params.id);
     const currentTicket = await Ticket.findById(req.params.id);
     if (!currentTicket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
+    console.log("PATCH /api/tickets/:id (" + currentTicket.display_id + "): " + JSON.stringify(req.body, null, 2));
 
     //const { priority, status, responder_id, priority_name, status_name, responder_name, closed_at, conversations, description_html, description, group_id, ...other } = req.body;
     const { priority, status, responder_id, priority_name, status_name, responder_name, conversations, description_html, description, group_id, ...other } = req.body;
     const updates = {};
     const ticketStatesUpdates = {};
-    const currentTime = new Date().toISOString();
+    const currentTime = new Date(); //.toISOString();
 
     if (priority !== undefined) updates.priority = priority;
     if (status !== undefined) {
@@ -523,7 +532,7 @@ app.patch('/api/tickets/:id', async (req, res) => {
         ticketStatesUpdates.first_assigned_at = currentTime;
       }
       const agent = await Agent.findById(responder_id);
-      console.log('agent: ' + JSON.stringify(agent, null, 2));
+      console.log('PATCH /api/tickets/:id agent: ' + JSON.stringify(agent, null, 2));
       if (agent) {
         updates.responder_name = agent.name;
       }
@@ -616,7 +625,7 @@ app.patch('/api/tickets/:id-old', async (req, res) => {
     updates.updated_at = currentTime;
     ticketStatesUpdates.updated_at = currentTime;
 
-    console.log(JSON.stringify(ticketStatesUpdates, null, 2));
+    console.log('PATCH /api/tickets/:id-old: ' + JSON.stringify(ticketStatesUpdates, null, 2));
     const newTicketStates = { ...currentTicket.ticket_states, ...ticketStatesUpdates };
 
     // Flatten newTicketStates to dotted keys
@@ -909,7 +918,7 @@ app.post('/api/tickets/:id/conversations', async (req, res) => {
           text: `A new comment was added:\n\n"${body_text}"\n\nView ticket: http://localhost:5001/tickets/${mapEntry.display_id}\n\nSincerely,\n${process.env.TEAM_NAME || 'Refresh Desk Team'}`,
         });
       } else {
-        console.log("Would have sent email 1");
+        console.log("Would have sent email from conversation post");
       }
     }
     res.status(201).json({ message: 'Conversation added' });
@@ -959,7 +968,7 @@ app.post('/api/tickets/reply', async (req, res) => {
         text: `${body}\n\nView ticket: http://localhost:5001/tickets/${mapEntry.display_id}\n\nSincerely,\n${process.env.TEAM_NAME || 'Refresh Desk Team'}`,
       });
     } else {
-      console.log("Would have send email 2");
+      console.log("Would have send email reply");
     }
     const newMessageId = info.messageId || `reply-${Date.now()}`;
     ticket.in_reply_to = ticket.in_reply_to || [];
@@ -1038,7 +1047,7 @@ app.get('/api/tickets/search', async (req, res) => {
 // Updated endpoint: Search contacts
 app.get('/api/users/search-old', async (req, res) => {
   const { q } = req.query;
-  console.log(q);
+  console.log('GET api/users/search-old query: ' + q);
   try {
     if (!q || q.length < 2) {
       return res.json([]);
@@ -1729,9 +1738,9 @@ app.delete('/api/settings/:id', async (req, res) => {
 // Ticket Fields
 app.get('/api/ticket-fields', async (req, res) => {
   try {
-    const ticketFields = await TicketField.find({});
-    const groups = await Group.find({ account_id: 320932 });
-    const agents = await Agent.find({ account_id: 320932 });
+    const ticketFields = await TicketField.find();
+    const groups = await Group.find();
+    const agents = await Agent.find();
 
     const fieldMap = ticketFields.reduce((acc, field) => {
       if (field.type === 'default_status') {
@@ -1863,7 +1872,7 @@ async function processEmail(mail) {
         ticketFields = fields;
 
         defaultAgent = fields.agent.find(
-          (agent) => agent.email === process.env.CURRENT_AGENT_EMAIL
+          (agent) => agent.email === process.env.CURRENT_AGENT_EMAIL // TODO: get from logged on user
         );
       } catch (error) {
         console.error('Error fetching ticket fields:', error);
@@ -1897,7 +1906,7 @@ async function processEmail(mail) {
       responder_name: defaultAgent.name || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      account_id: process.env.ACCOUNT_ID || 320932,
+      account_id: account_id, //process.env.ACCOUNT_ID || "688aa123f6d51061386b4aa5",
       delta: true,
       requester: requester
         ? {

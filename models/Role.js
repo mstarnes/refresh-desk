@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const roleSchema = new Schema({
   name: { type: String, required: true },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   description: { type: String },
   default: { type: Boolean, default: false },
   created_at: { type: Date, default: Date.now },

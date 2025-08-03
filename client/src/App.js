@@ -4,7 +4,6 @@ import { AppBar, Toolbar, Button, Typography, Grid, Card, CardContent, CardActio
 import axios from 'axios';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-
 const theme = createTheme({
   palette: { primary: { main: '#1976d2' }, secondary: { main: '#dc004e' } },
   typography: { fontFamily: 'Roboto, Arial, sans-serif' },
@@ -154,7 +153,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
       const agentId = agentResponse.data._id;
       const params = {
-        account_id: process.env.REACT_APP_ACCOUNT_ID,
+        //account_id: process.env.REACT_APP_ACCOUNT_ID,
         q: search || undefined,
         filters: filter || undefined,
         sort: sortField,
@@ -229,6 +228,8 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     const loadData = async () => {
       setLoading(true);
       try {
+        // TODO: we should get account_id, agentId from the logged in user and derive agentEmail from that
+        // TODO: ... and we should do it in /api/ticket/search (zero trust)
         const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
         const agentId = agentResponse.data._id;
         const agentEmail = agentResponse.data.email;
@@ -238,7 +239,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
           axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`),
           axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/search`, {
             params: {
-              account_id: process.env.REACT_APP_ACCOUNT_ID,
+              //account_id: process.env.REACT_APP_ACCOUNT_ID,
               agent_id: agentId,
               userId: agentEmail,
               q: search || undefined,
@@ -253,27 +254,46 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
 
         if (mounted) {
           const groupsData = groupsRes.data || [];
+          // console.log(JSON.stringify(groupsData, null, 2));
           setGroups(groupsData);
           const fields = fieldsRes.data;
           setPriorities((fields.priority || []).map(p => ({ _id: p.value.toString(), name: p.label })));
           setStatuses((fields.status || []).map(s => ({ _id: s.value.toString(), name: s.label })));
 
           const ticketData = ticketsRes.data.tickets || [];
+          console.log('ticketData: ' + JSON.stringify(ticketData, null, 2));
           const processedTickets = ticketData.map(t => {
             const responderId = t.responder_id?.$oid || t.responder_id || '';
             const groupId = t.group_id || '';
             let agentValue = '';
-            if (responderId) {
-              const group = groupsData.find(g => g._id === groupId && g.agents.find(a => a._id === responderId));
+            console.log('responderId: ' + JSON.stringify(responderId, null, 2));
+
+            if (responderId && groupsData.length > 0) { // Check if groupsData is loaded and not empty
+              const group = groupsData.find(g => g._id === groupId && g.agent_ids?.some(a => a._id === responderId)); // Use agent_ids assuming schema; fixed 'agents_ids'
               if (group) {
                 agentValue = `${groupId}|${responderId}`;
               } else {
-                const fallbackGroup = groupsData.find(g => g.agents.find(a => a._id === responderId));
+                const fallbackGroup = groupsData.find(g => g.agent_ids?.some(a => a._id === responderId));
                 if (fallbackGroup) {
                   agentValue = `${fallbackGroup._id}|${responderId}`;
                 }
               }
             }
+
+
+            /*
+            if (responderId) {
+              const group = groupsData.find(g => g._id === groupId && g.agents_ids.find(a => a._id === responderId._id));
+              if (group) {
+                agentValue = `${groupId}|${responderId}`;
+              } else {
+                const fallbackGroup = groupsData.find(g => g.agents_ids.find(a => a._id === responderId));
+                if (fallbackGroup) {
+                  agentValue = `${fallbackGroup._id}|${responderId}`;
+                }
+              }
+            }
+            */
             return {
               ...t,
               responder_id: responderId,

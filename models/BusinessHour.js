@@ -8,6 +8,7 @@ const dayScheduleSchema = new Schema({
 
 const businessHourSchema = new Schema({
   name: { type: String, required: true },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   is_default: { type: Boolean, default: false },
   description: { type: String },
   business_hours: {

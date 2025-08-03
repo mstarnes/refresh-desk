@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const ticketFieldSchema = new Schema({
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   name: { type: String, required: true },
   label: { type: String, required: true },
   description: { type: String },

@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const TimeEntrySchema = new mongoose.Schema({
+const TimeEntrySchema = new Schema({
   id: { type: Number, required: true, unique: true },
+  account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
   ticket_id: { type: Number, required: true }, // Now stores Ticket.id
   agent_id: { type: Number, required: true },
   company_id: { type: Number },
@@ -10,10 +12,10 @@ const TimeEntrySchema = new mongoose.Schema({
   billable: { type: Boolean, default: true },
   timer_running: { type: Boolean, default: false },
   note: { type: String },
-  start_time: { type: String }, // ISO 8601 format
-  executed_at: { type: String }, // ISO 8601 format
-  created_at: { type: String, required: true }, // ISO 8601 format
-  updated_at: { type: String }, // ISO 8601 format
+  start_time: { type: Date, default: Date.now }, // ISO 8601 format
+  executed_at: { type: Date }, // ISO 8601 format
+  created_at: { type: Date, default: Date.now, required: true }, // ISO 8601 format
+  updated_at: { type: Date, default: Date.now }, // ISO 8601 format
 });
 
 // Add index on ticket_id
