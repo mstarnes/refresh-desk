@@ -143,6 +143,8 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
   const [error, setError] = useState(null);
   const [groups, setGroups] = useState([]);
   const [agents, setAgents] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = process.env.REACT_APP_DEFAULT_LIMIT || 10;
   const ticketRefs = useRef({});
 
   const [priorities, setPriorities] = useState([]);
@@ -159,8 +161,8 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         filters: filter || undefined,
         sort: sortField,
         direction: sortOrder,
-        limit: process.env.REACT_APP_DEFAULT_LIMIT || 10,
-        page: 1,
+        limit: limit,
+        page: currentPage,
       };
       if (filter !== '') {
         params.agent_id = agentId;
@@ -180,7 +182,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     } finally {
       setLoading(false);
     }
-  }, [filter, sortField, sortOrder, search]);
+  }, [filter, sortField, sortOrder, search, currentPage]);
 
   const onPriorityChange = async (ticketId, newPriorityId) => {
     try {
@@ -247,8 +249,8 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
               filters: filter || undefined,
               sort: sortField,
               direction: sortOrder,
-              limit: process.env.REACT_APP_DEFAULT_LIMIT || 10,
-              page: 1,
+              limit: limit,
+              page: currentPage,
             },
           }),
           axios.get(`${process.env.REACT_APP_API_URL}/api/agents`)
@@ -305,7 +307,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     loadData();
 
     return () => { mounted = false; };
-  }, [filter, sortField, sortOrder, search]);
+  }, [filter, sortField, sortOrder, search, currentPage]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -318,6 +320,18 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       }, 2500);
     }
   }, [tickets]);
+
+  useEffect(() => {
+    const handleResetEvent = () => {
+      setCurrentPage(1);
+    };
+
+    document.addEventListener('reset-tickets', handleResetEvent);
+
+    return () => {
+      document.removeEventListener('reset-tickets', handleResetEvent);
+    };
+  }, []);
 
   console.log('Rendering Dashboard with tickets length:', tickets.length, 'data:', tickets);
 
@@ -424,6 +438,11 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
           </Grid>
         ))
       )}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, width: '100%' }}>
+        <Button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}>Previous</Button>
+        <Typography sx={{ mx: 2 }}>Page {currentPage}</Typography>
+        <Button disabled={tickets.length < limit} onClick={() => setCurrentPage(prev => prev + 1)}>Next</Button>
+      </Box>
     </Grid>
   );
 }
