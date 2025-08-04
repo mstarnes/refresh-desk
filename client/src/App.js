@@ -142,6 +142,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [agents, setAgents] = useState([]);
   const ticketRefs = useRef({});
 
   const [priorities, setPriorities] = useState([]);
@@ -169,7 +170,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       console.log('Fetched tickets data:', ticketData);
       setTickets(ticketData.map(t => ({
         ...t,
-        responder_id: t.responder_id?.$oid || t.responder_id || '',
+        responder_id: t.responder_id?._id || t.responder_id?.$oid || t.responder_id || '',
         priority_id: t.priority || 1,
         status_id: t.status || 2
       })));
@@ -234,8 +235,8 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         const agentId = agentResponse.data._id;
         const agentEmail = agentResponse.data.email;
 
-        const [groupsRes, fieldsRes, ticketsRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/api/groups`),
+        const [groupsRes, fieldsRes, ticketsRes, agentsRes] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/api/groups?populate=agent_ids`),
           axios.get(`${process.env.REACT_APP_API_URL}/api/ticket-fields`),
           axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/search`, {
             params: {
@@ -249,7 +250,8 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
               limit: process.env.REACT_APP_DEFAULT_LIMIT || 10,
               page: 1,
             },
-          })
+          }),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/agents`)
         ]);
 
         if (mounted) {
@@ -260,40 +262,27 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
           setPriorities((fields.priority || []).map(p => ({ _id: p.value.toString(), name: p.label })));
           setStatuses((fields.status || []).map(s => ({ _id: s.value.toString(), name: s.label })));
 
+          const agentsData = agentsRes.data || [];
+          setAgents(agentsData);
+
           const ticketData = ticketsRes.data.tickets || [];
-          console.log('ticketData: ' + JSON.stringify(ticketData, null, 2));
+          //console.log('ticketData: ' + JSON.stringify(ticketData, null, 2));
           const processedTickets = ticketData.map(t => {
-            const responderId = t.responder_id?.$oid || t.responder_id || '';
+            const responderId = t.responder_id?._id || t.responder_id?.$oid || t.responder_id || '';
             const groupId = t.group_id || '';
             let agentValue = '';
-            console.log('responderId: ' + JSON.stringify(responderId, null, 2));
 
             if (responderId && groupsData.length > 0) { // Check if groupsData is loaded and not empty
-              const group = groupsData.find(g => g._id === groupId && g.agent_ids?.some(a => a._id === responderId)); // Use agent_ids assuming schema; fixed 'agents_ids'
+              const group = groupsData.find(g => g._id === groupId && g.agent_ids?.some(a => a === responderId)); // Changed to a === responderId
               if (group) {
                 agentValue = `${groupId}|${responderId}`;
               } else {
-                const fallbackGroup = groupsData.find(g => g.agent_ids?.some(a => a._id === responderId));
+                const fallbackGroup = groupsData.find(g => g.agent_ids?.some(a => a === responderId));
                 if (fallbackGroup) {
                   agentValue = `${fallbackGroup._id}|${responderId}`;
                 }
               }
             }
-
-
-            /*
-            if (responderId) {
-              const group = groupsData.find(g => g._id === groupId && g.agents_ids.find(a => a._id === responderId._id));
-              if (group) {
-                agentValue = `${groupId}|${responderId}`;
-              } else {
-                const fallbackGroup = groupsData.find(g => g.agents_ids.find(a => a._id === responderId));
-                if (fallbackGroup) {
-                  agentValue = `${fallbackGroup._id}|${responderId}`;
-                }
-              }
-            }
-            */
             return {
               ...t,
               responder_id: responderId,
@@ -397,18 +386,18 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
                       if (!value) return 'Unassigned';
                       const [groupId, agentId] = value.split('|');
                       const group = groups.find(g => g._id === groupId);
-                      if (group) {
-                        const agent = group.agents.find(a => a._id === agentId);
-                        if (agent) return `${group.name} / ${agent.name}`;
-                      }
+                      const agent = agents.find(a => a._id === agentId);
+                      if (group && agent) return `${group.name} / ${agent.name}`;
                       return ticket.responder_name || 'Unknown';
                     }}
                   >
                     <MenuItem value="">Unassigned</MenuItem>
                     {groups.map(group => (
-                      group.agents.map(agent => (
-                        <MenuItem key={agent._id} value={`${group._id}|${agent._id}`}>{`${group.name} / ${agent.name}`}</MenuItem>
-                      ))
+                      group.agent_ids.map(agentId => {
+                        const agent = agents.find(a => a._id === agentId);
+                        if (!agent) return null;
+                        return <MenuItem key={agentId} value={`${group._id}|${agentId}`}>{`${group.name} / ${agent.name}`}</MenuItem>;
+                      })
                     ))}
                   </Select>
                 </FormControl>
