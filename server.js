@@ -404,6 +404,7 @@ app.get('/api/tickets/search', async (req, res) => {
       .populate('responder_id', 'name')
       .populate('company_id', 'name');
     const total = await Ticket.countDocuments(query);
+    console.log('get tickets: ' + JSON.stringify(tickets, null, 2));
     res.json({ tickets, total });
   } catch (err) {
     console.error('Error searching tickets:', err);
@@ -565,6 +566,7 @@ app.patch('/api/tickets/:id', async (req, res) => {
       .populate('company_id', 'name');
 
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    console.log('patch ticket: ' + JSON.stringify(ticket, null, 2));
     res.json(ticket);
   } catch (err) {
     console.error('Error updating ticket:', err);

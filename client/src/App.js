@@ -146,6 +146,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
   const [currentPage, setCurrentPage] = useState(1);
   const limit = process.env.REACT_APP_DEFAULT_LIMIT || 10;
   const ticketRefs = useRef({});
+  const [updatedTicketId, setUpdatedTicketId] = useState(null);
 
   const [priorities, setPriorities] = useState([]);
   const [statuses, setStatuses] = useState([]);
@@ -155,6 +156,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     try {
       const agentResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/agents/email/${process.env.REACT_APP_CURRENT_AGENT_EMAIL}`);
       const agentId = agentResponse.data._id;
+      const agentEmail = agentResponse.data.email;
       const params = {
         //account_id: process.env.REACT_APP_ACCOUNT_ID,
         q: search || undefined,
@@ -163,11 +165,10 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
         direction: sortOrder,
         limit: limit,
         page: currentPage,
+        agent_id: agentId,
+        userId: agentEmail
       };
-      if (filter !== '') {
-        params.agent_id = agentId;
-      }
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets`, { params });
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/tickets/search`, { params });
       const ticketData = response.data.tickets || [];
       console.log('Fetched tickets data:', ticketData);
       setTickets(ticketData.map(t => ({
@@ -182,13 +183,13 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     } finally {
       setLoading(false);
     }
-  }, [filter, sortField, sortOrder, search, currentPage]);
+  }, [filter, sortField, sortOrder, search, currentPage, limit]);
 
   const onPriorityChange = async (ticketId, newPriorityId) => {
     try {
       const newPriorityName = priorities.find(p => p._id === newPriorityId).name;
       await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { priority: newPriorityId, priority_name: newPriorityName });
-      setTickets(tickets.map(t => t._id === ticketId ? { ...t, priority_id: newPriorityId, priority_name: newPriorityName } : t));
+      setUpdatedTicketId(ticketId);
       fetchTickets(); // Force refresh from DB
     } catch (err) {
       console.error('Error updating priority:', err);
@@ -198,8 +199,10 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
 
   const onAgentChange = async (ticketId, newAgentId, newGroupId) => {
     try {
-      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { responder_id: newAgentId || null, group_id: newGroupId || null });
-      setTickets(tickets.map(t => t._id === ticketId ? { ...t, responder_id: newAgentId, group_id: newGroupId, agentValue: newAgentId ? `${newGroupId}|${newAgentId}` : '' } : t));
+      const agent = agents.find(a => a._id === newAgentId);
+      const agentName = agent ? agent.name : '';
+      await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { responder_id: newAgentId || null, group_id: newGroupId || null, responder_name: agentName });
+      setUpdatedTicketId(ticketId);
       fetchTickets();
     } catch (err) {
       console.error('Error updating agent:', err);
@@ -210,7 +213,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     try {
       const newStatusName = statuses.find(s => s._id === newStatusId).name;
       await axios.patch(`${process.env.REACT_APP_API_URL}/api/tickets/${ticketId}`, { status: newStatusId, status_name: newStatusName });
-      setTickets(tickets.map(t => t._id === ticketId ? { ...t, status_id: newStatusId, status_name: newStatusName } : t));
+      setUpdatedTicketId(ticketId);
       fetchTickets(); // Force refresh from DB
     } catch (err) {
       console.error('Error updating status:', err);
@@ -268,11 +271,12 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
           setAgents(agentsData);
 
           const ticketData = ticketsRes.data.tickets || [];
-          //console.log('ticketData: ' + JSON.stringify(ticketData, null, 2));
+          console.log('ticketData: ' + JSON.stringify(ticketData, null, 2));
           const processedTickets = ticketData.map(t => {
             const responderId = t.responder_id?._id || t.responder_id?.$oid || t.responder_id || '';
             const groupId = t.group_id || '';
             let agentValue = '';
+            console.log('responderId: ' + JSON.stringify(responderId, null, 2));
 
             if (responderId && groupsData.length > 0) { // Check if groupsData is loaded and not empty
               const group = groupsData.find(g => g._id === groupId && g.agent_ids?.some(a => a === responderId)); // Changed to a === responderId
@@ -285,6 +289,21 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
                 }
               }
             }
+
+
+            /*
+            if (responderId) {
+              const group = groupsData.find(g => g._id === groupId && g.agents_ids.find(a => a._id === responderId._id));
+              if (group) {
+                agentValue = `${groupId}|${responderId}`;
+              } else {
+                const fallbackGroup = groupsData.find(g => g.agents_ids.find(a => a._id === responderId));
+                if (fallbackGroup) {
+                  agentValue = `${fallbackGroup._id}|${responderId}`;
+                }
+              }
+            }
+            */
             return {
               ...t,
               responder_id: responderId,
@@ -307,7 +326,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
     loadData();
 
     return () => { mounted = false; };
-  }, [filter, sortField, sortOrder, search, currentPage]);
+  }, [filter, sortField, sortOrder, search, currentPage, limit]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -320,6 +339,16 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
       }, 2500);
     }
   }, [tickets]);
+
+  useEffect(() => {
+    if (updatedTicketId && ticketRefs.current[updatedTicketId]) {
+      ticketRefs.current[updatedTicketId].scrollIntoView({ behavior: 'smooth' });
+      ticketRefs.current[updatedTicketId].style.boxShadow = theme.shadows[6]; // Mimic hover
+      setTimeout(() => {
+        ticketRefs.current[updatedTicketId].style.boxShadow = '';
+      }, 2500);
+    }
+  }, [updatedTicketId, tickets]);
 
   useEffect(() => {
     const handleResetEvent = () => {
@@ -401,6 +430,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
                       const [groupId, agentId] = value.split('|');
                       const group = groups.find(g => g._id === groupId);
                       const agent = agents.find(a => a._id === agentId);
+                      console.log(`${group.name} / ${agent.name}`);
                       if (group && agent) return `${group.name} / ${agent.name}`;
                       return ticket.responder_name || 'Unknown';
                     }}
