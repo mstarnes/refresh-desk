@@ -33,8 +33,7 @@ function App() {
     const saved = localStorage.getItem('search');
     return saved !== null ? saved : '';
   });
-  const filterRef = useRef(null); // Add this in App()
-
+  
   useEffect(() => {
     const oldKeys = ['filterType', 'searchQuery', 'sortBy', 'sortDirection'];
     oldKeys.forEach(key => localStorage.removeItem(key));
