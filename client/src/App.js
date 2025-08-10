@@ -17,10 +17,23 @@ const TicketCard = styled(Card)(({ theme }) => ({
 }));
 
 function App() {
-  const [filter, setFilter] = useState(() => localStorage.getItem('filter') || 'newAndMyOpen');
-  const [sortField, setSortField] = useState(() => localStorage.getItem('sortField') || 'updated_at');
-  const [sortOrder, setSortOrder] = useState(() => localStorage.getItem('sortOrder') || 'desc');
-  const [search, setSearch] = useState(() => localStorage.getItem('search') || '');
+  const [filter, setFilter] = useState(() => {
+    const saved = localStorage.getItem('filter');
+    return saved !== null ? saved : 'newAndMyOpen';
+  });
+  const [sortField, setSortField] = useState(() => {
+    const saved = localStorage.getItem('sortField');
+    return saved !== null ? saved : 'updated_at';
+  });
+  const [sortOrder, setSortOrder] = useState(() => {
+    const saved = localStorage.getItem('sortOrder');
+    return saved !== null ? saved : 'desc';
+  });
+  const [search, setSearch] = useState(() => {
+    const saved = localStorage.getItem('search');
+    return saved !== null ? saved : '';
+  });
+  const filterRef = useRef(null); // Add this in App()
 
   useEffect(() => {
     const oldKeys = ['filterType', 'searchQuery', 'sortBy', 'sortDirection'];
@@ -51,7 +64,12 @@ function App() {
             <InputLabel sx={{ color: 'white', '&.Mui-focused': { color: 'white' }, '&.MuiInputLabel-shrink': { color: 'white' } }}>Filter</InputLabel>
             <Select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => {
+                setFilter(e.target.value);
+                setTimeout(() => {
+                  document.activeElement.blur(); // Blur the active element (the input)
+                }, 100); // Increased timeout for reliability
+              }}
               label="Filter"
               sx={{
                 color: 'white',
@@ -63,17 +81,17 @@ function App() {
                 '& [aria-expanded="true"] ~ .MuiOutlinedInput-notchedOutline': { borderColor: 'white' }
               }}
               renderValue={(value) => {
-                if (value === '') return 'All';
+                if (value === '') return null; // Show "Filter" placeholder for All
                 if (value === 'newAndMyOpen') return 'New & My Open';
                 if (value === 'openTickets') return 'Open Tickets';
                 if (value === 'closed') return 'Closed';
                 return value;
               }}
             >
+              <MenuItem value="">All</MenuItem>
               <MenuItem value="newAndMyOpen">New & My Open</MenuItem>
               <MenuItem value="openTickets">Open Tickets</MenuItem>
               <MenuItem value="closed">Closed</MenuItem>
-              <MenuItem value="">All</MenuItem>
             </Select>
           </FormControl>
           <FormControl sx={{ m: 1, minWidth: 120 }} variant="outlined">
@@ -341,7 +359,7 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
                 <FormControl fullWidth>
                   <InputLabel>Agent</InputLabel>
                   <Select
-                    value={ticket.agentValue || 'not set!'}
+                    value={ticket.agentValue || ''}
                     onChange={(e) => {
                       const value = e.target.value;
                       if (!value) {
@@ -358,10 +376,10 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
                       '.MuiOutlinedInput-notchedOutline': { borderColor: 'grey' }
                     }}
                     renderValue={(value) => {
-                      console.log('ticket.agentValue: ' + ticket.agentValue);
-                      console.log('value: ' + value);
+                      //console.log('ticket.agentValue: ' + ticket.agentValue);
+                      //console.log('value: ' + value);
                       if (!value) return 'Unassigned';
-                      console.log('value: ' + value);
+                      //console.log('value: ' + value);
                       const [groupId, agentId] = value.split('|');
                       const group = groups.find(g => g._id === groupId);
                       const agent = agents.find(a => a._id === agentId);
@@ -374,8 +392,6 @@ function Dashboard({ filter, sortField, sortOrder, search }) {
                     <MenuItem value="">Unassigned</MenuItem>
                     {groups.flatMap(group => group.agent_ids.map(agentId => {
                       const agent = agents.find(a => a._id === agentId);
-                      console.log('group!: ' + JSON.stringify(group, null, 2));
-                      console.log('agent!: ' + JSON.stringify(agent, null, 2));
                       if (!agent) return null;
                       return <MenuItem key={`${group._id}-${agentId}`} value={`${group._id}|${agentId}`}>{`${group.name} / ${agent.name}`}</MenuItem>;
                     }))}
