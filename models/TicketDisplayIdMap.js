@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const TicketDisplayIdMapSchema = new Schema({
   account_id: { type: Schema.Types.ObjectId, ref: 'Account', required: true },
+  id: { type: Number, required: true },
   next_display_id: { type: Number, required: true },
 });
 

@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   req.account_id = 320932; // Replace with req.user.account_id from auth
   next();
 });
-const account_id = process.env.ACCOUNT_ID || 320932;
+const account_id = 320932; //process.env.ACCOUNT_ID || 320932;
 
 // Set strictPopulate to false as a fallback
 mongoose.set('strictPopulate', false);
@@ -117,7 +117,9 @@ app.post('/api/tickets', async (req, res) => {
     await new ObjectIdMap({ id: newId }).save();
 
     // Generate display_id
-    let displayMap = await TicketDisplayIdMap.findOne({ account_id });
+    console.log('Generate display_id'); 
+    let displayMap = await TicketDisplayIdMap.findOne({ id: account_id });
+    console.log(JSON.stringify(displayMap, null, 2)); 
     let newDisplayId;
     if (displayMap) {
       newDisplayId = displayMap.next_display_id;
@@ -127,7 +129,7 @@ app.post('/api/tickets', async (req, res) => {
     } else {
       newDisplayId = 7001;
       console.log( 'newDisplayId: ' + newDisplayId);
-      await new TicketDisplayIdMap({ account_id, next_display_id: newDisplayId + 1 }).save();
+      await new TicketDisplayIdMap({ id: account_id, next_display_id: newDisplayId + 1 }).save();
     }
 
     // Set company_id and SLA policy
@@ -181,9 +183,9 @@ app.post('/api/tickets', async (req, res) => {
     const ticketData = {
       ...req.body,
       id: newId,
+      account_id,
       display_id: newDisplayId,
       company_id,
-      account_id,
       fr_due_by, // Explicitly included
       due_by,
       delta: true,
@@ -1828,7 +1830,7 @@ let lastFetchTime = new Date();
 
 // IMAP Email Processing
 async function processEmail(mail) {
-  //console.log("processEmail()");
+  console.log("processEmail()");
   const { from, subject, text, html, to, date, messageId } = mail;
 
   const email = from.value[0].address;
